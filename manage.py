@@ -41,6 +41,7 @@ prod_config_url = os.path.join(base_config_url, "prod", "config.py")
 dst_config_url = os.path.join(base_dir, "app", "common", "config", "config.py")
 
 
+
 @manager.command
 def init():
     input_init_str = "Please select the environment you want to init:\r\n"

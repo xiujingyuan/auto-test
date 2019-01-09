@@ -10,4 +10,7 @@
 """
 from flask import Blueprint
 api_v1 = Blueprint('api_v1', __name__)
-from . import gaea_api
+from . import case_api
+from . import init_api
+from . import prev_api
+from . import mock_api

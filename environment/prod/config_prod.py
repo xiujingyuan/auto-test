@@ -12,7 +12,8 @@ from environment.common.config import Config
 
 
 class ProductionConfig(Config):
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://product:xxxxx@localhost:3306/test?charset=utf8'
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/gaea_framework?charset=utf8'
 
     @classmethod
     def init_app(cls, app):

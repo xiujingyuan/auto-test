@@ -13,5 +13,5 @@ from environment.common.config import Config
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:123456qwe!@127.0.0.1:3306/flasky?charset=utf8'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/gaea_framework?charset=utf8'
 
