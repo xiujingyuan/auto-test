@@ -17,10 +17,11 @@ from app.common.tools.UnSerializer import UnSerializer
 class CaseBiz(UnSerializer):
 
     def add_case(self,request):
-        basicInfo = request.json['basicInfo']
-        prevInfo =request.json['prevInfo']
-        initInfo = request.json['initInfo']
-        mockInfo = request.json['mockInfo']
+        request = request.json['case']
+        basicInfo = request['basicInfo']
+        prevInfo =request['prevInfo']
+        initInfo = request['initInfo']
+        mockInfo = request['mockInfo']
         if basicInfo is None or basicInfo =='':
             return 0
         try:
