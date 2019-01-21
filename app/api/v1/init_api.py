@@ -15,7 +15,7 @@ from flask import jsonify, request
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
-from app.bussinse.InitBussinse import InitBussinse
+from app.bussinse.InitBiz import InitBiz as InitBussinse
 
 
 @api_v1.route('/init/<int:case_id>', methods=['GET'])
@@ -39,5 +39,11 @@ def change_init(init_id):
 def add_init():
     init = InitBussinse()
     result = init.add_init(request)
+    return jsonify(CommonResult.fill_result(result))
+
+@api_v1.route('/init/<int:init_id>' , methods=['DELETE'])
+def delete_init(init_id):
+    init = InitBussinse()
+    result = init.delete_init(init_id)
     return jsonify(CommonResult.fill_result(result))
 

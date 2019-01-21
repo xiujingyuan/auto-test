@@ -4,9 +4,11 @@
 # @Description: TODO
 # @author fyi zhang
 # @date 2019/1/6 15:53
+import json
 
 from sqlalchemy.inspection import inspect
 from datetime import datetime
+
 
 class Serializer(object):
 
@@ -17,6 +19,11 @@ class Serializer(object):
     def format_date(self,value):
         if isinstance(value,datetime):
             value = value.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(value,str):
+            try:
+                value = json.loads(value,encoding='utf-8')
+            except:
+                pass
         return value
 
 

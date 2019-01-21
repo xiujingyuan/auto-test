@@ -9,9 +9,6 @@ import time
 from app import db
 from datetime import datetime
 from app.common.tools.Serializer import Serializer
-from app.models.MockModel import MockModel
-from app.models.InitModel import InitModel
-from app.models.PrevModel import PrevModel
 
 
 
@@ -53,51 +50,6 @@ class Case(db.Model,Serializer):
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.case_id
-
-    @staticmethod
-    def check_exists_bycaseid(caseid):
-        try:
-            result = False
-            count = db.session.query(Case).filter(Case.case_id == caseid).count()
-            if count==1:
-                result = True
-            return result
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-    @staticmethod
-    def add_case(case):
-        try:
-            db.session.add(case)
-            db.session.flush()
-            id = case.case_id
-            return id
-        except Exception as e :
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-
-    @staticmethod
-    def change_case(data,caseid):
-        try:
-            db.session.query(Case).filter(Case.case_id == caseid).update(data)
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-    @staticmethod
-    def get_case_byid(caseid):
-        try:
-            result = db.session.query(Case).filter(Case.case_id==caseid).first()
-            return result.serialize()
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
 
 
     def serialize(self):

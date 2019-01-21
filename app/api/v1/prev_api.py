@@ -15,12 +15,12 @@ from flask import jsonify, request
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
-from app.bussinse.PrevBussinse import PrevBussinse
+from app.bussinse.PrevBiz import PrevBiz as PrevBussinse
 
 @api_v1.route('/prev/<int:case_id>', methods=['GET'])
 def get_prev_bycaseid(case_id):
-    mock = PrevBussinse()
-    result = mock.get_bussinse_data(case_id)
+    prev = PrevBussinse()
+    result = prev.get_bussinse_data(case_id)
     return jsonify(CommonResult.fill_result(result))
 
 
@@ -39,3 +39,9 @@ def add_prev():
     result = prev.add_prev(request)
     return jsonify(CommonResult.fill_result(result))
 
+
+@api_v1.route('/init/<int:prev_id>' , methods=['DELETE'])
+def delete_prev(prev_id):
+    prev = PrevBussinse()
+    result = prev.delete_prev(prev_id)
+    return jsonify(CommonResult.fill_result(result))

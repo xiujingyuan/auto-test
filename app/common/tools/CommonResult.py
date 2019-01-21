@@ -12,7 +12,7 @@ class CommonResult(object):
         if message is None:
             message ="success"
         if code is None:
-            code=1
+            code=0
         res = {
             "code":code,
             "msg" : message,

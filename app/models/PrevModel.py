@@ -40,49 +40,5 @@ class PrevModel(db.Model,Serializer):
     def __repr__(self):
         return '<finlab_cases %r>' % self.case_id
 
-    @staticmethod
-    def check_exists_bycaseid(caseid):
-        count = db.session.query(PrevModel).filter(PrevModel.prev_case_id == caseid).count()
-        if count>0:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def check_exists_byprevid(prev_id):
-        count = db.session.query(PrevModel).filter(PrevModel.prev_id == prev_id).count()
-        if count==1:
-            return True
-        else:
-            return False
-
-    @staticmethod
-    def get_prev_byid(caseid):
-        result = db.session.query(PrevModel).filter(PrevModel.prev_case_id==caseid).all()
-        return Serializer.serialize_list(result)
-
-
-    @staticmethod
-    def add_prev(prev):
-        try:
-            db.session.add(prev)
-            db.session.flush()
-            id = prev.prev_id
-            return id
-        except Exception as e :
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-
-    @staticmethod
-    def change_prev(data,prev_id):
-        try:
-            db.session.query(PrevModel).filter(PrevModel.prev_id == prev_id).update(data)
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
     def serialize(self):
         return Serializer.serialize(self)

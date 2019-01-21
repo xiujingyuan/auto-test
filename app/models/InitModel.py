@@ -35,64 +35,7 @@ class InitModel(db.Model,Serializer):
     def __repr__(self):
         return '<finlab_cases %r>' % self.case_id
 
-    @staticmethod
-    def check_exists_byinitid(initid):
-        try:
-            count = db.session.query(InitModel).filter(InitModel.case_init_id == initid).count()
-            if count==1:
-                return True
-            else:
-                return False
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
 
-
-    @staticmethod
-    def check_exists_bycaseid(caseid):
-        try:
-            count = db.session.query(InitModel).filter(InitModel.case_init_case_id == caseid).count()
-            if count>0:
-                return True
-            else:
-                return False
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-    @staticmethod
-    def get_init_byid(caseid):
-        try:
-            result = db.session.query(InitModel).filter(InitModel.case_init_case_id==caseid).all()
-            return Serializer.serialize_list(result)
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-    @staticmethod
-    def add_init(init):
-        try:
-            db.session.add(init)
-            db.session.flush()
-            id = init.case_init_id
-            return id
-        except Exception as e :
-            db.session.rollback()
-        finally:
-            db.session.commit()
-
-
-    @staticmethod
-    def change_init(data,init_id):
-        try:
-            db.session.query(InitModel).filter(InitModel.case_init_id == init_id).update(data)
-        except Exception as e:
-            db.session.rollback()
-        finally:
-            db.session.commit()
 
 
     def serialize(self):

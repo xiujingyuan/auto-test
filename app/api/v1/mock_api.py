@@ -15,7 +15,7 @@ from flask import jsonify, request
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
-from app.bussinse.MockBussinse import MockBussinse
+from app.bussinse.MockBiz import MockBiz as MockBussinse
 
 
 @api_v1.route('/mock/<int:case_id>', methods=['GET'])
@@ -38,4 +38,11 @@ def change_mock(mock_id):
 def add_mock():
     mock = MockBussinse()
     result = mock.add_mock(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/init/<int:mock_id>' , methods=['DELETE'])
+def delete_mock(mock_id):
+    mock = MockBussinse()
+    result = mock.delete_mock(mock_id)
     return jsonify(CommonResult.fill_result(result))
