@@ -18,6 +18,8 @@ from app.api.v1 import api_v1
 from app.models.CaseModel import Case
 from app.bussinse.CaseBiz import CaseBiz as CaseBussinse
 
+
+
 @api_v1.route('/case/<int:caseid>', methods=['PUT','GET'])
 def get_case_data_bycaseid(caseid):
     cs = CaseBussinse()

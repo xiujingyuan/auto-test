@@ -20,3 +20,13 @@ config = {
 }
 
 
+variable_database_list=[
+    "gbiz1",
+    "gbiz2",
+    "gbiz1",
+    "gbiz2",
+    "gbiz1",
+    "gbiz2",
+    "gbiz1",
+    "gbiz2"
+]
