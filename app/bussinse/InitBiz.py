@@ -48,7 +48,7 @@ class InitBiz(UnSerializer):
 
     def delete_init(self,init_id):
         try:
-            init = db.session.query(InitModel).filter(InitModel == init_id).first()
+            init = db.session.query(InitModel).filter(InitModel.case_init_id == init_id).first()
             db.session.delete(init)
         except Exception as e:
             pass

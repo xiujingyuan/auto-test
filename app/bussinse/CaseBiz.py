@@ -108,41 +108,46 @@ class CaseBiz(UnSerializer):
         params =[]
         page_index =1
         page_size=10
-        print(type(input_params))
-        if 'case_from_system' in input_params.keys():
-            value = input_params['case_from_system']
-            if value is not None and value!='':
-                params.append(Case.case_from_system==value)
-        if 'case_description' in input_params.keys():
-            value = input_params['case_description']
-            if value is not None and value!='':
-                params.append(Case.case_description==value)
-        if 'case_name' in input_params.keys():
-            value = input_params['case_name']
-            if value is not None and value!='':
-                params.append(Case.case_name==value)
-        if 'case_is_exec' in input_params.keys():
-            value = input_params['case_is_exec']
-            if value is not None and value!='':
-                params.append(Case.case_is_exec==value)
-        if 'case_executor' in input_params.keys():
-            value = input_params['case_executor']
-            if value is not None and value!='':
-                params.append(Case.case_executor==value)
-        if 'page_index' in input_params.keys():
-            page_index = input_params['page_index']
-        if 'page_size' in input_params.keys():
-            page_size = input_params['page_size']
-        for p in params:
-            print(p)
-        #result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
-        result = Case.filter(*params).query.paginate(page=page_index, per_page=page_size, error_out=False).items
+        if input_params is not None:
+            print(type(input_params))
+            if 'case_from_system' in input_params.keys():
+                value = input_params['case_from_system']
+                if value is not None and value!='':
+                    params.append(Case.case_from_system==value)
+            if 'case_description' in input_params.keys():
+                value = input_params['case_description']
+                if value is not None and value!='':
+                    params.append(Case.case_description==value)
+            if 'case_name' in input_params.keys():
+                value = input_params['case_name']
+                if value is not None and value!='':
+                    params.append(Case.case_name==value)
+            if 'case_is_exec' in input_params.keys():
+                value = input_params['case_is_exec']
+                if value is not None and value!='':
+                    params.append(Case.case_is_exec==value)
+            if 'case_executor' in input_params.keys():
+                value = input_params['case_executor']
+                if value is not None and value!='':
+                    params.append(Case.case_executor==value)
+            if 'page_index' in input_params.keys():
+                page_index = input_params['page_index']
+            if 'page_size' in input_params.keys():
+                page_size = input_params['page_size']
+            for p in params:
+                print(p)
+        #result_paginate = Case.filter(*params).query.paginate(page=page_index, per_page=page_size, error_out=False)
+        result_paginate = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False)
+        result = result_paginate.items
+        count = result_paginate.total
+
+
 
         cases = Case.serialize_list(result)
         data = {}
         data['page_index'] = page_index
         data['cases'] = cases
-        data['page_size'] = len(cases)
+        data['page_size'] =count
         return data
 
 
