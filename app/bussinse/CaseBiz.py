@@ -136,8 +136,8 @@ class CaseBiz(UnSerializer):
                 page_size = input_params['page_size']
             for p in params:
                 print(p)
-        #result_paginate = Case.filter(*params).query.paginate(page=page_index, per_page=page_size, error_out=False)
-        result_paginate = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False)
+        # result_paginate = Case.filter(*params).query.paginate(page=page_index, per_page=page_size, error_out=False)
+        result_paginate = db.session.query(Case).filter(*params).all().paginate(page=page_index, per_page=page_size,error_out=False)
         result = result_paginate.items
         count = result_paginate.total
 
