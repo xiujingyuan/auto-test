@@ -18,7 +18,7 @@ class PrevModel(db.Model,Serializer):
     prev_name=db.Column(db.String(255))
     prev_description=db.Column(db.String(255))
     prev_flag=db.Column(db.String(255))
-    prev_inner_flag=db.Column(db.String(255))
+    prev_setup_type=db.Column(db.String(255))
     prev_api_address=db.Column(db.String(255))
     prev_api_method=db.Column(db.String(255))
     prev_api_params=db.Column(db.Text)
