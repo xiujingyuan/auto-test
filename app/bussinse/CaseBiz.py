@@ -121,7 +121,7 @@ class CaseBiz(UnSerializer):
             if 'case_name' in input_params.keys():
                 value = input_params['case_name']
                 if value is not None and value!='':
-                    params.append(Case.case_name==value)
+                    params.append(Case.case_name.like('%'+value+'%'))
             if 'case_is_exec' in input_params.keys():
                 value = input_params['case_is_exec']
                 if value is not None and value!='':
@@ -130,6 +130,16 @@ class CaseBiz(UnSerializer):
                 value = input_params['case_executor']
                 if value is not None and value!='':
                     params.append(Case.case_executor==value)
+
+            if 'case_exec_group' in input_params.keys():
+                value = input_params['case_exec_group']
+                if value is not None and value!='':
+                    params.append(Case.case_exec_group==value)
+
+            if 'case_exec_group_priority' in input_params.keys():
+                value = input_params['case_exec_group_priority']
+                if value is not None and value!='':
+                    params.append(Case.case_exec_group_priority==value)
             if 'page_index' in input_params.keys():
                 page_index = input_params['page_index']
             if 'page_size' in input_params.keys():
