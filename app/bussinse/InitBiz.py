@@ -23,6 +23,11 @@ class InitBiz(UnSerializer):
             return None
         return self.get_init_byid(case_id)
 
+    def get_bussinse_data_by_initid(self,init_id):
+        if (self.check_exists_byinitid(init_id)==False):
+            return None
+        return self.get_init_byinitid(init_id)
+
     def add_init(self,request):
         try:
             initInfo = request.json
@@ -86,6 +91,15 @@ class InitBiz(UnSerializer):
     def get_init_byid(self,caseid):
         try:
             result = db.session.query(InitModel).filter(InitModel.case_init_case_id==caseid).all()
+            return Serializer.serialize_list(result)
+        except Exception as e:
+            db.session.rollback()
+        finally:
+            db.session.commit()
+
+    def get_init_byinitid(self,init_id):
+        try:
+            result = db.session.query(InitModel).filter(InitModel.case_init_id==init_id).all()
             return Serializer.serialize_list(result)
         except Exception as e:
             db.session.rollback()

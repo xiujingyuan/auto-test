@@ -24,6 +24,12 @@ class PrevBiz(UnSerializer):
             return None
         return self.get_prev_byid(case_id)
 
+    def get_bussinse_data_byprevid(self,prev_id):
+
+        if (self.check_exists_byprevid(prev_id)==False):
+            return None
+        return self.get_prev_byprevid(prev_id)
+
     def add_prev(self,request):
         try:
             prevInfo = request.json
@@ -74,4 +80,8 @@ class PrevBiz(UnSerializer):
 
     def get_prev_byid(self,caseid):
         result = db.session.query(PrevModel).filter(PrevModel.prev_case_id==caseid).all()
+        return Serializer.serialize_list(result)
+
+    def get_prev_byprevid(self,previd):
+        result = db.session.query(PrevModel).filter(PrevModel.prev_id==previd).all()
         return Serializer.serialize_list(result)
