@@ -26,6 +26,14 @@ def get_init_bycaseid(case_id):
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/init/id/<int:inid_id>', methods=['GET'])
+def get_init_byinitid(inid_id):
+
+    init = InitBussinse()
+    result = init.get_bussinse_data_by_initid(inid_id)
+    return jsonify(CommonResult.fill_result(result))
+
+
 @api_v1.route('/init/<int:init_id>', methods=['PUT'])
 def change_init(init_id):
     init = InitBussinse()

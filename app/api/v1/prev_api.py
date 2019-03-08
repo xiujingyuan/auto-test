@@ -24,6 +24,13 @@ def get_prev_bycaseid(case_id):
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/prev/id/<int:prev_id>', methods=['GET'])
+def get_prev_byprevid(prev_id):
+    prev = PrevBussinse()
+    result = prev.get_bussinse_data_byprevid(prev_id)
+    return jsonify(CommonResult.fill_result(result))
+
+
 @api_v1.route('/prev/<int:prev_id>', methods=['PUT'])
 def change_prev(prev_id):
     prev = PrevBussinse()
