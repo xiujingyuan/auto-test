@@ -74,12 +74,15 @@ class ParamsBiz(UnSerializer):
             page_size = input_params['page_size']
         for p in params:
             print(p)
-        result = db.session.query(ParamsModel).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
+        result_paginate = db.session.query(ParamsModel).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False)
+        result = result_paginate.items
+        total = result_paginate.total
         params =  ParamsModel.serialize_list(result)
         data={}
         data['page_index']=page_index
         data['params']=params
         data['page_size']=len(params)
+        data['total']=total
         return data
 
 
