@@ -31,12 +31,10 @@ def run_special_case():
         exec_case_array = case_biz.get_exec_caseid(case_ids)
         exec_case_array_str = ','.join(str(case) for case in exec_case_array)
         server = jenkins.Jenkins(jenkins_url,user_id,user_pwd)
-
-        #build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email})
-        return jsonify(CommonResult.fill_result(0,2,"测试"))
+        build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email})
+        return jsonify(CommonResult.fill_result(build_number))
     except Exception as e:
-        return jsonify(CommonResult.fill_result(0,1,str(e)))
-
+        return jsonify(CommonResult.fill_result(build_number,1,str(e)))
 
 
 
