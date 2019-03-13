@@ -23,7 +23,6 @@ def run_special_case():
         user_id = "zhangtingli"
         user_pwd = "123456"
         case_ids = request.json['case_ids']
-        confirm_cases=[]
         email = request.json['email']
         print(case_ids)
         for case in case_ids:
@@ -36,6 +35,8 @@ def run_special_case():
         build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email})
         return jsonify(CommonResult.fill_result(build_number))
     except Exception as e:
+        return jsonify(CommonResult.fill_result(build_number,1,"jenkins 构建失败"))
+    finally:
         return jsonify(CommonResult.fill_result(build_number,1,"jenkins 构建失败"))
 
 
