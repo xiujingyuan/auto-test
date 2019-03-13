@@ -36,7 +36,7 @@ def run_special_case():
         build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email})
         return jsonify(CommonResult.fill_result(build_number))
     except Exception as e:
-        jsonify(CommonResult.fill_result(build_number,1,"jenkins 构建失败"))
+        return jsonify(CommonResult.fill_result(build_number,1,"jenkins 构建失败"))
 
 
 
