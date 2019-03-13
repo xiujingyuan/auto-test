@@ -60,8 +60,17 @@ class MockBiz(UnSerializer):
 
     def delete_mock(self,mock_id):
         try:
-            mock = db.session.query(MockModel).filter(MockModel == mock_id).first()
+            mock = db.session.query(MockModel).filter(MockModel.mock_id == mock_id).first()
             db.session.delete(mock)
+        except Exception as e:
+            pass
+        finally:
+            db.session.commit()
+
+    def delete_mock_bycaseid(self,case_id):
+        try:
+            mocks = db.session.query(MockModel).filter(MockModel.mock_case_id == case_id).delete()
+            #db.session.delete(mocks)
         except Exception as e:
             pass
         finally:

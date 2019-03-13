@@ -14,9 +14,11 @@ from app.models.InitModel import InitModel
 from app.models.MockModel import MockModel
 from app.models.PrevModel import PrevModel
 from app.common.tools.UnSerializer import UnSerializer
+
+
 class CaseBiz(UnSerializer):
 
-    def add_case(self,request):
+    def  add_case(self,request):
         request = request.json['case']
         basicInfo = request['basicInfo']
         prevInfo =request['prevInfo']
@@ -32,8 +34,10 @@ class CaseBiz(UnSerializer):
             db.session.flush()
             case_id = case.case_id
             if  prevInfo is not None and len(prevInfo)>0:
+                print(request)
                 for single in prevInfo:
                     prev = PrevModel()
+                    print(single)
                     prev.__dict__.update(UnSerializer.un_serialize(single))
                     prev.prev_case_id = case_id
                     prev.prev_id =None
@@ -57,6 +61,7 @@ class CaseBiz(UnSerializer):
             return case_id
         except Exception as e:
             print(e)
+            print("fdsafdsafdsa")
             case_id =0
             db.session.rollback()
         finally:
@@ -67,10 +72,12 @@ class CaseBiz(UnSerializer):
         res ={}
         if (self.check_exists_bycaseid(case_id)==False):
             return None
-        res['basicInfo'] = self.get_case_byid(case_id);
-        res['prevInfo'] = PrevBiz().get_prev_byid(case_id)
-        res['mockInfo'] = MockBiz().get_mock_byid(case_id)
-        res['initInfo'] = InitBiz().get_init_byid(case_id)
+        basicInfo = self.get_case_byid(case_id);
+        if basicInfo is not None:
+            res['basicInfo'] = basicInfo
+            res['prevInfo'] = PrevBiz().get_prev_byid(case_id)
+            res['mockInfo'] = MockBiz().get_mock_byid(case_id)
+            res['initInfo'] = InitBiz().get_init_byid(case_id)
         return res
 
     def change_case(self,data,case_id):
@@ -81,11 +88,31 @@ class CaseBiz(UnSerializer):
         finally:
             db.session.commit()
 
+    def delete_case_bycaseid(self,case_id):
+        try:
+
+            result = db.session.query(Case).filter(Case.case_id == case_id).first()
+
+            result.case_is_exec = -1
+            print(result.case_is_exec)
+            #db.session.query(Case).filter(Case.case_id == case_id).update()
+
+            # PrevBiz().delete_prev_bycaseid(case_id)
+            # InitBiz().delete_init_bycaseid(case_id)
+            # MockBiz().delete_mock_bycaseid(case_id)
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+        finally:
+            db.session.commit()
+            return 0
+
     def get_case_byid(self,caseid):
         try:
-            result = db.session.query(Case).filter(Case.case_id==caseid).first()
+            result = db.session.query(Case).filter(Case.case_id==caseid).filter(Case.case_is_exec.in_([0,1])).first()
             return result.serialize()
         except Exception as e:
+            print(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -93,11 +120,12 @@ class CaseBiz(UnSerializer):
     def check_exists_bycaseid(self,caseid):
         try:
             result = False
-            count = db.session.query(Case).filter(Case.case_id == caseid).count()
+            count = db.session.query(Case).filter(Case.case_id == caseid).filter(Case.case_is_exec.in_([0,1])).count()
             if count==1:
                 result = True
             return result
         except Exception as e:
+            print(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -126,10 +154,19 @@ class CaseBiz(UnSerializer):
                 value = input_params['case_is_exec']
                 if value is not None and value!='':
                     params.append(Case.case_is_exec==value)
+                else:
+                    params.append(Case.case_is_exec.in_([0,1]))
+            else:
+                params.append(Case.case_is_exec.in_([0,1]))
+
             if 'case_executor' in input_params.keys():
                 value = input_params['case_executor']
                 if value is not None and value!='':
                     params.append(Case.case_executor==value)
+            if 'case_id' in input_params.keys():
+                value = input_params['case_id']
+                if value is not None and value!='':
+                    params.append(Case.case_id==value)
 
             if 'case_exec_group' in input_params.keys():
                 value = input_params['case_exec_group']
@@ -158,6 +195,39 @@ class CaseBiz(UnSerializer):
         data['total'] = count
         return data
 
+
+    def get_exec_caseid(self,caseids):
+        try:
+            result_case_id =[]
+
+            results = db.session.query(Case).filter(Case.case_id.in_(caseids)).filter(Case.case_is_exec.in_([1])).all()
+
+            for result in results:
+                case_exec_group = result.case_exec_group
+                if case_exec_group is None or case_exec_group=="":
+                    result_case_id.append(result.case_id)
+                else:
+                    main_case = db.session.query(Case).filter(Case.case_exec_group==case_exec_group).filter(Case.case_exec_group_priority=="main").first()
+                    result_case_id.append(main_case.case_id)
+            return result_case_id
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+        finally:
+            db.session.commit()
+
+    def check_execstatus_bycaseid(self,caseid):
+        try:
+            result = False
+            count = db.session.query(Case).filter(Case.case_id == caseid).filter(Case.case_is_exec.in_([1])).count()
+            if count==1:
+                result = True
+            return result
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+        finally:
+            db.session.commit()
 
 
 

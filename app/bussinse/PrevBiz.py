@@ -38,7 +38,7 @@ class PrevBiz(UnSerializer):
             prev.prev_id=None
             db.session.add(prev)
             db.session.flush()
-            return prev.prev_id
+            return self.get_prev_byprevid(prev.prev_id)
         except Exception as e :
             print(e)
             db.session.rollback()
@@ -51,7 +51,9 @@ class PrevBiz(UnSerializer):
         try:
             db.session.query(PrevModel).filter(PrevModel.prev_id == prev_id).update(data)
         except Exception as e:
+            print(e)
             db.session.rollback()
+            return "1"
         finally:
             db.session.commit()
 
@@ -63,6 +65,17 @@ class PrevBiz(UnSerializer):
             pass
         finally:
             db.session.commit()
+
+    def delete_prev_bycaseid(self,case_id):
+        try:
+            prevs = db.session.query(PrevModel).filter(PrevModel.prev_case_id == case_id).delete()
+            #db.session.delete(prevs)
+        except Exception as e:
+            print(e)
+            pass
+        finally:
+            db.session.commit()
+
 
     def check_exists_bycaseid(self,caseid):
         count = db.session.query(PrevModel).filter(PrevModel.prev_case_id == caseid).count()

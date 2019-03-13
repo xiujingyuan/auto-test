@@ -20,15 +20,18 @@ from app.bussinse.CaseBiz import CaseBiz as CaseBussinse
 
 
 
-@api_v1.route('/case/<int:caseid>', methods=['PUT','GET'])
+@api_v1.route('/case/<int:caseid>', methods=['PUT','GET','DELETE'])
 def get_case_data_bycaseid(caseid):
     cs = CaseBussinse()
     if request.method =="PUT":
         if(Case.check_exists_bycaseid(caseid)):
             basicInfo = request.json['basicInfo']
             result = cs.change_case(basicInfo,caseid)
-    else:
+    elif request.method=="GET":
         result = cs.get_bussinse_data(caseid)
+    elif request.method=="DELETE":
+        result = cs.delete_case_bycaseid(caseid)
+
     return jsonify(CommonResult.fill_result(result))
 
 

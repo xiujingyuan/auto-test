@@ -38,7 +38,7 @@ def change_prev(prev_id):
         if(prev.check_exists_byprevid(prev_id)):
             prevInfo = request.json
             result = prev.change_prev(prevInfo,prev_id)
-    return jsonify(CommonResult.fill_result(result))
+    return jsonify(CommonResult.fill_result(None,result))
 
 @api_v1.route('/prev' , methods=['POST'])
 def add_prev():
@@ -47,7 +47,7 @@ def add_prev():
     return jsonify(CommonResult.fill_result(result))
 
 
-@api_v1.route('/init/<int:prev_id>' , methods=['DELETE'])
+@api_v1.route('/prev/<int:prev_id>' , methods=['DELETE'])
 def delete_prev(prev_id):
     prev = PrevBussinse()
     result = prev.delete_prev(prev_id)

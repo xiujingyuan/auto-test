@@ -37,7 +37,7 @@ class InitBiz(UnSerializer):
             db.session.add(init)
             db.session.flush()
             id = init.case_init_id
-            return id
+            return self.get_init_byinitid(id)
         except Exception as e :
             db.session.rollback()
         finally:
@@ -55,6 +55,15 @@ class InitBiz(UnSerializer):
         try:
             init = db.session.query(InitModel).filter(InitModel.case_init_id == init_id).first()
             db.session.delete(init)
+        except Exception as e:
+            pass
+        finally:
+            db.session.commit()
+
+    def delete_init_bycaseid(self,case_id):
+        try:
+            init = db.session.query(InitModel).filter(InitModel.case_init_case_id == case_id).delete()
+            #db.session.delete(init)
         except Exception as e:
             pass
         finally:
