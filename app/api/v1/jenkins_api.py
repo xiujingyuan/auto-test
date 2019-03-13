@@ -30,14 +30,14 @@ def run_special_case():
                 return jsonify(CommonResult.fill_result(case,1,"case_id:{0} 执行状态不正确不能被执行".format(case)))
         exec_case_array = case_biz.get_exec_caseid(case_ids)
         exec_case_array_str = ','.join(str(case) for case in exec_case_array)
-        server = jenkins.Jenkins(jenkins_url,user_id,user_pwd)
+        #server = jenkins.Jenkins(jenkins_url,user_id,user_pwd)
 
-        build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email})
-        return jsonify(CommonResult.fill_result(build_number))
+        #build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email})
+        return jsonify(CommonResult.fill_result(0))
     except Exception as e:
-        return jsonify(CommonResult.fill_result(build_number,1,"jenkins 构建失败"))
+        return jsonify(CommonResult.fill_result(0,1,"jenkins 构建失败"))
     finally:
-        return jsonify(CommonResult.fill_result(build_number,1,"jenkins 构建失败"))
+        return jsonify(CommonResult.fill_result(0,1,"jenkins 构建失败"))
 
 
 
