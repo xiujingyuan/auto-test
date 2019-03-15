@@ -208,7 +208,8 @@ class CaseBiz(UnSerializer):
                     result_case_id.append(result.case_id)
                 else:
                     main_case = db.session.query(Case).filter(Case.case_exec_group==case_exec_group).filter(Case.case_exec_group_priority=="main").first()
-                    result_case_id.append(main_case.case_id)
+                    if main_case is not None:
+                        result_case_id.append(main_case.case_id)
             return result_case_id
         except Exception as e:
             print(e)
