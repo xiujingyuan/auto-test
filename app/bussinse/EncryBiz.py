@@ -40,7 +40,7 @@ class EncryBiz(UnSerializer):
             result = req.json()
             if result['code']==0:
                 return result[0]['hash']
-        return "test"
+        return req.json()
 
 
     def reuqest_de_encrp(self,data):
