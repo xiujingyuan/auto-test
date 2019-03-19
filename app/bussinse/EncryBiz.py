@@ -36,10 +36,9 @@ class EncryBiz(UnSerializer):
         url = Config.ENCRY_URL
         headers = {'content-type': 'application/json'}
         req = requests.post(url, data=json.dumps(data), headers=headers)
-        if req.status_code ==200:
-            result = req.json()
-            if result['code']==0:
-                return result[0]['hash']
+        result = req.json()
+        if result['code']==0:
+            return result[0]['hash']
         return req.json()
 
 
@@ -47,10 +46,9 @@ class EncryBiz(UnSerializer):
         deencry_url = Config.DEENCRY_URL
         headers = {'content-type': 'application/json'}
         req = requests.post(deencry_url, data=json.dumps(data), headers=headers)
-        if req.status_code ==200:
-            result = req.json()
-            if result['code']==0:
-                return result[0]['hash']
+        result = req.json()
+        if result['code']==0:
+            return result[0]['hash']
         return "test"
 
 
