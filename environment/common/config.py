@@ -33,7 +33,8 @@ class Config:
     JC_MOCK_FOLLOWERS_PER_PAGE = 50
     JC_MOCK_COMMENTS_PER_PAGE = 30
     JC_MOCK_SLOW_DB_QUERY_TIME = 0.5
-
+    ENCRY_URL ='http://test-encryptor.qianshengqian.com/encrypt/'
+    DEENCRY_URL = 'http://test-encryptor.qianshengqian.com/decrypt/plain/'
     @staticmethod
     def init_app(app):
         pass
