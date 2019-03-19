@@ -38,7 +38,7 @@ class EncryBiz(UnSerializer):
         req = requests.post(url, data=json.dumps(data), headers=headers)
         result = req.json()
         if result['code']==0:
-            return result[0]['hash']
+            return result['data'][0]['hash']
         return req.json()
 
 
@@ -48,7 +48,7 @@ class EncryBiz(UnSerializer):
         req = requests.post(deencry_url, data=json.dumps(data), headers=headers)
         result = req.json()
         if result['code']==0:
-            return result[0]['hash']
+            return result['data'][0]['hash']
         return "test"
 
 
