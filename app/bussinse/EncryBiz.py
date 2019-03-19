@@ -91,7 +91,7 @@ class EncryBiz(UnSerializer):
         result={}
         request_dict = request.json
         for key ,value in request_dict.items():
-            data = self.generate_data_deencry(key,value)
+            data = self.generate_data_deencry(value)
             encry_data = self.reuqest_de_encrp(data)
             encry_key = key + '_de_encry'
             result[encry_key] = encry_data
