@@ -48,7 +48,7 @@ class EncryBiz(UnSerializer):
         req = requests.post(deencry_url, data=json.dumps(data), headers=headers)
         result = req.json()
         if result['code']==0:
-            return result['data'][0]['hash']
+            return result['data']
         return "test"
 
 
@@ -93,7 +93,6 @@ class EncryBiz(UnSerializer):
         for key ,value in request_dict.items():
             data = self.generate_data_deencry(key,value)
             encry_data = self.reuqest_de_encrp(data)
-            result[key] = value
             encry_key = key + '_de_encry'
             result[encry_key] = encry_data
 
