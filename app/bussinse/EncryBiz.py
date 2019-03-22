@@ -24,9 +24,9 @@ class EncryBiz(UnSerializer):
         for key ,value in request_dict.items():
             data = self.generate_data(key,value)
             encry_data = self.reuqest_encrp(data)
-            result[key] = value
-            encry_key = key + '_encry'
-            result[encry_key] = encry_data
+            # result[key] = value
+            # encry_key = key + '_encry'
+            result[key] = encry_data
 
         return result
 
@@ -43,7 +43,7 @@ class EncryBiz(UnSerializer):
 
 
     def reuqest_de_encrp(self,data):
-        deencry_url = Config.DEENCRY_URL
+        deencry_url = Config.DEERY_URL
         headers = {'content-type': 'application/json'}
         req = requests.post(deencry_url, data=json.dumps(data), headers=headers)
         result = req.json()
@@ -93,8 +93,8 @@ class EncryBiz(UnSerializer):
         for key ,value in request_dict.items():
             data = self.generate_data_deencry(value)
             encry_data = self.reuqest_de_encrp(data)
-            encry_key = key + '_de_encry'
-            result[encry_key] = encry_data
+            # encry_key = key + '_de_encry'
+            result[key] = encry_data
 
         return result
 
