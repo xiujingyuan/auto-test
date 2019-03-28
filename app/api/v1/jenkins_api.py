@@ -37,7 +37,7 @@ def run_special_case():
         return jsonify(CommonResult.fill_result(0,1,str(e)))
 
 
-@api_v1.route("/run/case/<int:case_id>", methods=['GET'])
+@api_v1.route("/run/case/<str:case_id>", methods=['GET'])
 def run_case_bycaseid(case_id):
     try:
         case_biz = CaseBiz()
