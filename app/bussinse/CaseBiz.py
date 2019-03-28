@@ -7,6 +7,7 @@
 
 from app.models.CaseModel import Case
 from app import db
+from sqlalchemy import or_
 from app.bussinse.PrevBiz import PrevBiz
 from app.bussinse.MockBiz import MockBiz
 from app.bussinse.InitBiz import InitBiz
@@ -14,6 +15,7 @@ from app.models.InitModel import InitModel
 from app.models.MockModel import MockModel
 from app.models.PrevModel import PrevModel
 from app.common.tools.UnSerializer import UnSerializer
+
 
 
 class CaseBiz(UnSerializer):
@@ -84,6 +86,7 @@ class CaseBiz(UnSerializer):
         try:
             db.session.query(Case).filter(Case.case_id == case_id).update(data)
         except Exception as e:
+            print(str(e))
             db.session.rollback()
         finally:
             db.session.commit()
@@ -173,10 +176,19 @@ class CaseBiz(UnSerializer):
                 if value is not None and value!='':
                     params.append(Case.case_exec_group==value)
 
+            if 'case_exec_priority' in input_params.keys():
+                value = input_params['case_exec_priority']
+                if value is not None and value!='':
+                    params.append(Case.case_exec_priority==value)
+
             if 'case_exec_group_priority' in input_params.keys():
                 value = input_params['case_exec_group_priority']
                 if value is not None and value!='':
                     params.append(Case.case_exec_group_priority==value)
+            else:
+                params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
+
+
             if 'page_index' in input_params.keys():
                 page_index = input_params['page_index']
             if 'page_size' in input_params.keys():
@@ -184,7 +196,8 @@ class CaseBiz(UnSerializer):
             for p in params:
                 print(p)
         # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
-        result_paginate = Case.query.filter(*params).paginate(page=page_index, per_page=page_size, error_out=False)
+        query = Case.query.filter(*params)
+        result_paginate=query.order_by(Case.case_exec_group).order_by(Case.case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
         result = result_paginate.items
         count = result_paginate.total
         cases = Case.serialize_list(result)
@@ -194,7 +207,6 @@ class CaseBiz(UnSerializer):
         data['page_size'] = len(cases)
         data['total'] = count
         return data
-
 
     def get_exec_caseid(self,caseids):
         try:

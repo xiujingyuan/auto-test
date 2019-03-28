@@ -37,5 +37,25 @@ def run_special_case():
         return jsonify(CommonResult.fill_result(0,1,str(e)))
 
 
+@api_v1.route("/run/case/<int:case_id>", methods=['GET'])
+def run_case_bycaseid(case_id):
+    try:
+        case_biz = CaseBiz()
+        jenkins_url = "https://jenkins-test.kuainiujinke.com/jenkins/"
+        user_id = "zhangtingli"
+        user_pwd = "123456"
+        case_ids = []
+        case_ids.append(case_id)
+        email = "zhangtingli@kuainiugroup.com"
+        print(case_ids)
+        for case in case_ids:
+            if case_biz.check_execstatus_bycaseid(case)==False:
+                return jsonify(CommonResult.fill_result(case,1,"case_id:{0} 执行状态不正确不能被执行".format(case)))
+        server = jenkins.Jenkins(jenkins_url,user_id,user_pwd)
+        build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":case_ids,"email_address":email})
+        return jsonify(CommonResult.fill_result(build_number))
+    except Exception as e:
+        return jsonify(CommonResult.fill_result(0,1,str(e)))
+
 
 

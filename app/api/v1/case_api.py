@@ -15,17 +15,13 @@ from flask import jsonify, request
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
-from app.models.CaseModel import Case
 from app.bussinse.CaseBiz import CaseBiz as CaseBussinse
-
-
 
 @api_v1.route('/case/<int:caseid>', methods=['PUT','GET','DELETE'])
 def get_case_data_bycaseid(caseid):
     cs = CaseBussinse()
     if request.method =="PUT":
         if(cs.check_exists_bycaseid(caseid)):
-
             basicInfo = request.json['case']['basicInfo']
             result = cs.change_case(basicInfo,caseid)
     elif request.method=="GET":
@@ -39,7 +35,6 @@ def get_case_data_bycaseid(caseid):
 
 @api_v1.route('/case' , methods=['POST'])
 def add_case():
-
     cs = CaseBussinse()
     result = cs.add_case(request)
     if result ==0:
@@ -52,5 +47,3 @@ def search_case():
     cs = CaseBussinse()
     result = cs.search_case(request)
     return jsonify(CommonResult.fill_result(result))
-
-

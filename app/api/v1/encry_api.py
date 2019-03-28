@@ -20,4 +20,5 @@ def encry_data():
 @api_v1.route('/decrypt-data', methods=['POST'])
 def deencry_data():
     result = EncryBiz().de_encry_data(request)
+
     return jsonify(CommonResult.fill_result(result))
