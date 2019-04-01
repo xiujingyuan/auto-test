@@ -14,6 +14,7 @@ from app import db
 from app.models.PrevModel import PrevModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
+from flask import current_app
 
 class PrevBiz(UnSerializer):
 
@@ -40,7 +41,7 @@ class PrevBiz(UnSerializer):
             db.session.flush()
             return self.get_prev_byprevid(prev.prev_id)
         except Exception as e :
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -51,7 +52,7 @@ class PrevBiz(UnSerializer):
         try:
             db.session.query(PrevModel).filter(PrevModel.prev_id == prev_id).update(data)
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
             return "1"
         finally:
@@ -62,7 +63,7 @@ class PrevBiz(UnSerializer):
             prev = db.session.query(PrevModel).filter(PrevModel.prev_id == prev_id).first()
             db.session.delete(prev)
         except Exception as e:
-            pass
+            current_app.logger.exception(e)
         finally:
             db.session.commit()
 
@@ -71,7 +72,7 @@ class PrevBiz(UnSerializer):
             prevs = db.session.query(PrevModel).filter(PrevModel.prev_case_id == case_id).delete()
             #db.session.delete(prevs)
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             pass
         finally:
             db.session.commit()

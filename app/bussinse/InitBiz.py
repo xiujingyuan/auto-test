@@ -14,6 +14,7 @@ from app import db
 from app.models.InitModel import InitModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
+from flask import current_app
 
 class InitBiz(UnSerializer):
 
@@ -39,6 +40,7 @@ class InitBiz(UnSerializer):
             id = init.case_init_id
             return self.get_init_byinitid(id)
         except Exception as e :
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -47,6 +49,7 @@ class InitBiz(UnSerializer):
         try:
             db.session.query(InitModel).filter(InitModel.case_init_id == init_id).update(data)
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -56,7 +59,7 @@ class InitBiz(UnSerializer):
             init = db.session.query(InitModel).filter(InitModel.case_init_id == init_id).first()
             db.session.delete(init)
         except Exception as e:
-            pass
+            current_app.logger.exception(e)
         finally:
             db.session.commit()
 
@@ -65,7 +68,7 @@ class InitBiz(UnSerializer):
             init = db.session.query(InitModel).filter(InitModel.case_init_case_id == case_id).delete()
             #db.session.delete(init)
         except Exception as e:
-            pass
+            current_app.logger.exception(e)
         finally:
             db.session.commit()
 
@@ -80,6 +83,7 @@ class InitBiz(UnSerializer):
             else:
                 return False
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -93,6 +97,7 @@ class InitBiz(UnSerializer):
             else:
                 return False
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -102,6 +107,7 @@ class InitBiz(UnSerializer):
             result = db.session.query(InitModel).filter(InitModel.case_init_case_id==caseid).all()
             return Serializer.serialize_list(result)
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -111,6 +117,7 @@ class InitBiz(UnSerializer):
             result = db.session.query(InitModel).filter(InitModel.case_init_id==init_id).all()
             return Serializer.serialize_list(result)
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()

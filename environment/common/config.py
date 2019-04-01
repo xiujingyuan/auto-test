@@ -9,7 +9,7 @@
  @email:
 """
 
-import os
+import os,logging
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -25,6 +25,8 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USERNAME = "625046831@qq.com"
     MAIL_PASSWORD = "vdpritgxwgcnbajd"
+    ENCRY_URL ='http://test-encryptor.qianshengqian.com/encrypt/'
+    DEENCRY_URL = 'http://test-encryptor.qianshengqian.com/decrypt/plain/'
 
     JC_MOCK_MAIL_SUBJECT_PREFIX = '[Jc-Mock]'
     JC_MOCK_MAIL_SENDER = MAIL_USERNAME
@@ -33,8 +35,51 @@ class Config:
     JC_MOCK_FOLLOWERS_PER_PAGE = 50
     JC_MOCK_COMMENTS_PER_PAGE = 30
     JC_MOCK_SLOW_DB_QUERY_TIME = 0.5
-    ENCRY_URL ='http://test-encryptor.qianshengqian.com/encrypt/'
-    DEENCRY_URL = 'http://test-encryptor.qianshengqian.com/decrypt/plain/'
+
+    log_base_dir = os.path.dirname(basedir)
+    log_base_dir = os.path.dirname(log_base_dir)
+    LOG_PATH = os.path.join(log_base_dir, 'logs')
+    LOG_PATH_ERROR = os.path.join(LOG_PATH, 'error.log')
+    LOG_PATH_INFO = os.path.join(LOG_PATH, 'info.log')
+    LOG_FILE_MAX_BYTES = 100 * 1024 * 1024
+    # 轮转数量是 10 个
+    LOG_FILE_BACKUP_COUNT = 10
+
     @staticmethod
     def init_app(app):
-        pass
+        import logging
+        from logging.handlers import RotatingFileHandler
+        # Formatter
+        formatter = logging.Formatter(
+            '%(asctime)s %(levelname)s %(process)d %(thread)d '
+            '%(pathname)s %(lineno)s %(message)s')
+
+
+        # FileHandler Info
+        file_handler_info = RotatingFileHandler(filename=Config.LOG_PATH_INFO)
+        file_handler_info.setFormatter(formatter)
+        file_handler_info.setLevel(logging.INFO)
+        info_filter = InfoFilter()
+        file_handler_info.addFilter(info_filter)
+        app.logger.addHandler(file_handler_info)
+
+        # FileHandler Error
+        file_handler_error = RotatingFileHandler(filename=Config.LOG_PATH_ERROR)
+        file_handler_error.setFormatter(formatter)
+        file_handler_error.setLevel(logging.ERROR)
+        app.logger.addHandler(file_handler_error)
+
+
+class InfoFilter(logging.Filter):
+    def filter(self, record):
+        """only use INFO
+        筛选, 只需要 INFO 级别的log
+        :param record:
+        :return:
+        """
+        if logging.INFO <= record.levelno < logging.ERROR:
+            # 已经是INFO级别了
+            # 然后利用父类, 返回 1
+            return super().filter(record)
+        else:
+            return 0

@@ -14,6 +14,7 @@ from app import db
 from app.models.MockModel import MockModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
+from flask import current_app
 
 class MockBiz(UnSerializer):
 
@@ -43,6 +44,7 @@ class MockBiz(UnSerializer):
             db.session.flush()
             return mock.mock_id
         except Exception as e :
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -51,6 +53,7 @@ class MockBiz(UnSerializer):
         try:
             db.session.query(MockModel).filter(MockModel.mock_id == mock_id).update(data)
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -63,7 +66,7 @@ class MockBiz(UnSerializer):
             mock = db.session.query(MockModel).filter(MockModel.mock_id == mock_id).first()
             db.session.delete(mock)
         except Exception as e:
-            pass
+            current_app.logger.exception(e)
         finally:
             db.session.commit()
 
@@ -72,7 +75,7 @@ class MockBiz(UnSerializer):
             mocks = db.session.query(MockModel).filter(MockModel.mock_case_id == case_id).delete()
             #db.session.delete(mocks)
         except Exception as e:
-            pass
+            current_app.logger.exception(e)
         finally:
             db.session.commit()
 

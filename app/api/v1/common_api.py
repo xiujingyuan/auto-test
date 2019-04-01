@@ -31,3 +31,8 @@ def get_prev_flag():
     common = CommonBiz()
     result = common.get_prev_flag()
     return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/common/sync/keyvalue',methods=["POST"])
+def sync_keyvalue():
+    common = CommonBiz()

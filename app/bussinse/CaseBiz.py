@@ -7,6 +7,7 @@
 
 from app.models.CaseModel import Case
 from app import db
+from flask import current_app
 from sqlalchemy import or_
 from app.bussinse.PrevBiz import PrevBiz
 from app.bussinse.MockBiz import MockBiz
@@ -62,31 +63,34 @@ class CaseBiz(UnSerializer):
             db.session.commit()
             return case_id
         except Exception as e:
-            print(e)
-            print("fdsafdsafdsa")
-            case_id =0
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             return case_id
 
 
     def get_bussinse_data(self,case_id):
-        res ={}
-        if (self.check_exists_bycaseid(case_id)==False):
-            return None
-        basicInfo = self.get_case_byid(case_id);
-        if basicInfo is not None:
-            res['basicInfo'] = basicInfo
-            res['prevInfo'] = PrevBiz().get_prev_byid(case_id)
-            res['mockInfo'] = MockBiz().get_mock_byid(case_id)
-            res['initInfo'] = InitBiz().get_init_byid(case_id)
-        return res
+        try:
+            res ={}
+            if (self.check_exists_bycaseid(case_id)==False):
+                return None
+            basicInfo = self.get_case_byid(case_id);
+            if basicInfo is not None:
+                res['basicInfo'] = basicInfo
+                res['prevInfo'] = PrevBiz().get_prev_byid(case_id)
+                res['mockInfo'] = MockBiz().get_mock_byid(case_id)
+                res['initInfo'] = InitBiz().get_init_byid(case_id)
+            return res
+        except Exception as e:
+            current_app.logger.exception(e)
+
 
     def change_case(self,data,case_id):
         try:
             db.session.query(Case).filter(Case.case_id == case_id).update(data)
+
         except Exception as e:
-            print(str(e))
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -104,7 +108,7 @@ class CaseBiz(UnSerializer):
             # InitBiz().delete_init_bycaseid(case_id)
             # MockBiz().delete_mock_bycaseid(case_id)
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -115,7 +119,7 @@ class CaseBiz(UnSerializer):
             result = db.session.query(Case).filter(Case.case_id==caseid).filter(Case.case_is_exec.in_([0,1])).first()
             return result.serialize()
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -128,7 +132,7 @@ class CaseBiz(UnSerializer):
                 result = True
             return result
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -139,74 +143,78 @@ class CaseBiz(UnSerializer):
         params =[]
         page_index =1
         page_size=10
-        if input_params is not None:
-            print(type(input_params))
-            if 'case_from_system' in input_params.keys():
-                value = input_params['case_from_system']
-                if value is not None and value!='':
-                    params.append(Case.case_from_system==value)
-            if 'case_description' in input_params.keys():
-                value = input_params['case_description']
-                if value is not None and value!='':
-                    params.append(Case.case_description==value)
-            if 'case_name' in input_params.keys():
-                value = input_params['case_name']
-                if value is not None and value!='':
-                    params.append(Case.case_name.like('%'+value+'%'))
-            if 'case_is_exec' in input_params.keys():
-                value = input_params['case_is_exec']
-                if value is not None and value!='':
-                    params.append(Case.case_is_exec==value)
+        try:
+            if input_params is not None:
+                print(type(input_params))
+                if 'case_from_system' in input_params.keys():
+                    value = input_params['case_from_system']
+                    if value is not None and value!='':
+                        params.append(Case.case_from_system==value)
+                if 'case_description' in input_params.keys():
+                    value = input_params['case_description']
+                    if value is not None and value!='':
+                        params.append(Case.case_description==value)
+                if 'case_name' in input_params.keys():
+                    value = input_params['case_name']
+                    if value is not None and value!='':
+                        params.append(Case.case_name.like('%'+value+'%'))
+                if 'case_is_exec' in input_params.keys():
+                    value = input_params['case_is_exec']
+                    if value is not None and value!='':
+                        params.append(Case.case_is_exec==value)
+                    else:
+                        params.append(Case.case_is_exec.in_([0,1]))
                 else:
                     params.append(Case.case_is_exec.in_([0,1]))
-            else:
-                params.append(Case.case_is_exec.in_([0,1]))
 
-            if 'case_executor' in input_params.keys():
-                value = input_params['case_executor']
-                if value is not None and value!='':
-                    params.append(Case.case_executor==value)
-            if 'case_id' in input_params.keys():
-                value = input_params['case_id']
-                if value is not None and value!='':
-                    params.append(Case.case_id==value)
+                if 'case_executor' in input_params.keys():
+                    value = input_params['case_executor']
+                    if value is not None and value!='':
+                        params.append(Case.case_executor==value)
+                if 'case_id' in input_params.keys():
+                    value = input_params['case_id']
+                    if value is not None and value!='':
+                        params.append(Case.case_id==value)
 
-            if 'case_exec_group' in input_params.keys():
-                value = input_params['case_exec_group']
-                if value is not None and value!='':
-                    params.append(Case.case_exec_group==value)
+                if 'case_exec_group' in input_params.keys():
+                    value = input_params['case_exec_group']
+                    if value is not None and value!='':
+                        params.append(Case.case_exec_group==value)
 
-            if 'case_exec_priority' in input_params.keys():
-                value = input_params['case_exec_priority']
-                if value is not None and value!='':
-                    params.append(Case.case_exec_priority==value)
+                if 'case_exec_priority' in input_params.keys():
+                    value = input_params['case_exec_priority']
+                    if value is not None and value!='':
+                        params.append(Case.case_exec_priority==value)
 
-            if 'case_exec_group_priority' in input_params.keys():
-                value = input_params['case_exec_group_priority']
-                if value is not None and value!='':
-                    params.append(Case.case_exec_group_priority==value)
-            else:
-                params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
+                if 'case_exec_group_priority' in input_params.keys():
+                    value = input_params['case_exec_group_priority']
+                    if value is not None and value!='':
+                        params.append(Case.case_exec_group_priority==value)
+                else:
+                    params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
 
 
-            if 'page_index' in input_params.keys():
-                page_index = input_params['page_index']
-            if 'page_size' in input_params.keys():
-                page_size = input_params['page_size']
-            for p in params:
-                print(p)
-        # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
-        query = Case.query.filter(*params)
-        result_paginate=query.order_by(Case.case_exec_group).order_by(Case.case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
-        result = result_paginate.items
-        count = result_paginate.total
-        cases = Case.serialize_list(result)
-        data = {}
-        data['page_index'] = page_index
-        data['cases'] = cases
-        data['page_size'] = len(cases)
-        data['total'] = count
-        return data
+                if 'page_index' in input_params.keys():
+                    page_index = input_params['page_index']
+                if 'page_size' in input_params.keys():
+                    page_size = input_params['page_size']
+                for p in params:
+                    print(p)
+            # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
+            query = Case.query.filter(*params)
+            current_app.logger.info(query)
+            result_paginate=query.order_by(Case.case_exec_group).order_by(Case.case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
+            result = result_paginate.items
+            count = result_paginate.total
+            cases = Case.serialize_list(result)
+            data = {}
+            data['page_index'] = page_index
+            data['cases'] = cases
+            data['page_size'] = len(cases)
+            data['total'] = count
+            return data
+        except Exception as e :
+            current_app.logger.exception(e)
 
     def get_exec_caseid(self,caseids):
         try:
@@ -224,7 +232,7 @@ class CaseBiz(UnSerializer):
                         result_case_id.append(main_case.case_id)
             return result_case_id
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()
@@ -237,7 +245,7 @@ class CaseBiz(UnSerializer):
                 result = True
             return result
         except Exception as e:
-            print(e)
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()

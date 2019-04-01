@@ -8,6 +8,7 @@
 import app.common.config.config as config
 
 from app import db
+from flask import current_app
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
 from app.models.PrevModel import PrevModel
@@ -26,6 +27,7 @@ class CommonBiz(UnSerializer,Serializer):
                 temp.append(re[0])
             return temp
         except Exception as e:
+            current_app.logger.exception(e)
             db.session.rollback()
         finally:
             db.session.commit()

@@ -13,7 +13,6 @@ import json
 
 from flask import jsonify, request
 from app.common.tools.CommonResult import CommonResult
-
 from app.api.v1 import api_v1
 from app.bussinse.CaseBiz import CaseBiz as CaseBussinse
 
