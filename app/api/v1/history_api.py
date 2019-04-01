@@ -11,7 +11,7 @@
 
 import json
 
-from flask import jsonify, request
+from flask import jsonify, request,current_app
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
@@ -22,5 +22,6 @@ from app.bussinse.HistoryBiz import HistoryBiz
 @api_v1.route('/history/search',methods=['POST'])
 def search_history():
     cs = HistoryBiz()
+    current_app.logger.info("history begin")
     result = cs.search_history(request)
     return jsonify(CommonResult.fill_result(result))
