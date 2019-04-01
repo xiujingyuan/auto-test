@@ -105,11 +105,10 @@ class HistoryBiz(object):
                                 HistoryCaseModel.run_id == HistoryPrevModel.run_id),isouter=True)
 
             query = query.filter(*params)
+            query=query.order_by(HistoryCaseModel.run_id.desc()).order_by(HistoryCaseModel.history_case_exec_group).order_by(HistoryCaseModel.history_case_exec_priority)
             current_app.logger.info(query)
-            result_paginate=query.order_by(HistoryCaseModel.run_id.desc()).order_by(HistoryCaseModel.history_case_exec_group).order_by(HistoryCaseModel.history_case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
-
+            result_paginate=query.paginate(page=page_index, per_page=page_size, error_out=False)
             result = result_paginate.items
-
             current_app.logger.info(result)
             count = result_paginate.total
             col_name = ('history_id',
