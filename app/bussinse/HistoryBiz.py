@@ -107,7 +107,10 @@ class HistoryBiz(object):
             query = query.filter(*params)
             current_app.logger.info(query)
             result_paginate=query.order_by(HistoryCaseModel.run_id.desc()).order_by(HistoryCaseModel.history_case_exec_group).order_by(HistoryCaseModel.history_case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
+
             result = result_paginate.items
+
+            current_app.logger.info(result)
             count = result_paginate.total
             col_name = ('history_id',
                         'history_case_name',
@@ -152,6 +155,7 @@ class HistoryBiz(object):
                 for col in range(len(col_name)):
                     temp[col_name[col]] = res[col]
                 results.append(temp)
+            current_app.logger.info(results)
             results = self.SerializerDict(results)
             current_app.logger.info(results)
             data = {}
@@ -160,6 +164,9 @@ class HistoryBiz(object):
             data['page_size'] = len(results)
             data['total'] = count
             return data
+
+
+
 
     def SerializerDict(self,result):
         if isinstance(result,(list,tuple)):
