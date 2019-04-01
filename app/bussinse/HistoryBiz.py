@@ -106,7 +106,7 @@ class HistoryBiz(object):
 
                 query = query.filter(*params)
                 query=query.order_by(HistoryCaseModel.run_id.desc()).order_by(HistoryCaseModel.history_case_exec_group).order_by(HistoryCaseModel.history_case_exec_priority)
-                result_paginate=query.paginate(page=1, per_page=10, error_out=False)
+                result_paginate=query.paginate(page=page_index, per_page=page_size, error_out=False)
                 result = result_paginate.items
                 count = result_paginate.total
                 col_name = ('history_id',
