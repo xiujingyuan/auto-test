@@ -153,7 +153,7 @@ class HistoryBiz(object):
                     temp[col_name[col]] = res[col]
                 results.append(temp)
             results = self.SerializerDict(results)
-
+            current_app.logger.info(results)
             data = {}
             data['page_index'] = page_index
             data['cases'] = results
