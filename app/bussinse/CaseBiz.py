@@ -202,7 +202,7 @@ class CaseBiz(UnSerializer):
                     print(p)
             # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
             query = Case.query.filter(*params)
-            current_app.logger.info(query)
+            #current_app.logger.info(query)
             result_paginate=query.order_by(Case.case_exec_group).order_by(Case.case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
             result = result_paginate.items
             count = result_paginate.total
