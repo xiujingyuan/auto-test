@@ -11,7 +11,7 @@
 
 import json
 
-from flask import jsonify, request
+from flask import jsonify, request,Response
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
@@ -22,7 +22,8 @@ from app.bussinse.MockBiz import MockBiz as MockBussinse
 def get_mock_bycaseid(case_id):
     mock = MockBussinse()
     result = mock.get_bussinse_data(case_id)
-    return jsonify(CommonResult.fill_result(result))
+    #return jsonify(CommonResult.fill_result(result))
+    return Response(json.dumps(CommonResult.fill_result(result)),mimetype='application/json')
 
 
 @api_v1.route('/mock/<int:mock_id>', methods=['PUT'])

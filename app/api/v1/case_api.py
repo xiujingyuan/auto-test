@@ -11,7 +11,7 @@
 
 import json
 
-from flask import jsonify, request
+from flask import jsonify, request,Response
 from app.common.tools.CommonResult import CommonResult
 from app.api.v1 import api_v1
 from app.bussinse.CaseBiz import CaseBiz as CaseBussinse
@@ -25,10 +25,13 @@ def get_case_data_bycaseid(caseid):
             result = cs.change_case(basicInfo,caseid)
     elif request.method=="GET":
         result = cs.get_bussinse_data(caseid)
+
     elif request.method=="DELETE":
         result = cs.delete_case_bycaseid(caseid)
 
-    return jsonify(CommonResult.fill_result(result))
+    result = CommonResult.fill_result(result)
+    #return jsonify(result)
+    return Response(json.dumps(result),mimetype='application/json')
 
 
 

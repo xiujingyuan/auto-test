@@ -11,7 +11,7 @@
 
 import json
 
-from flask import jsonify, request
+from flask import jsonify, request,Response
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
@@ -31,7 +31,8 @@ def get_init_byinitid(inid_id):
 
     init = InitBussinse()
     result = init.get_bussinse_data_by_initid(inid_id)
-    return jsonify(CommonResult.fill_result(result))
+    #return jsonify(CommonResult.fill_result(result))
+    return Response(json.dumps(CommonResult.fill_result(result)),mimetype='application/json')
 
 
 @api_v1.route('/init/<int:init_id>', methods=['PUT'])
