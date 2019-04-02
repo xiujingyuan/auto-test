@@ -55,6 +55,7 @@ class MockBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -67,6 +68,8 @@ class MockBiz(UnSerializer):
             db.session.delete(mock)
         except Exception as e:
             current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -76,6 +79,8 @@ class MockBiz(UnSerializer):
             #db.session.delete(mocks)
         except Exception as e:
             current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 

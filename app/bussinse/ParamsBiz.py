@@ -25,6 +25,7 @@ class ParamsBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             return id
 
@@ -36,6 +37,7 @@ class ParamsBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -46,6 +48,7 @@ class ParamsBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -92,6 +95,7 @@ class ParamsBiz(UnSerializer):
             return data
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
 

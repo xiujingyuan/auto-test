@@ -43,6 +43,7 @@ class PrevBiz(UnSerializer):
         except Exception as e :
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -64,6 +65,8 @@ class PrevBiz(UnSerializer):
             db.session.delete(prev)
         except Exception as e:
             current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -73,7 +76,8 @@ class PrevBiz(UnSerializer):
             #db.session.delete(prevs)
         except Exception as e:
             current_app.logger.exception(e)
-            pass
+            db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 

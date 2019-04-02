@@ -65,6 +65,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             return case_id
 
@@ -83,15 +84,16 @@ class CaseBiz(UnSerializer):
             return res
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
     def change_case(self,data,case_id):
         try:
             db.session.query(Case).filter(Case.case_id == case_id).update(data)
-
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -110,6 +112,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
             return 0
@@ -121,6 +124,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -134,6 +138,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -215,6 +220,7 @@ class CaseBiz(UnSerializer):
             return data
         except Exception as e :
             current_app.logger.exception(e)
+            return 9999
 
     def get_exec_caseid(self,caseids):
         try:
@@ -234,6 +240,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -247,6 +254,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 

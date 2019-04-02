@@ -33,6 +33,7 @@ class EncryBiz(UnSerializer):
             return result
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
     def reuqest_encrp(self,data):
@@ -46,6 +47,7 @@ class EncryBiz(UnSerializer):
             return req.json()
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
     def reuqest_de_encrp(self,data):
@@ -59,6 +61,7 @@ class EncryBiz(UnSerializer):
             return "test"
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
 
@@ -108,6 +111,7 @@ class EncryBiz(UnSerializer):
             return result
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
     def generate_data_deencry(self,value):

@@ -92,6 +92,7 @@ class HistoryBiz(object):
                                          HistoryPrevModel.prev_sql_params,
                                          HistoryPrevModel.prev_sql_expression,
                                          HistoryInitModel.case_init_api_address,
+                                         HistoryInitModel.case_init_name,
                                          HistoryInitModel.case_init_api_params,
                                          HistoryInitModel.case_init_api_expression,
                                          HistoryInitModel.case_init_sql,
@@ -139,6 +140,7 @@ class HistoryBiz(object):
                             'prev_sql_params',
                             'prev_sql_expression',
                             'case_init_api_address',
+                            'case_init_name',
                             'case_init_api_params',
                             'case_init_api_expression',
                             'case_init_sql',
@@ -161,6 +163,7 @@ class HistoryBiz(object):
                 return data
         except Exception as e:
             current_app.logger.exception(e)
+            return 9999
 
 
 

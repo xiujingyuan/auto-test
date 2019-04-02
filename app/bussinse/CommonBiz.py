@@ -29,5 +29,6 @@ class CommonBiz(UnSerializer,Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()

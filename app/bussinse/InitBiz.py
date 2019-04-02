@@ -42,6 +42,7 @@ class InitBiz(UnSerializer):
         except Exception as e :
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -51,6 +52,7 @@ class InitBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -60,6 +62,8 @@ class InitBiz(UnSerializer):
             db.session.delete(init)
         except Exception as e:
             current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
@@ -69,6 +73,8 @@ class InitBiz(UnSerializer):
             #db.session.delete(init)
         except Exception as e:
             current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
         finally:
             db.session.commit()
 
