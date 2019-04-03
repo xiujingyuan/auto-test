@@ -203,8 +203,6 @@ class CaseBiz(UnSerializer):
                     page_index = input_params['page_index']
                 if 'page_size' in input_params.keys():
                     page_size = input_params['page_size']
-                for p in params:
-                    print(p)
             # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
             query = Case.query.filter(*params)
             #current_app.logger.info(query)
