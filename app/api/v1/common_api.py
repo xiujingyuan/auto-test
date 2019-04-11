@@ -16,6 +16,7 @@ from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
 from app.bussinse.CommonBiz import CommonBiz
+from app.bussinse.KeyvalueBiz import KeyvalueBiz
 
 
 
@@ -35,4 +36,7 @@ def get_prev_flag():
 
 @api_v1.route('/common/sync/keyvalue',methods=["POST"])
 def sync_keyvalue():
-    common = CommonBiz()
+    common = KeyvalueBiz()
+    result = common.sync_keyvalue(request)
+    return jsonify(CommonResult.fill_result(result))
+

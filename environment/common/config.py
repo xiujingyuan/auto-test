@@ -27,6 +27,7 @@ class Config:
     MAIL_PASSWORD = "vdpritgxwgcnbajd"
     ENCRY_URL ='http://test-encryptor.qianshengqian.com/encrypt/'
     DEENCRY_URL = 'http://test-encryptor.qianshengqian.com/decrypt/plain/'
+    SYNC_ENV_LIST =['biz1','biz2']
 
     JC_MOCK_MAIL_SUBJECT_PREFIX = '[Jc-Mock]'
     JC_MOCK_MAIL_SENDER = MAIL_USERNAME

@@ -12,7 +12,11 @@ class CommonResult(object):
         if message is None:
             message ="success"
         if code is None:
-            code=0
+            if isinstance(data,int) and data ==9999:
+                code=1
+            else:
+                code=0
+
         res = {
             "code":code,
             "msg" : message,
