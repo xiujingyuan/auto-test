@@ -195,8 +195,8 @@ class CaseBiz(UnSerializer):
                     value = input_params['case_exec_group_priority']
                     if value is not None and value!='':
                         params.append(Case.case_exec_group_priority==value)
-                else:
-                    params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
+                # else:
+                #     params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
 
 
                 if 'page_index' in input_params.keys():
