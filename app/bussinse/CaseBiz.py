@@ -8,7 +8,7 @@
 from app.models.CaseModel import Case
 from app import db
 from flask import current_app
-from sqlalchemy import or_
+from sqlalchemy import or_,and_
 from app.bussinse.PrevBiz import PrevBiz
 from app.bussinse.MockBiz import MockBiz
 from app.bussinse.InitBiz import InitBiz
@@ -179,6 +179,7 @@ class CaseBiz(UnSerializer):
                 if 'case_id' in input_params.keys():
                     value = input_params['case_id']
                     if value is not None and value!='':
+                        value = self.get_maincaseid_caseid(value)
                         params.append(Case.case_id==value)
 
                 if 'case_exec_group' in input_params.keys():
@@ -256,5 +257,17 @@ class CaseBiz(UnSerializer):
         finally:
             db.session.commit()
 
+
+    def get_maincaseid_caseid(self,case_id):
+        query = db.session.query(Case).filter(Case.case_id==case_id).filter(Case.case_is_exec.in_([0,1]))
+        result = query.first()
+        if result.case_exec_group_priority=='main':
+            return case_id
+        else:
+            main_result = db.session.query(Case).filter(Case.case_exec_group == result.case_exec_group).filter(Case.case_exec_group_priority=='main').first()
+            if main_result is not None:
+                return main_result.case_id
+
+        return case_id
 
 
