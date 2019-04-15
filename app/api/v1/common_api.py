@@ -40,3 +40,11 @@ def sync_keyvalue():
     result = common.sync_keyvalue(request)
     return jsonify(CommonResult.fill_result(result))
 
+
+@api_v1.route('/common/tools',methods=["GET"])
+def common_tools():
+    common = CommonBiz()
+    result =common.get_common_tools()
+    return jsonify(CommonResult.fill_result(result))
+
+

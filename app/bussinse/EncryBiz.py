@@ -40,21 +40,21 @@ class EncryBiz(UnSerializer):
         try:
             url = Config.ENCRY_URL
             headers = {'content-type': 'application/json'}
-            req = requests.post(url, data=json.dumps(data), headers=headers)
+            req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
             result = req.json()
             if result['code']==0:
                 return result['data'][0]['hash']
             return req.json()
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            raise str(e)
 
 
     def reuqest_de_encrp(self,data):
         try:
             deencry_url = Config.DEENCRY_URL
             headers = {'content-type': 'application/json'}
-            req = requests.post(deencry_url, data=json.dumps(data), headers=headers)
+            req = requests.post(deencry_url, data=json.dumps(data), headers=headers,timeout=10)
             result = req.json()
             if result['code']==0:
                 return result['data']

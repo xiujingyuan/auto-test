@@ -57,10 +57,15 @@ class KeyvalueBiz(UnSerializer, Serializer):
             # 替换指定数据的dvalue
             self.replace_target_value(diff_keyvalue, keyvalue_value_replace)
             # 写回目的库的表
+            result={
+                "add_keys":[],
+                "update_keys":[],
+                "msg":error_message
+            }
             for keyvalue in diff_keyvalue:
-                self.update_or_add_keyvalue(keyvalue, to_env, last_user, update_flag)
+                self.update_or_add_keyvalue(keyvalue, to_env, last_user,result,update_flag)
 
-        return error_message
+        return result
 
     def replace_target_key(self, targets, keyvalue_key_replace):
         if keyvalue_key_replace != "" and keyvalue_key_replace is not None:
@@ -114,7 +119,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
 
         return result
 
-    def update_or_add_keyvalue(self, key_value, to_env, user, update_flag=False, ):
+    def update_or_add_keyvalue(self, key_value, to_env, user, result,update_flag=False):
         new_key_value = KeyvalueModel()
         del key_value.__dict__['_sa_instance_state']
         new_key_value.__dict__.update(key_value.__dict__)
@@ -124,8 +129,11 @@ class KeyvalueBiz(UnSerializer, Serializer):
             if update_flag:
                 key_value_dict = key_value.__dict__
                 self.update_keyvalue(keyvalue_key, key_value_dict, to_env, user)
+                result['update_keys'].append(keyvalue_key)
         else:
             self.add_keyvalue(new_key_value, to_env, user)
+            result['add_keys'].append(key_value.keyvalue_key)
+        return result
 
     def update_keyvalue(self, keyvalue_key, keyvalue, to_env, user):
         db.session.connection(execution_options={
