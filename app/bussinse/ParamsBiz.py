@@ -63,7 +63,7 @@ class ParamsBiz(UnSerializer):
             if 'name' in input_params.keys():
                 value = input_params['name']
                 if value is not None and value!='':
-                    params.append(ParamsModel.name==value)
+                    params.append(ParamsModel.name.like('%'+value+'%'))
             if 'action' in input_params.keys():
                 value = input_params['action']
                 if value is not None and value!='':
