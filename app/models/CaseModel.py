@@ -32,7 +32,7 @@ class Case(db.Model,Serializer):
     case_sql_actual_statement=db.Column(db.String)
     case_sql_actual_database=db.Column(db.String(255))
     case_sql_params=db.Column(db.String)
-    case_sql_reference_name=db.Column(db.String(255))
+    case_ref_tapd_id=db.Column(db.String(255))
     case_is_exec=db.Column(db.String(255))
     case_mock_flag=db.Column(db.Enum('Y','N'))
     case_next_msg=db.Column(db.String(255))

@@ -39,7 +39,7 @@ class HistoryCaseModel(db.Model,Serializer):
     history_case_sql_actual_statement=db.Column(db.String)
     history_case_sql_actual_database=db.Column(db.String(255))
     history_case_sql_params=db.Column(db.String)
-    history_case_sql_reference_name=db.Column(db.String(255))
+    history_case_ref_tapd_id=db.Column(db.String(255))
     history_case_is_exec=db.Column(db.String(255))
     history_case_mock_flag=db.Column(db.Enum('Y','N'))
     history_case_next_msg=db.Column(db.String(255))

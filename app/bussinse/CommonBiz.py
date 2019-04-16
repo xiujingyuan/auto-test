@@ -46,3 +46,5 @@ class CommonBiz(UnSerializer,Serializer):
             return result
             db.session.close()
 
+
+

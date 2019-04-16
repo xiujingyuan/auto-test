@@ -17,7 +17,7 @@ from app.common.tools.CommonResult import CommonResult
 from app.api.v1 import api_v1
 from app.bussinse.CommonBiz import CommonBiz
 from app.bussinse.KeyvalueBiz import KeyvalueBiz
-
+from app.bussinse.TableSyncBiz import TableSyncBiz
 
 
 @api_v1.route('/common/getdblist', methods=['GET'])
@@ -46,5 +46,13 @@ def common_tools():
     common = CommonBiz()
     result =common.get_common_tools()
     return jsonify(CommonResult.fill_result(result))
+
+@api_v1.route('/common/sync/tables',methods=["POST"])
+def sync_tables():
+    common = TableSyncBiz()
+    result = common.sync_tables(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
 
 
