@@ -31,8 +31,8 @@ class CommonBiz(UnSerializer,Serializer):
             current_app.logger.exception(e)
             db.session.rollback()
             return 9999
-        finally:
-            db.session.close()
+        #finally:
+            #db.session.close()
 
     def get_common_tools(self):
         try:
@@ -44,7 +44,7 @@ class CommonBiz(UnSerializer,Serializer):
             return 9999
         finally:
             return result
-            db.session.close()
+            #db.session.close()
 
 
 

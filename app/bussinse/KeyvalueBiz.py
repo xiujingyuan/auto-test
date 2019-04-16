@@ -101,7 +101,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
         result = db.session.query(KeyvalueModel). \
             filter(KeyvalueModel.keyvalue_status == 'active'). \
             filter(KeyvalueModel.keyvalue_key.in_(keylists)).all()
-        db.session.close()
+        #db.session.close()
         return result
 
     def get_keyvalue_key_byenv(self, from_env):
@@ -115,7 +115,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
             .with_entities(KeyvalueModel.keyvalue_key)
 
         result = query.all()
-        db.session.close()
+        #db.session.close()
 
         return result
 
@@ -143,7 +143,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
         del keyvalue['keyvalue_id']
         db.session.query(KeyvalueModel).filter(KeyvalueModel.keyvalue_key == keyvalue_key).update(keyvalue)
         db.session.commit()
-        db.session.close()
+        #db.session.close()
 
     def add_keyvalue(self, keyvalue, to_env, user):
         db.session.connection(execution_options={
@@ -156,13 +156,13 @@ class KeyvalueBiz(UnSerializer, Serializer):
         db.session.add(keyvalue)
         db.session.flush()
         db.session.commit()
-        db.session.close()
+        #db.session.close()
 
     def check_keyvalue_key_exists(self, keyvalue_key, env):
         db.session.connection(execution_options={
             "schema_translate_map": {"db_test": env}})
         count = db.session.query(KeyvalueModel).filter(KeyvalueModel.keyvalue_key == keyvalue_key).count()
-        db.session.close()
+        #db.session.close()
         if count > 0:
             return True
         else:
