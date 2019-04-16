@@ -32,6 +32,8 @@ class PrevModel(db.Model,Serializer):
     prev_params=db.Column(db.Text)
     prev_except_expression=db.Column(db.Text)
     prev_except_value=db.Column(db.Text)
+    prev_priority=db.Column(db.Integer)
+    prev_wait_time=db.Column(db.Integer)
     prev_in_user=db.Column(db.String(255))
     prev_last_user=db.Column(db.String(255))
     prev_in_date=db.Column(db.DateTime,default=datetime.now())
