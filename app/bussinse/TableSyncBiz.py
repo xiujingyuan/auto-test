@@ -105,7 +105,7 @@ class TableSyncBiz(object):
 
         finally:
             db.session.commit();
-            db.session.close()
+            db.session.execute('use gaea_framework;')
 
 
 
@@ -123,7 +123,7 @@ class TableSyncBiz(object):
 
         finally:
             db.session.commit();
-            db.session.close()
+            db.session.execute('use gaea_framework;')
 
 
 
@@ -224,4 +224,5 @@ class TableSyncBiz(object):
                 table_field[table_name] = t_f_structor
             return result,table_list,table_field
         finally:
-            db.session.close()
+            db.session.execute('use gaea_framework;')
+            #db.session.close()
