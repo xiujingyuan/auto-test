@@ -95,9 +95,9 @@ class TableSyncBiz(object):
                         #exec_sql = exec_sql +" default " + type[2] +";"
                         if type[0].upper() in ['TIMESTAMP','DATETIME','DATE','TIME']:
                             exec_sql = exec_sql +" default " + type[2] +";"
-                        elif type[2] is None:
+                        elif type[2] is None and type[1]=="YES":
                             exec_sql = exec_sql +" default null;"
-                        else:
+                        elif type[2] is not None:
                             exec_sql = exec_sql +" default '" + type[2] +"';"
                         result['update_tables'].append(exec_sql)
                         db.session.execute("use {0}".format(to_env));
