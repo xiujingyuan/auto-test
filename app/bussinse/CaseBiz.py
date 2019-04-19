@@ -148,6 +148,7 @@ class CaseBiz(UnSerializer):
         params =[]
         page_index =1
         page_size=10
+        sort_field=""
         try:
             if input_params is not None:
                 print(type(input_params))
@@ -192,11 +193,14 @@ class CaseBiz(UnSerializer):
                     if value is not None and value!='':
                         params.append(Case.case_exec_priority==value)
 
+
                 if 'case_exec_group_priority' in input_params.keys():
                     value = input_params['case_exec_group_priority']
                     if value is not None and value!='':
                         params.append(Case.case_exec_group_priority==value)
+                        sort_field='sub'
                 else:
+                    sort_field='main'
                     params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
 
 
@@ -207,7 +211,10 @@ class CaseBiz(UnSerializer):
             # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
             query = Case.query.filter(*params)
             #current_app.logger.info(query)
-            result_paginate=query.order_by(Case.case_exec_group).order_by(Case.case_exec_priority).paginate(page=page_index, per_page=page_size, error_out=False)
+            if sort_field=="main":
+                result_paginate=query.order_by(Case.case_id.desc(),Case.case_exec_group).paginate(page=page_index, per_page=page_size, error_out=False)
+            else:
+                result_paginate=query.order_by(Case.case_exec_priority.asc(),Case.case_exec_group).paginate(page=page_index, per_page=page_size, error_out=False)
             result = result_paginate.items
             count = result_paginate.total
             cases = Case.serialize_list(result)
