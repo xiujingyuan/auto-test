@@ -326,6 +326,7 @@ class CaseBiz(UnSerializer):
 
             db.session.execute("call gaea_framework.copy_case_from_exists_group ('{0}','{1}','{2}','{3}','{4}','{5}')".format(result[1],result[0],case_exec_group,case_from_system,case_exec_group_new,case_author))
             #db.session.execute("call gaea_framework.copy_case_from_exists_group (?,?,?,?,?)",result[1],result[0],case_exec_group,case_from_system,case_exec_group_new)
+            return 0,'复制成功'
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
