@@ -49,3 +49,18 @@ def search_case():
     cs = CaseBussinse()
     result = cs.search_case(request)
     return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/summary/search',methods=['GET'])
+def summary_case():
+    cs = CaseBussinse()
+    result = cs.get_summary_case()
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/copy/group',methods=['POST'])
+def copy_group_case():
+    cs = CaseBussinse()
+    result ,error_message = cs.copy_group_case(request)
+    return jsonify(CommonResult.fill_result(result,message=error_message))
+

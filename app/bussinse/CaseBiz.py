@@ -8,7 +8,7 @@
 from app.models.CaseModel import Case
 from app import db
 from flask import current_app
-from sqlalchemy import or_,and_
+from sqlalchemy import or_,and_,func
 from app.bussinse.PrevBiz import PrevBiz
 from app.bussinse.MockBiz import MockBiz
 from app.bussinse.InitBiz import InitBiz
@@ -155,7 +155,7 @@ class CaseBiz(UnSerializer):
                 if 'case_from_system' in input_params.keys():
                     value = input_params['case_from_system']
                     if value is not None and value!='':
-                        params.append(Case.case_from_system==value)
+                        params.append(Case.case_from_system.like('%'+value+'%'))
                 if 'case_description' in input_params.keys():
                     value = input_params['case_description']
                     if value is not None and value!='':
@@ -186,7 +186,7 @@ class CaseBiz(UnSerializer):
                 if 'case_exec_group' in input_params.keys():
                     value = input_params['case_exec_group']
                     if value is not None and value!='':
-                        params.append(Case.case_exec_group==value)
+                        params.append(Case.case_exec_group.like('%'+value+'%'))
 
                 if 'case_exec_priority' in input_params.keys():
                     value = input_params['case_exec_priority']
@@ -276,5 +276,99 @@ class CaseBiz(UnSerializer):
                 return main_result.case_id
 
         return case_id
+
+
+    def get_summary_case(self):
+        try:
+            query = db.session.query(Case.case_from_system, func.count(Case.case_id)).\
+                filter(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority ==None)).filter(Case.case_is_exec.in_([0,1])).group_by(Case.case_from_system).order_by(func.count(Case.case_id).desc())
+            result = query.all()
+            return result
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
+        finally:
+            db.session.commit()
+
+
+    def copy_group_case(self,request):
+        try:
+            print(request.json)
+            input_params = request.json
+            error_message =""
+            case_id = ""
+            case_from_system=""
+            case_exec_group=""
+            if input_params is not None:
+                if 'case_id' in input_params.keys():
+                    case_id = input_params['case_id']
+                if 'case_exec_group' in input_params.keys():
+                    case_exec_group = input_params['case_exec_group']
+                if 'case_from_system' in input_params.keys():
+                    case_from_system= input_params['case_from_system']
+                if case_id is None or case_id =="" \
+                    or case_from_system is None or case_from_system=="" :
+                    error_message ="case_id ,case_from_system 均不能为空"
+                    return 9999,error_message
+                if 'case_author' in input_params.keys():
+                    case_author = input_params['case_author']
+
+            if case_exec_group is None or case_exec_group=="":
+                case_exec_group_new=""
+            else:
+                case_exec_group_new = str(case_exec_group)+'copy'
+                if self.check_group_exists(case_exec_group_new):
+                    error_message="复杂用例名称已经存在，不能再次复制"
+                    return 9999,error_message
+
+            result = self.get_maxandmin_caseid(case_id,case_exec_group,case_from_system)
+
+            db.session.execute("call gaea_framework.copy_case_from_exists_group ('{0}','{1}','{2}','{3}','{4}','{5}')".format(result[1],result[0],case_exec_group,case_from_system,case_exec_group_new,case_author))
+            #db.session.execute("call gaea_framework.copy_case_from_exists_group (?,?,?,?,?)",result[1],result[0],case_exec_group,case_from_system,case_exec_group_new)
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999,error_message
+        finally:
+            db.session.commit()
+
+    def check_group_exists(self,case_exec_group):
+        try:
+            params =[]
+            if 'case_exec_group' is not None and case_exec_group!="":
+                params.append(Case.case_exec_group ==case_exec_group)
+            params.append(Case.case_is_exec.in_([0,1]))
+            result = db.session.query(func.count(Case.case_id)).filter(*params).first()
+            if result[0] >0:
+                return True
+            else:
+                return False
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
+        finally:
+            db.session.commit()
+
+    def get_maxandmin_caseid(self,case_id,case_exec_group,case_from_system):
+        try:
+            params =[]
+            if 'case_exec_group' is not None and case_exec_group!="":
+                params.append(Case.case_exec_group ==case_exec_group)
+            else:
+                params.append(Case.case_id == case_id)
+            params.append(Case.case_from_system == case_from_system)
+            result = db.session.query(func.max(Case.case_id).label("max_case_id"),func.min(Case.case_id).label("min_case_id")).filter(*params).first()
+            print(result)
+            return result
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
+        finally:
+            db.session.commit()
+
+
 
 
