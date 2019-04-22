@@ -186,7 +186,7 @@ class CaseBiz(UnSerializer):
                 if 'case_exec_group' in input_params.keys():
                     value = input_params['case_exec_group']
                     if value is not None and value!='':
-                        params.append(Case.case_exec_group.like('%'+value+'%'))
+                        params.append(Case.case_exec_group == value)
 
                 if 'case_exec_priority' in input_params.keys():
                     value = input_params['case_exec_priority']
