@@ -8,7 +8,7 @@
 import jenkins
 import json
 
-from flask import jsonify, request
+from flask import jsonify, request,current_app
 from app.common.tools.CommonResult import CommonResult
 from app.api.v1 import api_v1
 from app.models.CaseModel import Case
@@ -34,6 +34,7 @@ def run_special_case():
         build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":exec_case_array_str,"email_address":email,"debug_model":"TestRunCase.py"})
         return jsonify(CommonResult.fill_result(build_number))
     except Exception as e:
+        current_app.logger.exception(e)
         return jsonify(CommonResult.fill_result(0,1,str(e)))
 
 
@@ -57,6 +58,7 @@ def run_case_bycaseid(case_id):
         build_number = server.build_job("Auto_Test_Api_Run_Case",parameters={"case_ids":int(case_id),"email_address":email,"debug_model":"testDebug.py"})
         return jsonify(CommonResult.fill_result(build_number))
     except Exception as e:
+        current_app.logger.exception(e)
         return jsonify(CommonResult.fill_result(0,1,str(e)))
 
 
