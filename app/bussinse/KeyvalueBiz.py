@@ -124,23 +124,26 @@ class KeyvalueBiz(UnSerializer, Serializer):
         return result
 
     def update_or_add_keyvalue(self, key_value, to_env, user, result,update_flag=False):
-        new_key_value = KeyvalueModel()
-        del key_value.__dict__['_sa_instance_state']
-        new_key_value.__dict__.update(key_value.__dict__)
-        new_key_value.keyvalue_id = None
-        keyvalue_key = new_key_value.keyvalue_key
-        current_app.logger.info("进入update 或者 add 流程:"+result)
-        if (self.check_keyvalue_key_exists(key_value.keyvalue_key, to_env)):
-            if update_flag:
-                key_value_dict = key_value.__dict__
-                self.update_keyvalue(keyvalue_key, key_value_dict, to_env, user)
-                result['update_keys'].append(keyvalue_key)
-                current_app.logger.info("update_special_keys:"+result)
-        else:
-            self.add_keyvalue(new_key_value, to_env, user)
-            result['add_keys'].append(key_value.keyvalue_key)
-            current_app.logger.info("add_keys:"+result)
-        return result
+        try:
+            new_key_value = KeyvalueModel()
+            del key_value.__dict__['_sa_instance_state']
+            new_key_value.__dict__.update(key_value.__dict__)
+            new_key_value.keyvalue_id = None
+            keyvalue_key = new_key_value.keyvalue_key
+            current_app.logger.info("进入update 或者 add 流程:"+result)
+            if (self.check_keyvalue_key_exists(key_value.keyvalue_key, to_env)):
+                if update_flag:
+                    key_value_dict = key_value.__dict__
+                    self.update_keyvalue(keyvalue_key, key_value_dict, to_env, user)
+                    result['update_keys'].append(keyvalue_key)
+                    current_app.logger.info("update_special_keys:"+result)
+            else:
+                self.add_keyvalue(new_key_value, to_env, user)
+                result['add_keys'].append(key_value.keyvalue_key)
+                current_app.logger.info("add_keys:"+result)
+            return result
+        except Exception as e:
+            current_app.logger.exception(e)
 
     def update_keyvalue(self, keyvalue_key, keyvalue, to_env, user):
         db.session.connection(execution_options={
