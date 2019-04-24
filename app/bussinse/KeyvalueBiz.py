@@ -10,12 +10,14 @@ from app import db
 from app.models.KeyvalueModel import KeyvalueModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
+from flask import current_app
 
 
 class KeyvalueBiz(UnSerializer, Serializer):
 
     def sync_keyvalue(self, request):
         request_dict = request.json
+        current_app.logger.info(request_dict)
         error_message = ""
         keyvalue_key_replace = ""
         keyvalue_value_replace = ""
@@ -53,6 +55,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
             else:
                 diff_keyvalue = self.get_keyvalue_bykey(keyvalue_list, source_env)
             # 替换指定的数据的key
+            current_app.logger.info(diff_keyvalue)
             self.replace_target_key(diff_keyvalue, keyvalue_key_replace)
             # 替换指定数据的dvalue
             self.replace_target_value(diff_keyvalue, keyvalue_value_replace)
@@ -62,6 +65,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
                 "update_keys":[],
                 "msg":error_message
             }
+            current_app.logger.info(result)
             for keyvalue in diff_keyvalue:
                 self.update_or_add_keyvalue(keyvalue, to_env, last_user,result,update_flag)
 
