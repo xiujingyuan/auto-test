@@ -129,6 +129,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
         new_key_value.__dict__.update(key_value.__dict__)
         new_key_value.keyvalue_id = None
         keyvalue_key = new_key_value.keyvalue_key
+        current_app.logger.info("进入update 或者 add 流程:"+result)
         if (self.check_keyvalue_key_exists(key_value.keyvalue_key, to_env)):
             if update_flag:
                 key_value_dict = key_value.__dict__
