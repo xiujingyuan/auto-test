@@ -55,20 +55,21 @@ class KeyvalueBiz(UnSerializer, Serializer):
             else:
                 diff_keyvalue = self.get_keyvalue_bykey(keyvalue_list, source_env)
             # 替换指定的数据的key
-            current_app.logger.info(diff_keyvalue)
+
             self.replace_target_key(diff_keyvalue, keyvalue_key_replace)
             # 替换指定数据的dvalue
             self.replace_target_value(diff_keyvalue, keyvalue_value_replace)
             # 写回目的库的表
+            current_app.logger.info(diff_keyvalue)
             result={
                 "add_keys":[],
                 "update_keys":[],
                 "msg":error_message
             }
-            current_app.logger.info(result)
             for keyvalue in diff_keyvalue:
+                current_app.logger.info(diff_keyvalue)
                 self.update_or_add_keyvalue(keyvalue, to_env, last_user,result,update_flag)
-
+            current_app.logger.info(result)
         return result
 
     def replace_target_key(self, targets, keyvalue_key_replace):
