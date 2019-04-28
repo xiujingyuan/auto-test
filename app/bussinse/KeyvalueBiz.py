@@ -144,14 +144,17 @@ class KeyvalueBiz(UnSerializer, Serializer):
                 current_app.logger.info("add_keys:"+result)
             return result
         except Exception as e:
+            print(str(e))
             current_app.logger.exception(e)
 
     def update_keyvalue(self, keyvalue_key, keyvalue, to_env, user):
+        print(keyvalue)
         db.session.connection(execution_options={
             "schema_translate_map": {"db_test": to_env}})
         keyvalue['keyvalue_update_at'] = datetime.datetime.now()
         keyvalue['keyvalue_update_user'] = user
         del keyvalue['keyvalue_id']
+
         db.session.query(KeyvalueModel).filter(KeyvalueModel.keyvalue_key == keyvalue_key).update(keyvalue)
         db.session.commit()
         #db.session.close()

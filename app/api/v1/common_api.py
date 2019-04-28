@@ -54,5 +54,12 @@ def sync_tables():
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/common/sendmail',methods=["POST"])
+def send_mail():
+    common = CommonBiz()
+    result = common.sendMail(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
 
 

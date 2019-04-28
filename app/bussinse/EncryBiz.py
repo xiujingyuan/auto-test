@@ -23,13 +23,13 @@ class EncryBiz(UnSerializer):
         result={}
         try:
             request_dict = request.json
+            print(request_dict)
             for key ,value in request_dict.items():
                 data = self.generate_data(key,value)
                 encry_data = self.reuqest_encrp(data)
                 # result[key] = value
                 # encry_key = key + '_encry'
                 result[key] = encry_data
-
             return result
         except Exception as e:
             current_app.logger.exception(e)
