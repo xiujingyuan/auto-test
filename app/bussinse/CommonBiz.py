@@ -72,7 +72,7 @@ class CommonBiz(UnSerializer,Serializer):
             print("发送邮件成功！！！")
             smtp.quit()
         except smtplib.SMTPException as e:
-            print(str(e))
+            current_app.logger.exception(e)
             print("发送邮件失败！！！")
             return 9999
 
