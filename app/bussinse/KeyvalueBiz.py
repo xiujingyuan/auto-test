@@ -106,13 +106,12 @@ class KeyvalueBiz(UnSerializer, Serializer):
         result = db.session.query(KeyvalueModel). \
             filter(KeyvalueModel.keyvalue_status == 'active'). \
             filter(KeyvalueModel.keyvalue_key.in_(keylists)).all()
-        #db.session.close()
+        db.session.close()
         return result
 
     def get_keyvalue_key_byenv(self, from_env):
         db.session.connection(execution_options={
             "schema_translate_map": {"db_test": from_env}})
-        # print(from_env)
         query = db.session.query(KeyvalueModel). \
             filter(KeyvalueModel.keyvalue_status == 'active'). \
             filter(KeyvalueModel.keyvalue_key != ""). \
@@ -120,7 +119,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
             .with_entities(KeyvalueModel.keyvalue_key)
 
         result = query.all()
-        #db.session.close()
+        db.session.close()
 
         return result
 
@@ -148,7 +147,6 @@ class KeyvalueBiz(UnSerializer, Serializer):
             current_app.logger.exception(e)
 
     def update_keyvalue(self, keyvalue_key, keyvalue, to_env, user):
-        print(keyvalue)
         db.session.connection(execution_options={
             "schema_translate_map": {"db_test": to_env}})
         keyvalue['keyvalue_update_at'] = datetime.datetime.now()
@@ -157,9 +155,10 @@ class KeyvalueBiz(UnSerializer, Serializer):
 
         db.session.query(KeyvalueModel).filter(KeyvalueModel.keyvalue_key == keyvalue_key).update(keyvalue)
         db.session.commit()
-        #db.session.close()
+        db.session.close()
 
     def add_keyvalue(self, keyvalue, to_env, user):
+        print("add_keys")
         db.session.connection(execution_options={
             "schema_translate_map": {"db_test": to_env}})
         keyvalue.keyvalue_create_at = datetime.datetime.now()
@@ -170,13 +169,14 @@ class KeyvalueBiz(UnSerializer, Serializer):
         db.session.add(keyvalue)
         db.session.flush()
         db.session.commit()
-        #db.session.close()
+        db.session.close()
 
     def check_keyvalue_key_exists(self, keyvalue_key, env):
         db.session.connection(execution_options={
             "schema_translate_map": {"db_test": env}})
+
         count = db.session.query(KeyvalueModel).filter(KeyvalueModel.keyvalue_key == keyvalue_key).count()
-        #db.session.close()
+        db.session.close()
         if count > 0:
             return True
         else:
