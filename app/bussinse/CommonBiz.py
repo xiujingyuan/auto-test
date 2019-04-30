@@ -50,20 +50,21 @@ class CommonBiz(UnSerializer,Serializer):
             #db.session.close()
 
     def sendMail(self,request):
-        request_json = request.json
-        to_email = request_json['to_mail'].split(";")
-
-        content = request_json['content']
-        #to_cc = request_json['to_cc']
-        sender = '634586189@qq.com'
-        sender_mail = 'p_scm@kuainiugroup.com'
-        sender_passwd = 'ftlhypyhtcrjbddh'
-        mail_title = request_json['mail_title']
-        message = MIMEText(content,'html','utf-8')
-        message['From'] = Header(sender_mail, 'utf-8')
-        message['To'] = Header(','.join(to_email), 'utf-8')
-        message['Subject'] =Header(mail_title, 'utf-8')
         try:
+            request_json = request.json
+            to_email = request_json['to_mail'].split(";")
+
+            content = request_json['content']
+            #to_cc = request_json['to_cc']
+            sender = '634586189@qq.com'
+            sender_mail = 'p_scm@kuainiugroup.com'
+            sender_passwd = 'ftlhypyhtcrjbddh'
+            mail_title = request_json['mail_title']
+            message = MIMEText(content,'html','utf-8')
+            message['From'] = Header(sender_mail, 'utf-8')
+            message['To'] = Header(','.join(to_email), 'utf-8')
+            message['Subject'] =Header(mail_title, 'utf-8')
+
             smtp = smtplib.SMTP()
             smtp.connect('smtp.qq.com')
             smtp.ehlo()
