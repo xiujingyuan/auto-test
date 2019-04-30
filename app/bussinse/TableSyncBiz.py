@@ -40,7 +40,7 @@ class TableSyncBiz(object):
             "msg":error_message
         }
 
-        if table_list is None or table_list == "":
+        if table_list is None or table_list == "" or len(table_list)==0:
             self.get_diff_tables(source_env,target_env,result)
         else:
             self.get_special_diff_tables(source_env,target_env,table_list,result)
