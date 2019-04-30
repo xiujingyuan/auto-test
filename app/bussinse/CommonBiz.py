@@ -68,7 +68,6 @@ class CommonBiz(UnSerializer,Serializer):
             smtp = smtplib.SMTP()
             smtp.connect('smtp.qq.com')
             current_app.logger.info(to_email)
-            smtp.ehlo()
             smtp.starttls()
             current_app.logger.info(to_email)
             smtp.login(sender, sender_passwd)
