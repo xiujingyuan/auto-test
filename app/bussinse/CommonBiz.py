@@ -67,16 +67,15 @@ class CommonBiz(UnSerializer,Serializer):
             current_app.logger.info(to_email)
             smtp = smtplib.SMTP()
             smtp.connect('smtp.qq.com')
-            current_app.logger.info(to_email)
+            smtp.ehlo()
             smtp.starttls()
-            current_app.logger.info(to_email)
             smtp.login(sender, sender_passwd)
             current_app.logger.info(to_email)
             print(to_email)
             smtp.sendmail(sender, to_email, message.as_string())
             print("发送邮件成功！！！")
             smtp.quit()
-        except smtplib.SMTPException as e:
+        except Exception as e:
             current_app.logger.exception(e)
             print("发送邮件失败！！！")
             return 9999
