@@ -66,7 +66,7 @@ class CommonBiz(UnSerializer,Serializer):
             message['Subject'] =Header(mail_title, 'utf-8')
             current_app.logger.info(to_email)
             smtp = smtplib.SMTP_SSL(host='smtp.qq.com')
-            smtp.connect('smtp.qq.com',465)
+            smtp.connect(host='smtp.qq.com',port=465)
             smtp.login(sender, sender_passwd)
             current_app.logger.info(to_email)
             print(to_email)
