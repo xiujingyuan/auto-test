@@ -66,6 +66,8 @@ class CommonBiz(UnSerializer,Serializer):
         try:
             smtp = smtplib.SMTP()
             smtp.connect('smtp.qq.com')
+            smtp.ehlo()
+            smtp.starttls()
             smtp.login(sender, sender_passwd)
             print(to_email)
             smtp.sendmail(sender, to_email, message.as_string())
