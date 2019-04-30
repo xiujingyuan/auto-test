@@ -64,7 +64,7 @@ class CommonBiz(UnSerializer,Serializer):
             message['From'] = Header(sender_mail, 'utf-8')
             message['To'] = Header(','.join(to_email), 'utf-8')
             message['Subject'] =Header(mail_title, 'utf-8')
-
+            current_app.logger.info(to_email)
             smtp = smtplib.SMTP()
             smtp.connect('smtp.qq.com')
             smtp.ehlo()
