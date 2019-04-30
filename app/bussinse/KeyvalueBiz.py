@@ -49,8 +49,11 @@ class KeyvalueBiz(UnSerializer, Serializer):
         for to_env in target_env:
             # from_env 比to_env 多的数据。
             diff_keyvalue = {}
-            if keyvalue_list is None or keyvalue_list == "":
-                diff_keyvalue_list = self.get_diff_keyvalue_keys(source_env, to_env)
+            if keyvalue_list is None or keyvalue_list == "" or len(keyvalue_list)==0:
+                if update_flag ==False:
+                    diff_keyvalue_list = self.get_diff_keyvalue_keys(source_env, to_env)
+                else:
+                    diff_keyvalue_list = self.get_diff_keyvalue_keys(source_env, None)
                 diff_keyvalue = self.get_keyvalue_bykey(diff_keyvalue_list, source_env)
             else:
                 diff_keyvalue = self.get_keyvalue_bykey(keyvalue_list, source_env)
@@ -66,14 +69,14 @@ class KeyvalueBiz(UnSerializer, Serializer):
                 "update_keys":[],
                 "msg":error_message
             }
+            print(diff_keyvalue)
             for keyvalue in diff_keyvalue:
-                current_app.logger.info(diff_keyvalue)
                 self.update_or_add_keyvalue(keyvalue, to_env, last_user,result,update_flag)
             current_app.logger.info(result)
         return result
 
     def replace_target_key(self, targets, keyvalue_key_replace):
-        if keyvalue_key_replace != "" and keyvalue_key_replace is not None:
+        if keyvalue_key_replace != "" and keyvalue_key_replace is not None and len(keyvalue_key_replace)>0:
             for keyvalue_key in keyvalue_key_replace:
                 for key, value in keyvalue_key.items():
                     for target in targets:
@@ -81,7 +84,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
             return targets
 
     def replace_target_value(self, targets, keyvalue_value_replace):
-        if keyvalue_value_replace != "" and keyvalue_value_replace is not None:
+        if keyvalue_value_replace != "" and keyvalue_value_replace is not None and len(keyvalue_value_replace)>0:
             for keyvalue_key in keyvalue_value_replace:
                 for key, value in keyvalue_key.items():
                     for target in targets:
@@ -90,6 +93,7 @@ class KeyvalueBiz(UnSerializer, Serializer):
 
     def get_diff_keyvalue_keys(self, from_env, to_env):
         # 获取两套环境中，from_env 比to_env 多的key
+        to_env_keyvalues =[]
         if from_env is not None:
             from_env_keyvalues = self.get_keyvalue_key_byenv(from_env)
         if to_env is not None:
@@ -136,11 +140,11 @@ class KeyvalueBiz(UnSerializer, Serializer):
                     key_value_dict = key_value.__dict__
                     self.update_keyvalue(keyvalue_key, key_value_dict, to_env, user)
                     result['update_keys'].append(keyvalue_key)
-                    current_app.logger.info("update_special_keys:"+result)
+                    current_app.logger.info("update_special_keys:"+str(result))
             else:
                 self.add_keyvalue(new_key_value, to_env, user)
                 result['add_keys'].append(key_value.keyvalue_key)
-                current_app.logger.info("add_keys:"+result)
+                current_app.logger.info("add_keys:"+str(result))
             return result
         except Exception as e:
             print(str(e))
