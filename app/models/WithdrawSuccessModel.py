@@ -37,6 +37,7 @@ class WithdrawSuccessModel(object):
         try:
             req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
             result = req.json()
+            print(result)
             return result
         except Exception as e:
             current_app.logger.exception(e)
@@ -52,6 +53,7 @@ class WithdrawSuccessModel(object):
         result =  {
             "type":"AssetWithdrawSuccess",
             "key":str(uuid.uuid1()),
+            "from_system": "BIZ",
             "data":{
                 "asset":basic_info,
                 "loan_record":loan_info,
@@ -94,17 +96,17 @@ class WithdrawSuccessModel(object):
         basic_info['actual_grant_at'] = cls.date_to_datetime(base_at+delta4)
         basic_info['due_at'] = due_at
         basic_info['payoff_at'] = due_at
-        basic_info['from_system'] = reqeust_body['from_system']
+        basic_info['from_system'] = 'dsq' #reqeust_body['from_system']
         basic_info['status'] = 'repay'
-        basic_info['principal_amount'] = reqeust_body['data']['asset']['cmdb_product_number']
-        basic_info['granted_principal_amount'] = reqeust_body['data']['asset']['principal_amount']
+        basic_info['principal_amount'] = int(reqeust_body['data']['asset']['principal_amount']*100)
+        basic_info['granted_principal_amount'] = int(reqeust_body['data']['asset']['principal_amount']*100)
         basic_info['loan_channel'] = reqeust_body['data']['asset']['loan_channel']
         basic_info['alias_name'] = reqeust_body['data']['asset']['item_no']
-        basic_info['interest_amount'] = reqeust_body['data']['asset']['interest_amount']
-        basic_info['fee_amount'] = reqeust_body['data']['asset']['fee_amount']
+        basic_info['interest_amount'] = int(reqeust_body['data']['asset']['interest_amount'] *100)
+        basic_info['fee_amount'] = int(reqeust_body['data']['asset']['fee_amount']*100)
         basic_info['balance_amount'] = 0
         basic_info['repaid_amount'] = 0
-        basic_info['total_amount'] = reqeust_body['data']['asset']['total_amount']
+        basic_info['total_amount'] = int(reqeust_body['data']['asset']['total_amount']*100)
         basic_info['version'] = 1
         basic_info['interest_rate'] = reqeust_body['data']['asset']['interest_rate']
         basic_info['charge_type'] = reqeust_body['data']['asset']['charge_type']
@@ -136,7 +138,7 @@ class WithdrawSuccessModel(object):
         basic_info['finish_at'] = cls.date_to_datetime(base_at+delta4)
         basic_info['trans_property'] = None
         basic_info['pre_interest'] = None
-        basic_info['commission_amt_interest'] = reqeust_body['data']['asset']['loan_channel']
+        basic_info['commission_amt_interest'] = reqeust_body['data']['asset']['interest_amount']
         basic_info['grant_at'] =cls.date_to_datetime(base_at+delta4)
         basic_info['push_at'] = cls.date_to_datetime(base_at+delta3)
         return basic_info
