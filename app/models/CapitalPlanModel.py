@@ -35,8 +35,10 @@ class CapitalPlanModel(object):
     @classmethod
     def http_request_post(cls,data,url,headers):
         try:
+            print(data)
             req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
             result = req.json()
+            print(result)
             return result
         except Exception as e:
             current_app.logger.exception(e)
@@ -89,14 +91,27 @@ class CapitalPlanModel(object):
     def build_transaction_params(cls,calc_rate,period_count,item_no,sign_at,fee_rate,interest_rate):
         tran_info_list =[]
 
+        manage=None
+        interest_list =None
+        service_list =None
+        manage_list=None
+        principal =None
+        service = None
+        interest=None
+
+
         trans = calc_rate['data']['calculate_result']
         if 'principal' in trans.keys():
             principal = trans['principal']
         if 'interest' in trans.keys():
             interest = trans['interest']
         if 'fee' in trans.keys():
-            service = trans['fee']['service']
-            manage = trans['fee']['manage']
+            fees = trans['fee']
+            if 'service' in fees.keys():
+                service = trans['fee']['service']
+            if 'manage' in fees.keys():
+                manage = trans['fee']['manage']
+
         if principal is not None and len(principal)>0:
             principal_list=cls.generate_params_trans('principal',principal,period_count,sign_at,item_no,fee_rate,interest_rate)
         if interest is not None and len(interest)>0:
