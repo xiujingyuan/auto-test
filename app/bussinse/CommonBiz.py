@@ -123,7 +123,8 @@ class CommonBiz(UnSerializer,Serializer):
     def withdrawSuccess(self,request):
         try:
             request_json = request.json
-            request_body = request_json['request_body']
+            request_body = request_json['request_body'].replace("'",'"').replace('None','null')
+            request_body = json.loads(request_body)
             call_back = request_json['call_back']
             params = WithdrawSuccessModel.build_all_params(request_body)
             urls = call_back.split(";")
