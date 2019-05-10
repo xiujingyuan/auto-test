@@ -11,7 +11,7 @@
 
 import json
 
-from flask import jsonify, request
+from flask import jsonify, request,current_app
 from app.common.tools.CommonResult import CommonResult
 
 from app.api.v1 import api_v1
@@ -61,5 +61,15 @@ def send_mail():
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/common/capital-plan',methods=["POST"])
+def capital_plan():
+    common = CommonBiz()
+    result = common.capitalPlan(request)
+    return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/common/withdraw-success',methods=["POST"])
+def withdraw_success():
+    common = CommonBiz()
+    result = common.withdrawSuccess(request)
+    return jsonify(CommonResult.fill_result(result))

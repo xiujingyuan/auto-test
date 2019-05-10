@@ -29,6 +29,7 @@ class Config:
     MAIL_PASSWORD = "vdpritgxwgcnbajd"
     ENCRY_URL ='http://test-encryptor.qianshengqian.com/encrypt/'
     DEENCRY_URL = 'http://test-encryptor.qianshengqian.com/decrypt/plain/'
+    CMDB_URL = "http://kong-api-test.kuainiujinke.com/cmdb1/v5/rate/calculate"
     SYNC_ENV_LIST =['biz1','biz2']
 
     JC_MOCK_MAIL_SUBJECT_PREFIX = '[Jc-Mock]'
