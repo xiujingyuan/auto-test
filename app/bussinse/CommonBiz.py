@@ -14,6 +14,7 @@ from app.common.tools.Serializer import Serializer
 from app.models.PrevModel import PrevModel
 from app.models.CommonToolsModel import CommonToolsModel
 from app.models.CapitalPlanModel import CapitalPlanModel
+from app.models.CaseModel import Case
 from app.models.WithdrawSuccessModel import WithdrawSuccessModel
 from email.header import Header
 from email.mime.text import MIMEText
@@ -38,7 +39,21 @@ class CommonBiz(UnSerializer,Serializer):
             db.session.rollback()
             return 9999
         #finally:
-            #db.session.close()
+        #db.session.close()
+
+    def get_from_system(self):
+        try:
+            result = PrevModel.query.with_entities(Case.case_from_system).filter(Case.case_from_system!="").distinct().all()
+            temp = []
+            for re in result :
+                temp.append(re[0])
+            return temp
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return 9999
+        #finally:
+        #db.session.close()
 
     def get_common_tools(self):
         try:
@@ -123,8 +138,12 @@ class CommonBiz(UnSerializer,Serializer):
     def withdrawSuccess(self,request):
         try:
             request_json = request.json
-            request_body = request_json['request_body'].replace("'",'"').replace('None','null')
-            request_body = json.loads(request_body)
+            import_params = request_json['request_body']
+            if (type(import_params)==dict):
+                request_body = import_params
+            else:
+                request_body = request_json['request_body'].replace("'",'"').replace('None','null')
+                request_body = json.loads(request_body)
             call_back = request_json['call_back']
             params = WithdrawSuccessModel.build_all_params(request_body)
             urls = call_back.split(";")
