@@ -123,13 +123,14 @@ class CommonBiz(UnSerializer,Serializer):
                 interest_rate = request_json['interest_rate']
 
             cmdb_url,cmdb_request = CapitalPlanModel.get_calculate_request(product_name,principal_amount,period_count,sign_date)
-            print(cmdb_request)
+            current_app.logger.info(cmdb_request)
             headers ={'content-type': 'application/json'}
             result = CapitalPlanModel.http_request_post(cmdb_request,cmdb_url,headers)
             params = CapitalPlanModel.build_all_params(channel,item_no,int(period_count),int(period),sign_date,principal_amount,product_name,result,fee_rate,interest_rate)
             urls = call_back.split(";")
             for url in urls:
-                 CapitalPlanModel.http_request_post(params,url,headers)
+                if  url is not None and url !="":
+                    CapitalPlanModel.http_request_post(params,url,headers)
             return params
         except Exception as e:
             current_app.logger.exception(e)
@@ -137,7 +138,11 @@ class CommonBiz(UnSerializer,Serializer):
 
     def withdrawSuccess(self,request):
         try:
-            request_json = request.json
+            if isinstance(request,dict):
+                request_json = request
+            else:
+                request_json = request.json
+
             import_params = request_json['request_body']
             if (type(import_params)==dict):
                 request_body = import_params
@@ -147,10 +152,87 @@ class CommonBiz(UnSerializer,Serializer):
             call_back = request_json['call_back']
             params = WithdrawSuccessModel.build_all_params(request_body)
             urls = call_back.split(";")
+
             for url in urls:
-                headers ={'content-type': 'application/json'}
-                WithdrawSuccessModel.http_request_post(params,url,headers)
+
+                if  url is not None and url !="":
+                    headers ={'content-type': 'application/json'}
+                    WithdrawSuccessModel.http_request_post(params,url,headers)
             return params
         except Exception as e:
             current_app.logger.exception(e)
             return 9999
+
+
+    def grantWithdrawSuccess(self,request):
+        try:
+            request_dict = request.json
+            if "item_no" in request_dict.keys():
+                item_no = request_dict['item_no']
+            if "env" in request_dict.keys():
+                env = request_dict['env']
+            if "call_back" in request_dict.keys():
+                call_back = request_dict['call_back']
+            sql = '''
+                select task_request_data from {0}.task where task_order_no='{1}'
+            '''.format(env,item_no)
+            result = db.session.execute(sql).fetchone()
+            defualt_withdraw ="http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive;".format(env[1:])
+            call_back = defualt_withdraw +call_back
+            result = json.loads(result.task_request_data)
+            request_body = {
+                "request_body":result,
+                "call_back":call_back
+            }
+            withdraw_success_result = self.withdrawSuccess(request_body)
+            if withdraw_success_result ==9999:
+                return "放款成功通知失败，具体错误信息请联系管理员"
+
+            capital_plan_result = self.grant_capital_plan(result,env)
+            if capital_plan_result==9999 or isinstance(capital_plan_result,str):
+                return capital_plan_result
+
+        except Exception as e:
+            current_app.logger.exception(e)
+            return 9999
+
+    def grant_capital_plan(self,request,env):
+        try:
+            request_json = request['data']['asset']
+            if 'cmdb_product_number' in request_json.keys():
+                product_name = request_json['cmdb_product_number']
+            if 'principal_amount' in request_json.keys():
+                principal_amount = int(request_json['principal_amount']) *100
+            if 'period_count' in request_json.keys():
+                period_count = request_json['period_count']
+            if 'grant_at' in request_json.keys():
+                sign_date = request_json['grant_at']
+            if 'loan_channel' in request_json.keys():
+                channel = request_json['loan_channel']
+            if 'item_no' in request_json.keys():
+                item_no = request_json['item_no']
+            if 'period_day' in request_json.keys():
+                period = request_json['period_day']
+            if 'fee_rate' in request_json.keys():
+                fee_rate = request_json['fee_rate']
+            if 'interest_rate' in request_json.keys():
+                interest_rate = request_json['interest_rate']
+            defualt_capital ="http://kong-api-test.kuainiujinke.com/{0}/capital-asset/asset-loan;http://kong-api-test.kuainiujinke.com/{1}/capital-asset/grant;".format(env[1:],'r'+env[1:])
+            cmdb_url,cmdb_request = CapitalPlanModel.get_calculate_request(product_name,principal_amount,period_count,sign_date)
+            print(cmdb_request)
+            headers ={'content-type': 'application/json'}
+            result = CapitalPlanModel.http_request_post(cmdb_request,cmdb_url,headers)
+            params = CapitalPlanModel.build_all_params(channel,item_no,int(period_count),int(period),sign_date,principal_amount,product_name,result,fee_rate,interest_rate)
+            if isinstance(params,str):
+                return "汇率编号已经失效，无法生成资方还款计划"
+            urls = defualt_capital.split(";")
+            for url in urls:
+                print(url)
+                if  url is not None and url !="":
+                    CapitalPlanModel.http_request_post(params,url,headers)
+            return params
+        except Exception as e:
+            current_app.logger.exception(e)
+            return 9999
+
+

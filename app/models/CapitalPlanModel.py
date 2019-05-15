@@ -35,10 +35,9 @@ class CapitalPlanModel(object):
     @classmethod
     def http_request_post(cls,data,url,headers):
         try:
-            print(data)
             req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
             result = req.json()
-            print(result)
+            current_app.logger.info(url+str(result))
             return result
         except Exception as e:
             current_app.logger.exception(e)

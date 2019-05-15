@@ -73,3 +73,24 @@ def withdraw_success():
     common = CommonBiz()
     result = common.withdrawSuccess(request)
     return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/common/prev-flag',methods=['GET'])
+def search_prev_flag():
+    cs = CommonBiz()
+    result = cs.get_prev_flag()
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/common/from-system',methods=['GET'])
+def search_from_system():
+    cs = CommonBiz()
+    result = cs.get_from_system()
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/grant/withdraw-success',methods=["POST"])
+def grant_withdraw_success():
+    common = CommonBiz()
+    result = common.grantWithdrawSuccess(request)
+    return jsonify(CommonResult.fill_result(result))
