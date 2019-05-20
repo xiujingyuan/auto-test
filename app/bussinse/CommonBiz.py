@@ -6,9 +6,10 @@
 # @date 2019/1/19 22:29
 
 import app.common.config.config as config
-import smtplib,json
+import smtplib,json,os
 from app import db
 from flask import current_app
+from werkzeug.utils import secure_filename
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
 from app.models.PrevModel import PrevModel
@@ -18,6 +19,7 @@ from app.models.CaseModel import Case
 from app.models.WithdrawSuccessModel import WithdrawSuccessModel
 from email.header import Header
 from email.mime.text import MIMEText
+from app.models.ErrorCode import ErrorCode
 
 
 
@@ -37,7 +39,7 @@ class CommonBiz(UnSerializer,Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         #finally:
         #db.session.close()
 
@@ -51,7 +53,7 @@ class CommonBiz(UnSerializer,Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         #finally:
         #db.session.close()
 
@@ -62,7 +64,7 @@ class CommonBiz(UnSerializer,Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             return result
             #db.session.close()
@@ -94,7 +96,7 @@ class CommonBiz(UnSerializer,Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             print("发送邮件失败！！！")
-            return 9999
+            return ErrorCode.ERROR_CODE
 
     def capitalPlan(self,request):
         try:
@@ -134,7 +136,7 @@ class CommonBiz(UnSerializer,Serializer):
             return params
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
     def withdrawSuccess(self,request):
         try:
@@ -161,7 +163,7 @@ class CommonBiz(UnSerializer,Serializer):
             return params
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
     def grantWithdrawSuccess(self,request):
@@ -185,16 +187,16 @@ class CommonBiz(UnSerializer,Serializer):
                 "call_back":call_back
             }
             withdraw_success_result = self.withdrawSuccess(request_body)
-            if withdraw_success_result ==9999:
+            if withdraw_success_result ==ErrorCode.ERROR_CODE:
                 return "放款成功通知失败，具体错误信息请联系管理员"
 
             capital_plan_result = self.grant_capital_plan(result,env)
-            if capital_plan_result==9999 or isinstance(capital_plan_result,str):
+            if capital_plan_result==ErrorCode.ERROR_CODE or isinstance(capital_plan_result,str):
                 return capital_plan_result
 
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
     def grant_capital_plan(self,request,env):
         try:
@@ -233,6 +235,25 @@ class CommonBiz(UnSerializer,Serializer):
             return params
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
+
+
+    def upload_save_file(self,request):
+        data = {
+            "code": 1,
+            "message": "复制用例失败"
+        }
+
+        if 'upfile' in request.files:
+            file = request.files['upfile']
+        filename_ext = file.filename
+        if '.' in filename_ext and filename_ext.rsplit('.', 1)[1].lower() in ['png','jpg','bpm']:
+            filename = secure_filename(filename_ext)
+            file.save(os.path.join('/data/www/wwwroot/images',filename))
+            data['code']=0
+            data['message']='上传成功'
+
+        return data
+
 
 

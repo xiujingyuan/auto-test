@@ -20,6 +20,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from flask_restful import Api,Resource
 from flask import Flask
+from app.models.ErrorCode import ErrorCode
 
 app = Flask(__name__)
 api = Api(app)
@@ -88,7 +89,7 @@ class FourElement(Resource):
     def get_phone_number(self):
         # prelist=["130","131","132","133","134","135","136","137","138","139","147","150","151","152","153","155","156","157","158","159","186","187","188"]
         # prefix = random.choice(prelist)
-        # number = str(random.randint(0,99999999)).zfill(8)
+        # number = str(random.randint(0,ErrorCode.ERROR_CODEErrorCode.ERROR_CODE)).zfill(8)
         # return prefix + number
         return self.faker.phone_number()
 
@@ -113,7 +114,7 @@ class FourElement(Resource):
                          '622280'
                          ]
         width = bank_code_length-len(bank_code_bin[id])-1
-        max_string = '9999999999999'
+        max_string = 'ErrorCode.ERROR_CODEErrorCode.ERROR_CODEErrorCode.ERROR_CODE9'
         max = int(max_string[0:width])
         random_code = str(random.randint(0,max)).zfill(width)
         bank_code = str(bank_code_bin[id])+random_code

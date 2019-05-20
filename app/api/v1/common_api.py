@@ -18,6 +18,7 @@ from app.api.v1 import api_v1
 from app.bussinse.CommonBiz import CommonBiz
 from app.bussinse.KeyvalueBiz import KeyvalueBiz
 from app.bussinse.TableSyncBiz import TableSyncBiz
+from app.bussinse.ReportBiz import ReportBiz
 
 
 @api_v1.route('/common/getdblist', methods=['GET'])
@@ -94,3 +95,28 @@ def grant_withdraw_success():
     common = CommonBiz()
     result = common.grantWithdrawSuccess(request)
     return jsonify(CommonResult.fill_result(result))
+
+@api_v1.route('/report/write-report',methods=['POST'])
+def report_writeport():
+    report = ReportBiz()
+    result = report.write_report(request)
+    print(result)
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/report/capturescreen',methods=['POST'])
+def capture_screen():
+    report = ReportBiz()
+    request_json = request.json
+    result = report.capture_screen_report(request_json['url'],request_json['path'])
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/common/upload/file',methods=['POST'])
+def upload_file():
+    cmmon = CommonBiz()
+    result = cmmon.upload_save_file(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
+

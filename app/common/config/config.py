@@ -16,17 +16,7 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'default': ProductionConfig
+    'default': DevelopmentConfig
 }
 
 
-variable_database_list=[
-    "gbiz1",
-    "gbiz2",
-    "gbiz1",
-    "gbiz2",
-    "gbiz1",
-    "gbiz2",
-    "gbiz1",
-    "gbiz2"
-]

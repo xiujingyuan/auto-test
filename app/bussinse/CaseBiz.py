@@ -16,6 +16,7 @@ from app.models.InitModel import InitModel
 from app.models.MockModel import MockModel
 from app.models.PrevModel import PrevModel
 from app.common.tools.UnSerializer import UnSerializer
+from app.models.ErrorCode import ErrorCode
 
 
 
@@ -65,7 +66,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             return case_id
 
@@ -84,7 +85,7 @@ class CaseBiz(UnSerializer):
             return res
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
     def change_case(self,data,case_id):
@@ -93,7 +94,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -112,7 +113,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
             return 0
@@ -124,7 +125,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -138,7 +139,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -226,7 +227,7 @@ class CaseBiz(UnSerializer):
             return data
         except Exception as e :
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
     def get_exec_caseid(self,caseids):
         try:
@@ -246,7 +247,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -260,7 +261,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -287,7 +288,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -310,7 +311,7 @@ class CaseBiz(UnSerializer):
                 if case_id is None or case_id =="" \
                     or case_from_system is None or case_from_system=="" :
                     error_message ="case_id ,case_from_system 均不能为空"
-                    return 9999,error_message
+                    return ErrorCode.ERROR_CODE,error_message
                 if 'case_author' in input_params.keys():
                     case_author = input_params['case_author']
 
@@ -320,7 +321,7 @@ class CaseBiz(UnSerializer):
                 case_exec_group_new = str(case_exec_group)+'copy'
                 if self.check_group_exists(case_exec_group_new):
                     error_message="复杂用例名称已经存在，不能再次复制"
-                    return 9999,error_message
+                    return ErrorCode.ERROR_CODE,error_message
 
             result = self.get_maxandmin_caseid(case_id,case_exec_group,case_from_system)
 
@@ -330,7 +331,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999,error_message
+            return ErrorCode.ERROR_CODE,error_message
         finally:
             db.session.commit()
 
@@ -348,7 +349,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -366,7 +367,7 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 

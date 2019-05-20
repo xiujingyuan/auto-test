@@ -16,7 +16,7 @@ from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
 from environment.common.config import Config
 from flask import current_app
-
+from app.models.ErrorCode import ErrorCode
 class EncryBiz(UnSerializer):
 
     def encry_data(self,request):
@@ -33,7 +33,7 @@ class EncryBiz(UnSerializer):
             return result
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
     def reuqest_encrp(self,data):
@@ -61,7 +61,7 @@ class EncryBiz(UnSerializer):
             return "test"
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
 
@@ -111,7 +111,7 @@ class EncryBiz(UnSerializer):
             return result
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
     def generate_data_deencry(self,value):

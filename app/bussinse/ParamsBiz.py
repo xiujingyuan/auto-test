@@ -6,6 +6,7 @@
 # @date 2019/1/19 22:29
 
 from app.models.ParamsModel import ParamsModel
+from app.models.ErrorCode import ErrorCode
 from app import db
 from flask import current_app
 from app.common.tools.UnSerializer import UnSerializer
@@ -25,7 +26,7 @@ class ParamsBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             return id
 
@@ -37,7 +38,7 @@ class ParamsBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -48,7 +49,7 @@ class ParamsBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -95,7 +96,7 @@ class ParamsBiz(UnSerializer):
             return data
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
 

@@ -5,13 +5,17 @@
 # @author fyi zhang
 # @date 2019/1/19 22:29
 
+
+import time
 from app import db
 import traceback,datetime,decimal,json
 from app.models.HistoryCaseModel import HistoryCaseModel
 from app.models.HistoryInitModel import HistoryInitModel
 from app.models.HistoryPrevModel import HistoryPrevModel
+from app.models.ErrorCode import ErrorCode
 from sqlalchemy import and_
 from flask import current_app
+
 
 class HistoryBiz(object):
 
@@ -21,6 +25,7 @@ class HistoryBiz(object):
     def search_history(self,request):
         try:
             input_params = request.json
+
             params =[]
             page_index =1
             page_size=10
@@ -100,6 +105,8 @@ class HistoryBiz(object):
                                          HistoryInitModel.case_init_sql_params,
                                          HistoryInitModel.case_init_sql_database
                                          )
+
+
                 query = query.join(HistoryInitModel,
                                    and_(HistoryCaseModel.run_id == HistoryInitModel.run_id,
                                    HistoryInitModel.case_init_case_id==HistoryCaseModel.history_case_id),isouter=True
@@ -107,10 +114,12 @@ class HistoryBiz(object):
                                     HistoryCaseModel.run_id == HistoryPrevModel.run_id),isouter=True)
 
                 query = query.filter(*params)
+                current_app.logger.info(int(time.time()))
                 query=query.order_by(HistoryCaseModel.run_id.desc()).order_by(HistoryCaseModel.history_case_exec_group).order_by(HistoryCaseModel.history_case_exec_priority)
                 result_paginate=query.paginate(page=page_index, per_page=page_size, error_out=False)
+                current_app.logger.info(int(time.time()))
                 result = result_paginate.items
-                count = result_paginate.total
+                #count = result_paginate.total
                 col_name = ('history_id',
                             'history_case_name',
                             'run_id',
@@ -156,16 +165,18 @@ class HistoryBiz(object):
                     for col in range(len(col_name)):
                         temp[col_name[col]] = res[col]
                     results.append(temp)
+                print(time.time())
                 results = self.SerializerDict(results)
+                print(time.time())
                 data = {}
                 data['page_index'] = page_index
                 data['cases'] = results
                 data['page_size'] = len(results)
-                data['total'] = count
+                data['total'] = 10
                 return data
         except Exception as e:
             current_app.logger.exception(e)
-            return 9999
+            return ErrorCode.ERROR_CODE
 
 
 

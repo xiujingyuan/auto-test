@@ -12,6 +12,7 @@
 
 from app import db
 from app.models.InitModel import InitModel
+from app.models.ErrorCode import ErrorCode
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
 from flask import current_app
@@ -42,7 +43,7 @@ class InitBiz(UnSerializer):
         except Exception as e :
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -52,7 +53,7 @@ class InitBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -63,7 +64,7 @@ class InitBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -74,7 +75,7 @@ class InitBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 

@@ -14,6 +14,7 @@ from app import db
 from app.models.MockModel import MockModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
+from app.models.ErrorCode import ErrorCode
 from flask import current_app
 
 class MockBiz(UnSerializer):
@@ -55,7 +56,7 @@ class MockBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -69,7 +70,7 @@ class MockBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
@@ -80,7 +81,7 @@ class MockBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
-            return 9999
+            return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
 
