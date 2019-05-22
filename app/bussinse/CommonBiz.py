@@ -239,21 +239,31 @@ class CommonBiz(UnSerializer,Serializer):
 
 
     def upload_save_file(self,request):
-        data = {
-            "code": 1,
-            "message": "复制用例失败"
-        }
+        try:
+            data = {
+                "code": 1,
+                "message": ""
+            }
 
-        if 'upfile' in request.files:
-            file = request.files['upfile']
-        filename_ext = file.filename
-        if '.' in filename_ext and filename_ext.rsplit('.', 1)[1].lower() in ['png','jpg','bpm']:
-            filename = secure_filename(filename_ext)
-            file.save(os.path.join('/data/www/wwwroot/images',filename))
-            data['code']=0
-            data['message']='上传成功'
+            if 'upfile' in request.files:
+                file = request.files['upfile']
+            print("1111111")
+            if 'branch_name' in request.json:
+                branch_name = request.json['branch_name']
+            filename_ext = file.filename
+            if '.' in filename_ext and filename_ext.rsplit('.', 1)[1].lower() in ['png','jpg','bpm']:
+                filename = secure_filename(filename_ext)
+                path = os.path.json(config.image_path,branch_name)
+                if os.path.exists(path)==False:
+                    print(path)
+                    os.makedirs(path)
+                file.save(os.path.join(path,filename))
+                data['code']=0
+                data['message']='上传成功'
 
-        return data
+            return data
+        except Exception as e:
+            current_app.logger.exception(e)
 
 
 

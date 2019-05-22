@@ -99,17 +99,23 @@ def grant_withdraw_success():
 @api_v1.route('/report/write-report',methods=['POST'])
 def report_writeport():
     report = ReportBiz()
-    result = report.write_report(request)
+    result = report.transfer_params(request)
     print(result)
     return jsonify(CommonResult.fill_result(result))
 
 
 @api_v1.route('/report/capturescreen',methods=['POST'])
 def capture_screen():
+    report = 1
     report = ReportBiz()
     request_json = request.json
+    print(request_json['path'])
     result = report.capture_screen_report(request_json['url'],request_json['path'])
-    return jsonify(CommonResult.fill_result(result))
+    if result==0:
+        report_dict = request_json['report']
+        trans_dict = request_json['trans']
+        report_result = report.write_report(report_dict,trans_dict)
+    return jsonify(CommonResult.fill_result(report_result))
 
 
 @api_v1.route('/common/upload/file',methods=['POST'])

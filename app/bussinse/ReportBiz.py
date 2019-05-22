@@ -17,12 +17,19 @@ from app.common.tools.UnSerializer import UnSerializer
 
 class ReportBiz(UnSerializer):
 
-    def write_report(self, request):
+
+
+    def transfer_params(self,request):
+        request_json = request.json
+        master = request_json['report']
+        trans = request_json['trans']
+        self.write_report(master,trans)
+
+
+    def write_report(self, master,trans):
         report_id = -1
         try:
-            request_json = request.json
-            master = request_json['report']
-            trans = request_json['trans']
+
             report = ReportModel()
             report.__dict__.update(UnSerializer.un_serialize(master))
             reportIsExists, existsReport = self.check_exists_bybranch_name(report.finlab_report_branch_name,
@@ -33,12 +40,14 @@ class ReportBiz(UnSerializer):
             else:
                 result = self.add_report(report)
                 report_id =result
-                print("tianjia report report_id"+str(report_id))
-            if result == ErrorCode.ERROR_CODE:
-                return result
 
+
+            if result == ErrorCode.ERROR_CODE:
+                print(result) 
+                return result
+            print(trans)
             for tran in trans:
-                print("tran de report_id"+str(report_id))
+                print(tran)
                 report_tran = ReportTransModel()
                 report_tran.__dict__.update(UnSerializer.un_serialize(tran))
                 reportTranIsExists, report_tran_exists = self.check_tran_exists_byreportid(report_id,
@@ -47,7 +56,6 @@ class ReportBiz(UnSerializer):
                     tran_reuslt = self.update_report_tran(tran, report_tran_exists.finlab_report_transaction_id)
                 else:
                     report_tran.finlab_report_transaction_report_id = report_id
-                    print("fuzhi houde  report_id"+str(report_tran.finlab_report_transaction_report_id))
                     tran_reuslt = self.add_report_tran(report_tran)
                 if tran_reuslt == ErrorCode.ERROR_CODE:
                     return tran_reuslt
@@ -154,6 +162,12 @@ class ReportBiz(UnSerializer):
 
 
     def capture_screen_report(self,url,path):
-        driver = webdriver.PhantomJS()
-        driver.get(url)
-        driver.save_screenshot(path)
+        try:
+            driver = webdriver.PhantomJS()
+            driver.get(url)
+
+            driver.save_screenshot(path)
+            return 0
+        except Exception as e:
+            current_app.logger.exception(e)
+            return 9999
