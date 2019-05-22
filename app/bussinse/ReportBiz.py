@@ -163,7 +163,7 @@ class ReportBiz(UnSerializer):
 
     def capture_screen_report(self,url,path):
         try:
-            driver = webdriver.PhantomJS()
+            driver = webdriver.PhantomJS(executable_path="/usr/local/python3/bin/phantomjs")
             driver.get(url)
 
             driver.save_screenshot(path)
