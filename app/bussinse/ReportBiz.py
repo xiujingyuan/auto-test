@@ -4,6 +4,8 @@
 # @Site    : 
 # @File    : ReportBiz.py
 # @Software: IntelliJ IDEA
+import platform
+
 from app import db
 from flask import current_app
 from sqlalchemy import or_, and_, func
@@ -163,9 +165,14 @@ class ReportBiz(UnSerializer):
 
     def capture_screen_report(self,url,path):
         try:
-            driver = webdriver.PhantomJS(executable_path="/usr/local/python3/bin/phantomjs")
+            system_name = platform.system()
+            if system_name.lower() =='linux':
+                driver = webdriver.PhantomJS(executable_path="/usr/local/python3/bin/phantomjs")
+            else:
+                driver = webdriver.PhantomJS()
             driver.get(url)
-
+            print(url)
+            print(path)
             driver.save_screenshot(path)
             return 0
         except Exception as e:
