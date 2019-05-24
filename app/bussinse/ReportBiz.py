@@ -171,8 +171,8 @@ class ReportBiz(UnSerializer):
             else:
                 driver = webdriver.PhantomJS()
             driver.get(url)
-            print(url)
-            print(path)
+            current_app.logger.info(url)
+            current_app.logger.info(path)
             driver.save_screenshot(path)
             return 0
         except Exception as e:
