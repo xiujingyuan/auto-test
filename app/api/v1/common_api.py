@@ -104,12 +104,25 @@ def report_writeport():
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/report/search',methods=['POST'])
+def search_report():
+    report = ReportBiz()
+    result = report.search_report(request)
+    print(result)
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/report/report-detail',methods=['POST'])
+def search_report_detail():
+    report = ReportBiz()
+    result = report.get_report_detail(request)
+    print(result)
+    return jsonify(CommonResult.fill_result(result))
+
 @api_v1.route('/report/capturescreen',methods=['POST'])
 def capture_screen():
-    report = 1
     report = ReportBiz()
     request_json = request.json
-    print(request_json['path'])
     result = report.capture_screen_report(request_json['url'],request_json['path'])
     if result==0:
         report_dict = request_json['report']
