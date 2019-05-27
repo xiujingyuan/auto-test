@@ -16,6 +16,7 @@ from app.common.tools.Serializer import Serializer
 class ReportModel(db.Model,Serializer):
     __tablename__ = 'finlab_report'
     finlab_report_id= db.Column(db.Integer, primary_key=True)
+    finlab_report_result = db.Column(db.String(45))
     finlab_report_description=db.Column(db.String(5000))
     finlab_report_branch_name=db.Column(db.String(500))
     finlab_report_build_number=db.Column(db.INTEGER)
@@ -31,9 +32,11 @@ class ReportModel(db.Model,Serializer):
     finlab_report_ref_requirement=db.Column(db.String(500))
     finlab_report_case_address=db.Column(db.String(500))
     finlab_report_productor=db.Column(db.String(50))
+    finlab_report_devloper=db.Column(db.String(50))
     finlab_report_begin=db.Column(db.DateTime)
     finlab_report_end=db.Column(db.DateTime)
     finlab_report_notify_address=db.Column(db.String(1000))
+    finlab_report_system_name=db.Column(db.String(45))
     finlab_report_inuser=db.Column(db.String(255))
     finlab_report_indate=db.Column(db.DateTime,default=datetime.now,onupdate=datetime.now)
 

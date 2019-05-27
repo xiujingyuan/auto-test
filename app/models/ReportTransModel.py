@@ -18,6 +18,7 @@ class ReportTransModel(db.Model,Serializer):
     finlab_report_transaction_id= db.Column(db.Integer, primary_key=True)
     finlab_report_transaction_report_id=db.Column(db.Integer)
     finlab_report_transaction_type=db.Column(db.String(20))
+    finlab_report_transaction_name=db.Column(db.String(45))
     finlab_report_transaction_rate=db.Column(db.String(45))
     finlab_report_transaction_content=db.Column(db.TEXT)
     finlab_report_transaction_image_url=db.Column(db.String(500))

@@ -96,40 +96,6 @@ def grant_withdraw_success():
     result = common.grantWithdrawSuccess(request)
     return jsonify(CommonResult.fill_result(result))
 
-@api_v1.route('/report/write-report',methods=['POST'])
-def report_writeport():
-    report = ReportBiz()
-    result = report.transfer_params(request)
-    print(result)
-    return jsonify(CommonResult.fill_result(result))
-
-
-@api_v1.route('/report/search',methods=['POST'])
-def search_report():
-    report = ReportBiz()
-    result = report.search_report(request)
-    print(result)
-    return jsonify(CommonResult.fill_result(result))
-
-
-@api_v1.route('/report/report-detail',methods=['POST'])
-def search_report_detail():
-    report = ReportBiz()
-    result = report.get_report_detail(request)
-    print(result)
-    return jsonify(CommonResult.fill_result(result))
-
-@api_v1.route('/report/capturescreen',methods=['POST'])
-def capture_screen():
-    report = ReportBiz()
-    request_json = request.json
-    result = report.capture_screen_report(request_json['url'],request_json['path'])
-    if result==0:
-        report_dict = request_json['report']
-        trans_dict = request_json['trans']
-        report_result = report.write_report(report_dict,trans_dict)
-    return jsonify(CommonResult.fill_result(report_result))
-
 
 @api_v1.route('/common/upload/file',methods=['POST'])
 def upload_file():

@@ -19,3 +19,4 @@ from . import common_api
 from . import jenkins_api
 from . import encry_api
 from . import history_api
+from . import report_api
