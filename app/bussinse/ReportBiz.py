@@ -26,7 +26,7 @@ class ReportBiz(Serializer,UnSerializer):
         request_json = request.json
         master = request_json['report']
         trans = request_json['trans']
-        self.write_report(master,trans)
+        return self.write_report(master,trans)
 
 
     def write_report(self, master,trans):
@@ -46,11 +46,11 @@ class ReportBiz(Serializer,UnSerializer):
 
 
             if result == ErrorCode.ERROR_CODE:
-                print(result) 
+                current_app.logger.info(result)
                 return result
-            print(trans)
+            current_app.logger.info(trans)
             for tran in trans:
-                print(tran)
+                current_app.logger.info(tran)
                 report_tran = ReportTransModel()
                 report_tran.__dict__.update(UnSerializer.un_serialize(tran))
                 reportTranIsExists, report_tran_exists = self.check_tran_exists_byreportid(report_id,
@@ -188,10 +188,16 @@ class ReportBiz(Serializer,UnSerializer):
         result ={}
         try:
             if request_json is not None:
-                if 'branch_name' in request_json.keys():
-                    value = request_json['branch_name']
+                if 'report_id' in request_json.keys():
+                    value = request_json['report_id']
                     if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_branch_name == value)
+                        params.append(ReportModel.finlab_report_id == value)
+                    else:
+                        if 'branch_name' in request_json.keys():
+                            value = request_json['branch_name']
+                            if value is not None or value!="":
+                                params.append(ReportModel.finlab_report_branch_name == value)
+
                 master = db.session.query(ReportModel).filter(*params).first()
                 report = Serializer.serialize(master)
                 if master is not None:
@@ -215,35 +221,44 @@ class ReportBiz(Serializer,UnSerializer):
         sort_field=""
         try:
             if request_json is not None:
-                if 'branch_name' in request_json.keys():
-                    value = request_json['branch_name']
-                    if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_branch_name.like('%'+value+'%'))
-                if 'tester' in request_json.keys():
-                    value = request_json['tester']
-                    if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_tester == value)
-                if 'productor' in request_json.keys():
-                    value = request_json['productor']
-                    if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_productor == value)
-                if 'devloper' in request_json.keys():
-                    value = request_json['devloper']
-                    if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_devloper == value)
-                if 'begin_date' in request_json.keys():
-                    value = request_json['begin_date']
-                    if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_begin >= value)
-                if 'end_date' in request_json.keys():
-                    value = request_json['end_date']
-                    if value is not None or value!="":
-                        params.append(ReportModel.finlab_report_begin <= value)
+                if 'report_id' in request_json.keys():
+                    value = request_json['report_id']
+                    if value is not None and value!="":
+                        params.append(ReportModel.finlab_report_id.like('%'+value+'%'))
+                    else:
+                        if 'branch_name' in request_json.keys():
+                            value = request_json['branch_name']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_branch_name.like('%'+value+'%'))
+                        if 'tester' in request_json.keys():
+                            value = request_json['tester']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_tester == value)
+                        if 'productor' in request_json.keys():
+                            value = request_json['productor']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_productor == value)
+                        if 'devloper' in request_json.keys():
+                            value = request_json['devloper']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_devloper == value)
+                        if 'begin_date' in request_json.keys():
+                            value = request_json['begin_date']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_begin >= value)
+                        if 'end_date' in request_json.keys():
+                            value = request_json['end_date']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_begin <= value)
+                        if 'system_name' in request_json.keys():
+                            value = request_json['system_name']
+                            if value is not None and value!="":
+                                params.append(ReportModel.finlab_report_system_name.like('%'+value+'%'))
 
-                if 'page_index' in request_json.keys():
-                    page_index = request_json['page_index']
-                if 'page_size' in request_json.keys():
-                    page_size = request_json['page_size']
+                    if 'page_index' in request_json.keys():
+                        page_index = request_json['page_index']
+                    if 'page_size' in request_json.keys():
+                        page_size = request_json['page_size']
 
                 query = db.session.query(ReportModel)
                 query = query.filter(*params)

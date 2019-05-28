@@ -76,17 +76,17 @@ class CommonBiz(UnSerializer,Serializer):
 
             content = request_json['content']
             #to_cc = request_json['to_cc']
-            sender = '634586189@qq.com'
-            sender_mail = 'p_scm@kuainiugroup.com'
-            sender_passwd = 'ftlhypyhtcrjbddh'
+            sender = 'zhangtingli@kuainiugroup.com'
+            sender_mail = 'zdcs@kuainiugroup.com'
+            sender_passwd = 'LEtgfndJZPzBDYsj'
             mail_title = request_json['mail_title']
             message = MIMEText(content,'html','utf-8')
             message['From'] = Header(sender_mail, 'utf-8')
             message['To'] = Header(','.join(to_email), 'utf-8')
             message['Subject'] =Header(mail_title, 'utf-8')
             current_app.logger.info(to_email)
-            smtp = smtplib.SMTP_SSL(host='smtp.qq.com')
-            smtp.connect(host='smtp.qq.com',port=465)
+            smtp = smtplib.SMTP_SSL(host='smtp.exmail.qq.com')
+            smtp.connect(host='smtp.exmail.qq.com',port=465)
             smtp.login(sender, sender_passwd)
             current_app.logger.info(to_email)
             print(to_email)
@@ -247,7 +247,7 @@ class CommonBiz(UnSerializer,Serializer):
 
             if 'upfile' in request.files:
                 file = request.files['upfile']
-            print("1111111")
+            print(request)
             if 'branch_name' in request.json:
                 branch_name = request.json['branch_name']
             filename_ext = file.filename
