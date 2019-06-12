@@ -4,7 +4,9 @@
 # @Description: TODO
 # @author fyi zhang
 # @date 2019/1/19 22:29
+from sqlalchemy.orm import class_mapper
 
+from app.common.tools.Serializer import Serializer
 from app.models.CaseModel import Case
 from app import db
 from flask import current_app
@@ -371,6 +373,15 @@ class CaseBiz(UnSerializer):
         finally:
             db.session.commit()
 
-
-
-
+    @staticmethod
+    def get_new_cases():
+        try:
+            ret = []
+            new_cases = Case.query.order_by(Case.case_id.desc()).limit(8)
+            for new_case in new_cases:
+                ret.append(new_case.serialize())
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ret, ErrorCode.ERROR_CODE
+        else:
+            return ret, "success"

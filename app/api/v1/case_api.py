@@ -64,3 +64,8 @@ def copy_group_case():
     result ,error_message = cs.copy_group_case(request)
     return jsonify(CommonResult.fill_result(result,message=error_message))
 
+
+@api_v1.route('/case/last_case', methods=['GET'])
+def get_new_cases():
+    result, error_message = CaseBussinse.get_new_cases()
+    return jsonify(CommonResult.fill_result(result, message=error_message))
