@@ -377,7 +377,7 @@ class CaseBiz(UnSerializer):
     def get_new_cases():
         try:
             ret = []
-            new_cases = Case.query.order_by(Case.case_id.desc()).limit(8)
+            new_cases = Case.query.filter(Case.case_exec_group_priority == "main").order_by(Case.case_id.desc()).limit(8)
             for new_case in new_cases:
                 ret.append(new_case.serialize())
         except Exception as e:
