@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # @Time    : 公元19-05-09 下午5:26
 # @Author  : 张廷利
-# @Site    : 
+# @Site    :
 # @File    : CapitalPlan.py
 # @Software: IntelliJ IDEA
+import traceback
 import uuid,requests,json
 import datetime as dt
 import datetime
@@ -40,6 +41,7 @@ class CapitalPlanModel(object):
             current_app.logger.info(url+str(result))
             return result
         except Exception as e:
+            current_app.logger.info(traceback.format_exc())
             current_app.logger.exception(e)
             raise str(e)
 

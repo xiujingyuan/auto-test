@@ -16,6 +16,8 @@ from app.models.ErrorCode import ErrorCode
 from sqlalchemy import and_
 from flask import current_app
 
+from app.models.RunCasesModel import RunCase
+
 
 class HistoryBiz(object):
 
@@ -217,3 +219,16 @@ class HistoryBiz(object):
                     except Exception as e:
                         pass
         return result
+
+    @staticmethod
+    def last_update_history():
+        try:
+            ret = []
+            new_cases = RunCase.query.order_by(RunCase.run_id.desc()).limit(8)
+            for new_case in new_cases:
+                ret.append(new_case.serialize())
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ret, ErrorCode.ERROR_CODE
+        else:
+            return ret, "success"

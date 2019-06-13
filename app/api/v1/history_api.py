@@ -27,3 +27,13 @@ def search_history():
     #return jsonify(CommonResult.fill_result(result))
 
     return Response(json.dumps(CommonResult.fill_result(result)),mimetype='application/json')
+
+
+@api_v1.route('/history/last_update', methods=['GET'])
+def last_update_history():
+    """
+    获取最新执行的报告，前八
+    :return:
+    """
+    result = HistoryBiz.last_update_history()
+    return Response(json.dumps(CommonResult.fill_result(result)), mimetype='application/json')
