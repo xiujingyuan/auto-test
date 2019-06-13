@@ -37,6 +37,7 @@ class CapitalPlanModel(object):
     def http_request_post(cls,data,url,headers):
         try:
             req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
+            current_app.logger.info(req)
             result = req.json()
             current_app.logger.info(url+str(result))
             return result
