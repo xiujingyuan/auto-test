@@ -72,8 +72,7 @@ class CommonBiz(UnSerializer,Serializer):
     def sendMail(self,request):
         try:
             request_json = request.json
-            to_email = request_json['to_mail'].split(";")
-
+            to_email = [x for x in request_json['to_mail'].split(";") if x and x!='\n']
             content = request_json['content']
             #to_cc = request_json['to_cc']
             sender = 'zhangtingli@kuainiugroup.com'
@@ -89,7 +88,6 @@ class CommonBiz(UnSerializer,Serializer):
             smtp.connect(host='smtp.exmail.qq.com',port=465)
             smtp.login(sender, sender_passwd)
             current_app.logger.info(to_email)
-            print(to_email)
             smtp.sendmail(sender, to_email, message.as_string())
             print("发送邮件成功！！！")
             smtp.quit()
@@ -180,6 +178,8 @@ class CommonBiz(UnSerializer,Serializer):
             '''.format(env,item_no)
             result = db.session.execute(sql).fetchone()
             defualt_withdraw ="http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive;".format(env[1:])
+            if result is None:
+                return "放款成功通知失败，进件数据没有进件到gbiz 的task 表"
             call_back = defualt_withdraw +call_back
             result = json.loads(result.task_request_data)
             request_body = {
@@ -251,7 +251,7 @@ class CommonBiz(UnSerializer,Serializer):
             if 'branch_name' in request.json:
                 branch_name = request.json['branch_name']
             filename_ext = file.filename
-            if '.' in filename_ext and filename_ext.rsplit('.', 1)[1].lower() in ['png','jpg','bpm']:
+            if '.' in filename_ext :
                 filename = secure_filename(filename_ext)
                 path = os.path.json(config.image_path,branch_name)
                 if os.path.exists(path)==False:

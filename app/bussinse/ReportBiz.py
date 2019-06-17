@@ -197,7 +197,7 @@ class ReportBiz(Serializer,UnSerializer):
                             value = request_json['branch_name']
                             if value is not None or value!="":
                                 params.append(ReportModel.finlab_report_branch_name == value)
-
+                current_app.logger.info(request_json);
                 master = db.session.query(ReportModel).filter(*params).first()
                 report = Serializer.serialize(master)
                 if master is not None:
@@ -219,49 +219,51 @@ class ReportBiz(Serializer,UnSerializer):
         page_index =1
         page_size=10
         sort_field=""
+        current_app.logger.info(request_json)
         try:
             if request_json is not None:
                 if 'report_id' in request_json.keys():
                     value = request_json['report_id']
                     if value is not None and value!="":
                         params.append(ReportModel.finlab_report_id.like('%'+value+'%'))
-                    else:
-                        if 'branch_name' in request_json.keys():
-                            value = request_json['branch_name']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_branch_name.like('%'+value+'%'))
-                        if 'tester' in request_json.keys():
-                            value = request_json['tester']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_tester == value)
-                        if 'productor' in request_json.keys():
-                            value = request_json['productor']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_productor == value)
-                        if 'devloper' in request_json.keys():
-                            value = request_json['devloper']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_devloper == value)
-                        if 'begin_date' in request_json.keys():
-                            value = request_json['begin_date']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_begin >= value)
-                        if 'end_date' in request_json.keys():
-                            value = request_json['end_date']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_begin <= value)
-                        if 'system_name' in request_json.keys():
-                            value = request_json['system_name']
-                            if value is not None and value!="":
-                                params.append(ReportModel.finlab_report_system_name.like('%'+value+'%'))
+                else:
+                    if 'branch_name' in request_json.keys():
+                        value = request_json['branch_name']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_branch_name.like('%'+value+'%'))
+                    if 'tester' in request_json.keys():
+                        value = request_json['tester']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_tester == value)
+                    if 'productor' in request_json.keys():
+                        value = request_json['productor']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_productor == value)
+                    if 'devloper' in request_json.keys():
+                        value = request_json['devloper']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_devloper == value)
+                    if 'begin_date' in request_json.keys():
+                        value = request_json['begin_date']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_begin >= value)
+                    if 'end_date' in request_json.keys():
+                        value = request_json['end_date']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_begin <= value)
+                    if 'system_name' in request_json.keys():
+                        value = request_json['system_name']
+                        if value is not None and value!="":
+                            params.append(ReportModel.finlab_report_system_name.like('%'+value+'%'))
 
-                    if 'page_index' in request_json.keys():
-                        page_index = request_json['page_index']
-                    if 'page_size' in request_json.keys():
-                        page_size = request_json['page_size']
+                if 'page_index' in request_json.keys():
+                    page_index = request_json['page_index']
+                if 'page_size' in request_json.keys():
+                    page_size = request_json['page_size']
 
                 query = db.session.query(ReportModel)
                 query = query.filter(*params)
+                current_app.logger.info(query)
                 result_page = query.order_by(ReportModel.finlab_report_begin.desc()).paginate(page=page_index, per_page=page_size, error_out=False)
                 result = result_page.items
                 count = result_page.total
