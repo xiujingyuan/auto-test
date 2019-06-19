@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/5/27 10:01
 # @Author  : 张廷利
-# @Site    : 
+# @Site    :
 # @File    : report_api.py
 # @Software: IntelliJ IDEA
 
@@ -24,7 +24,7 @@ def report_writeport():
 def search_report():
     report = ReportBiz()
     result = report.search_report(request)
-    print(result)
+    # print(result)
     return jsonify(CommonResult.fill_result(result))
 
 
