@@ -6,6 +6,7 @@ from app import create_app, db
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 from app.common.config.config import config
+from raven.contrib.flask import Sentry
 
 COV = None
 if os.environ.get('FLASK_COVERAGE'):
@@ -22,6 +23,7 @@ if os.path.exists('.env'):
 
 
 app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+sentry = Sentry(app, dsn=app.config['SENTRY_DSN'])
 manager = Manager(app)
 migrate = Migrate(app, db)
 

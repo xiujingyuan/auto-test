@@ -48,6 +48,7 @@ class Config:
     LOG_FILE_MAX_BYTES = 100 * 1024 * 1024
     # 轮转数量是 10 个
     LOG_FILE_BACKUP_COUNT = 10
+    SENTRY_DSN = ""
 
     @staticmethod
     def init_app(app):
