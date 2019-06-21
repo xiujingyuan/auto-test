@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/5/16 15:51
 # @Author  : 张廷利
-# @Site    : 
+# @Site    :
 # @File    : ReportBiz.py
 # @Software: IntelliJ IDEA
 import platform
@@ -192,11 +192,11 @@ class ReportBiz(Serializer,UnSerializer):
                     value = request_json['report_id']
                     if value is not None or value!="":
                         params.append(ReportModel.finlab_report_id == value)
-                    else:
-                        if 'branch_name' in request_json.keys():
-                            value = request_json['branch_name']
-                            if value is not None or value!="":
-                                params.append(ReportModel.finlab_report_branch_name == value)
+                else:
+                    if 'branch_name' in request_json.keys():
+                        value = request_json['branch_name']
+                        if value is not None or value!="":
+                            params.append(ReportModel.finlab_report_branch_name == value)
                 current_app.logger.info(request_json);
                 master = db.session.query(ReportModel).filter(*params).first()
                 report = Serializer.serialize(master)
