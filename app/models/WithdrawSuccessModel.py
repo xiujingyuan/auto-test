@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 公元19-05-09 下午5:26
 # @Author  : 张廷利
-# @Site    : 
+# @Site    :
 # @File    : CapitalPlan.py
 # @Software: IntelliJ IDEA
 import uuid,requests,json
@@ -62,7 +62,7 @@ class WithdrawSuccessModel(object):
             }
 
         }
-        print(json.dumps(result))
+        # print(json.dumps(result))
         return result
 
 
