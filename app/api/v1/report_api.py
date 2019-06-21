@@ -32,7 +32,7 @@ def search_report():
 def search_report_detail():
     report = ReportBiz()
     result = report.get_report_detail(request)
-    print(result)
+    # print(result)
     return jsonify(CommonResult.fill_result(result))
 
 @api_v1.route('/report/capturescreen',methods=['POST'])
