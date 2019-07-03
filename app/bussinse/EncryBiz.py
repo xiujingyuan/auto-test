@@ -101,14 +101,17 @@ class EncryBiz(UnSerializer):
     def de_encry_data(self,request):
         try:
             result={}
+            new_result = {}
             request_dict = request.json
             for key ,value in request_dict.items():
                 data = self.generate_data_deencry(value)
                 encry_data = self.reuqest_de_encrp(data)
                 # encry_key = key + '_de_encry'
                 result[key] = encry_data
+                new_result[key] = encry_data[value] if not isinstance(encry_data, int) else encry_data
 
-            return result
+
+            return {"old": result, "new": new_result}
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
