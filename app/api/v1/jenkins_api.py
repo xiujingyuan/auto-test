@@ -25,25 +25,35 @@ def run_special_case():
         user_pwd = "123456"
         case_ids = request.json['case_ids']
         email = request.json['email']
-        print(case_ids)
         for case in case_ids:
             if case_biz.check_execstatus_bycaseid(case)==False:
                 return jsonify(CommonResult.fill_result(case,1,"case_id:{0} 执行状态不正确不能被执行".format(case)))
         exec_case_array = case_biz.get_exec_caseid(case_ids)
         exec_case_array_str = ','.join(str(case) for case in exec_case_array)
         server = jenkins.Jenkins(jenkins_url,user_id,user_pwd)
-        print(server.get_all_jobs())
         next_build_number = server.get_job_info('Auto_Test_Api_Run_Case1')['nextBuildNumber']
         build_number = server.build_job('Auto_Test_Api_Run_Case1',parameters={"case_ids":exec_case_array_str,"email_address":email,"debug_model":"TestRunCase.py"})
-        from time import sleep
-        sleep(10)
+        # from time import sleep
+        # sleep(10)
+        last_console_output = ""
         while True:
-            build_info = server.get_build_info('Auto_Test_Api_Run_Case1', next_build_number)
-            print(build_info["building"])
-            console_output = server.get_build_console_output("Auto_Test_Api_Run_Case1", next_build_number)
-            current_app.logger.info(console_output)
-            if not build_info["building"]:
-                break
+
+            try:
+                build_info = server.get_build_info('Auto_Test_Api_Run_Case1', next_build_number)
+                console_output = server.get_build_console_output("Auto_Test_Api_Run_Case1", next_build_number)
+            except:
+                pass
+            else:
+                console_output = console_output.strip("\r\n").strip("\n")
+                if console_output:
+                    if last_console_output:
+                        console_output = console_output.replace(last_console_output, "")
+                    if console_output:
+                        last_console_output += console_output
+                        console_output = console_output.strip("\r\n").strip("\n")
+                        print(console_output)
+                if not build_info["building"]:
+                    break
         return jsonify(CommonResult.fill_result(build_number))
     except Exception as e:
         current_app.logger.exception(traceback.format_exc())
