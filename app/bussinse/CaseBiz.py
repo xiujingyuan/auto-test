@@ -377,6 +377,8 @@ class CaseBiz(UnSerializer):
                     value = getattr(pre_case, pre_attr)
                     if pre_attr == "prev_case_id":
                         value = copycase.case_id
+                    elif pre_attr in ("prev_in_user", "prev_last_user"):
+                        value = case_author
                     setattr(copy_pre_case, pre_attr, value)
             db.session.add(copy_pre_case)
 
@@ -387,6 +389,8 @@ class CaseBiz(UnSerializer):
                     value = getattr(init_case, init_attr)
                     if init_attr == "init_case_id":
                         value = copycase.case_id
+                    elif init_attr in ("case_init_inuser", "case_init_lastuser"):
+                        value = case_author
                     setattr(copy_init_case, init_attr, value)
             db.session.add(copy_init_case)
 
