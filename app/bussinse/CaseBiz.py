@@ -5,12 +5,13 @@
 # @author fyi zhang
 # @date 2019/1/19 22:29
 from sqlalchemy.orm import class_mapper
+from sqlalchemy.sql.functions import current_user
 
 from app.common.tools.Serializer import Serializer
 from app.models.CaseModel import Case
 from app import db
-from flask import current_app
-from sqlalchemy import or_,and_,func
+from flask import current_app, json
+from sqlalchemy import or_, and_, func, inspect
 from app.bussinse.PrevBiz import PrevBiz
 from app.bussinse.MockBiz import MockBiz
 from app.bussinse.InitBiz import InitBiz
@@ -19,6 +20,7 @@ from app.models.MockModel import MockModel
 from app.models.PrevModel import PrevModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.models.ErrorCode import ErrorCode
+import time
 
 
 
@@ -316,26 +318,77 @@ class CaseBiz(UnSerializer):
                     return ErrorCode.ERROR_CODE,error_message
                 if 'case_author' in input_params.keys():
                     case_author = input_params['case_author']
-
-            if case_exec_group is None or case_exec_group=="":
-                case_exec_group_new=""
+            code = 0
+            message = '复制成功'
+            copy_time = int(time.time())
+            if case_exec_group is None or case_exec_group == "":
+                self.copy_case_by_id(case_id, copy_time, case_exec_group)
             else:
-                case_exec_group_new = str(case_exec_group)+'copy'
-                if self.check_group_exists(case_exec_group_new):
-                    error_message="复杂用例名称已经存在，不能再次复制"
-                    return ErrorCode.ERROR_CODE,error_message
+                all_cases = Case.query.filter(Case.case_exec_group == case_exec_group).all()
+                if "_copy_" in case_exec_group:
+                    case_exec_group = case_exec_group.split("_copy_")[0]
+                case_exec_group_new = "{0}_copy_{1}".format(case_exec_group, copy_time)
+                for item_case in all_cases:
+                    self.copy_case_by_id(item_case.case_id, copy_time, case_author, case_exec_group_new)
+                # case_exec_group_new = str(case_exec_group)+'copy'
+                # if self.check_group_exists(case_exec_group_new):
+                #     error_message="复杂用例名称已经存在，不能再次复制"
+                #     return ErrorCode.ERROR_CODE,error_message
+                #
+                # result = self.get_maxandmin_caseid(case_id,case_exec_group,case_from_system)
+                #
+                # db.session.execute("call gaea_framework.copy_case_from_exists_group ('{0}','{1}','{2}','{3}','{4}','{5}')".format(result[1],result[0],case_exec_group,case_from_system,case_exec_group_new,case_author))
+                # #db.session.execute("call gaea_framework.copy_case_from_exists_group (?,?,?,?,?)",result[1],result[0],case_exec_group,case_from_system,case_exec_group_new)
 
-            result = self.get_maxandmin_caseid(case_id,case_exec_group,case_from_system)
-
-            db.session.execute("call gaea_framework.copy_case_from_exists_group ('{0}','{1}','{2}','{3}','{4}','{5}')".format(result[1],result[0],case_exec_group,case_from_system,case_exec_group_new,case_author))
-            #db.session.execute("call gaea_framework.copy_case_from_exists_group (?,?,?,?,?)",result[1],result[0],case_exec_group,case_from_system,case_exec_group_new)
-            return 0,'复制成功'
+            db.session.commit()
         except Exception as e:
             current_app.logger.exception(e)
+            code = ErrorCode.ERROR_CODE
+            message = error_message
             db.session.rollback()
-            return ErrorCode.ERROR_CODE,error_message
         finally:
-            db.session.commit()
+            return code, message
+
+    def copy_case_by_id(self, case_id, copy_time, case_author, case_exec_group=None):
+        oldcase = Case.query.filter(Case.case_id == case_id).one()
+        pre_cases = PrevModel.query.filter(PrevModel.prev_case_id == case_id).all()
+        init_cases = InitModel.query.filter(InitModel.case_init_case_id == case_id).all()
+        copycase = Case()
+
+        for attr in inspect(oldcase).attrs.keys():
+            if attr not in ("case_id", "case_last_date", "case_in_date"):
+                value = getattr(oldcase, attr)
+                if attr == "case_name":
+                    if "_copy_" in value:
+                        value = value.split("_copy_")[0]
+                    value = value + "_copy_{0}".format(copy_time)
+                elif attr == "case_exec_group" and case_exec_group is not None:
+                    value = case_exec_group
+                elif attr in ("case_author", "case_in_user", "case_last_user"):
+                    value = case_author
+                setattr(copycase, attr, value)
+        db.session.add(copycase)
+        db.session.flush()
+
+        for pre_case in pre_cases:
+            copy_pre_case = PrevModel()
+            for pre_attr in inspect(pre_case).attrs.keys():
+                if pre_attr not in ("prev_id", "prev_in_date", "prev_last_date"):
+                    value = getattr(pre_case, pre_attr)
+                    if pre_attr == "prev_case_id":
+                        value = copycase.case_id
+                    setattr(copy_pre_case, pre_attr, value)
+            db.session.add(copy_pre_case)
+
+        for init_case in init_cases:
+            copy_init_case = InitModel()
+            for init_attr in inspect(init_case).attrs.keys():
+                if init_attr not in ("init_id", "case_init_indate", "case_init_lastdate"):
+                    value = getattr(init_case, init_attr)
+                    if init_attr == "init_case_id":
+                        value = copycase.case_id
+                    setattr(copy_init_case, init_attr, value)
+            db.session.add(copy_init_case)
 
     def check_group_exists(self,case_exec_group):
         try:
@@ -380,6 +433,25 @@ class CaseBiz(UnSerializer):
             new_cases = Case.query.filter(Case.case_exec_group_priority == "main").order_by(Case.case_id.desc()).limit(8)
             for new_case in new_cases:
                 ret.append(new_case.serialize())
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ret, ErrorCode.ERROR_CODE
+        else:
+            return ret, "success"
+
+    @staticmethod
+    def get_all_cases():
+        try:
+
+            if current_app.app_redis.exists("gaea_all_cases"):
+                ret = json.loads(current_app.app_redis.get("gaea_all_cases"))
+            else:
+                ret = []
+                all_cases = Case.query.filter(Case.case_exec_group_priority == "main")
+                for all_case in all_cases:
+                    case_serialize = all_case.serialize()
+                    ret.append({"case_id": case_serialize["case_id"], "case_name": case_serialize["case_name"]})
+                current_app.app_redis.set("gaea_all_cases", json.dumps(ret))
         except Exception as e:
             current_app.logger.exception(e)
             return ret, ErrorCode.ERROR_CODE

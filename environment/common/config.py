@@ -50,6 +50,17 @@ class Config:
     LOG_FILE_BACKUP_COUNT = 10
     SENTRY_DSN = ""
 
+    CELERY_BROKER_URL = "redis://:123456@localhost:6379/6"
+    CELERY_RESULT_BACKEND = "redis://:123456@localhost:6379/7"
+
+    JENKINS_URL = "https://jenkins-test.kuainiujinke.com/jenkins/"
+    USER_ID = "zhangtingli"
+    USER_PWD = "123456"
+
+    REDIS_HOST = "127.0.0.1"
+    REDIS_PORT = "6379"
+    REDIS_PWD = "123456"
+
     @staticmethod
     def init_app(app):
         import logging

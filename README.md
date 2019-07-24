@@ -3,6 +3,7 @@
  ##### 执行命令：venv/bin/python3.7 manage.py db upgrade
  
  **2.本地运行项目**
- ##### 执行命令：venv/bin/python3.7 manage.py runserver
- 
- 
+ #### venv/bin/python gaea.py runserver --port 5003
+
+ **3.Celery任务项目运行**
+ #### venv/bin/celery worker -A celery_worker.celery --loglevel=info

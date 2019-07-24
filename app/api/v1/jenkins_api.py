@@ -37,7 +37,6 @@ def run_special_case():
         # sleep(10)
         last_console_output = ""
         while True:
-
             try:
                 build_info = server.get_build_info('Auto_Test_Api_Run_Case1', next_build_number)
                 console_output = server.get_build_console_output("Auto_Test_Api_Run_Case1", next_build_number)
