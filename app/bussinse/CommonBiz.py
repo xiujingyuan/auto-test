@@ -226,7 +226,8 @@ class CommonBiz(UnSerializer,Serializer):
             result = CapitalPlanModel.http_request_post(cmdb_request,cmdb_url,headers)
             params = CapitalPlanModel.build_all_params(channel,item_no,int(period_count),int(period),sign_date,principal_amount,product_name,result,fee_rate,interest_rate)
             if isinstance(params,str):
-                return "汇率编号已经失效，无法生成资方还款计划"
+                # return "汇率编号已经失效，无法生成资方还款计划"
+                return result["message"] if "message" in result else "汇率编号已经失效，无法生成资方还款计划"
             urls = defualt_capital.split(";")
             for url in urls:
                 print(url)
