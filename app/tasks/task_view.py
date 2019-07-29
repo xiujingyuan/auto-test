@@ -51,7 +51,7 @@ def task_create():
     return jsonify({"Location": '/tasks/status/{0}'.format(task.id)}), 202
 
 
-@task_url.route("/tasks/case_task_create/status/<run_id>", methods=["GET"])
+@task_url.route("/tasks/case_task_status/status/<run_id>", methods=["GET"])
 def case_task_status(run_id):
     task = run_case_by_case_id.AsyncResult(run_id)
     if task.state == 'PENDING':
@@ -66,13 +66,15 @@ def case_task_status(run_id):
     elif task.state != 'FAILURE':
         response = {
             'state': task.state,
-            'current': task.info.get('current', 0),
-            'total': task.info.get('total', 1),
-            'status': task.info.get('status', ''),
-            'message': task.info.get('message', '')
+            'current': task.info.get('current', 0) if task.info is not None else 1,
+            'total': task.info.get('total', 1) if task.info is not None else 1,
+            'status': task.info.get('status', '') if task.info is not None else "",
+            'message': task.info.get('message', '') if task.info is not None else ""
         }
-        if 'result' in task.info:
+        if task.info is not None and 'result' in task.info:
             response['result'] = task.info['result']
+        else:
+            response['result'] = "error"
     else:
         # something went wrong in the background job
         response = {
@@ -87,6 +89,6 @@ def case_task_status(run_id):
 
 @task_url.route("/tasks/case_task_create/<task_id>", methods=["GET"])
 def case_task_create(task_id):
-    task = run_case_by_case_id.apply_async(task_id)
-    return jsonify({"Location": '/tasks/case_task_create/status/{0}'.format(task.id)}), 202
+    task = run_case_by_case_id.apply_async(args=[task_id])
+    return jsonify({"Location": '/tasks/case_task_status/status/{0}'.format(task.id), "code": 202})
 

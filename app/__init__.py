@@ -27,14 +27,14 @@ celery = Celery(__name__,
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    config[config_name].init_app(app)
 
-    celery.conf.update(app.config)
     app.app_redis = Redis(host=app.config['REDIS_HOST'],
                           port=app.config['REDIS_PORT'],
                           db=5,
                           password=app.config['REDIS_PWD'])
     #csrf.init_app(app)
-    config[config_name].init_app(app)
+
     db.init_app(app)
     if not app.debug and not app.testing and not app.config['SSL_DISABLE']:
         from flask_sslify import SSLify
@@ -42,5 +42,8 @@ def create_app(config_name):
 
     from app.api.v1 import api_v1 as api_v1_blueprint
     app.register_blueprint(api_v1_blueprint)
+
+    from app.tasks import task_url as tasks_blueprint
+    app.register_blueprint(tasks_blueprint, url="/tasks")
 
     return app

@@ -62,18 +62,18 @@ def run_special_case(self):
 
 
 @celery.task(bind=True)
-def run_case_by_case_id(case_id):
+def run_case_by_case_id(self, case_id):
     try:
         case_biz = CaseBiz()
         case_ids = [case_id]
-        email = request.args.get("email")
-        if email is None or email == "":
-            email = "zhangtingli@kuainiugroup.com"
-        for case in case_ids:
-            if not case_biz.check_execstatus_bycaseid(case):
-                return jsonify(CommonResult.fill_result(case,
-                                                        1,
-                                                        "case_id:{0} 执行状态不正确不能被执行".format(case)))
+        email = "zhangtingli@kuainiugroup.com"
+        # for case in case_ids:
+        #     if not case_biz.check_execstatus_bycaseid(case):
+        #         print("FAILURE", "case_id:{0} 执行状态不正确不能被执行".format(case))
+        #         self.update_state(state='FAILURE',
+        #                                  meta={'current': 1,
+        #                                        'total': 1,
+        #                                        'status': "case_id:{0} 执行状态不正确不能被执行".format(case)})
         server = jenkins.Jenkins(current_app.config["JENKINS_URL"],
                                  current_app.config["USER_ID"],
                                  current_app.config["USER_PWD"])
@@ -114,8 +114,8 @@ def run_case_by_case_id(case_id):
                                        'status': ""})
     except Exception as e:
         current_app.logger.exception(traceback.format_exc())
-        self.update_state(state='PROGRESS',
-                          meta={'current': i,
-                                'total': total,
-                                'status': traceback.format_exc()})
+        return self.update_state(state='PROGRESS',
+                                 meta={'current': i,
+                                       'total': total,
+                                       'status': traceback.format_exc()})
 
