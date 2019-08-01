@@ -1,0 +1,24 @@
+# phpstorm project files
+.idea
+.DS_Store
+
+# ignore directory venv
+venv
+
+# ignore directory supervisor
+supervisor
+
+# ignore directory environment/dev
+# environment/dev
+
+# 忽略生产的pyc文件
+*.pyc
+
+# 日志文件
+*.log
+
+# 项目配置文件
+conf/*.conf
+
+# 忽略测试Controller文件
+controller/Test*
