@@ -348,6 +348,7 @@ class CaseBiz(UnSerializer):
             return code, message
 
     def copy_case_by_id(self, case_id, copy_time, case_author, case_exec_group=None):
+        print("case_id", case_id)
         oldcase = Case.query.filter(Case.case_id == case_id).one()
         pre_cases = PrevModel.query.filter(PrevModel.prev_case_id == case_id).all()
         init_cases = InitModel.query.filter(InitModel.case_init_case_id == case_id).all()
@@ -383,9 +384,9 @@ class CaseBiz(UnSerializer):
         for init_case in init_cases:
             copy_init_case = InitModel()
             for init_attr in inspect(init_case).attrs.keys():
-                if init_attr not in ("init_id", "case_init_indate", "case_init_lastdate"):
+                if init_attr not in ("case_init_id", "case_init_indate", "case_init_lastdate"):
                     value = getattr(init_case, init_attr)
-                    if init_attr == "init_case_id":
+                    if init_attr == "case_init_case_id":
                         value = copycase.case_id
                     elif init_attr in ("case_init_inuser", "case_init_lastuser"):
                         value = case_author
