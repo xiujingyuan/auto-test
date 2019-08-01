@@ -65,7 +65,7 @@ class CommonBiz(UnSerializer,Serializer):
             current_app.logger.exception(e)
             db.session.rollback()
             return ErrorCode.ERROR_CODE
-        finally:
+        else:
             return result
             #db.session.close()
 

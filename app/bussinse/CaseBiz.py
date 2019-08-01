@@ -11,6 +11,7 @@ from app.common.tools.Serializer import Serializer
 from app.models.CaseModel import Case
 from app import db
 from flask import current_app, json
+
 from sqlalchemy import or_, and_, func, inspect
 from app.bussinse.PrevBiz import PrevBiz
 from app.bussinse.MockBiz import MockBiz
@@ -21,7 +22,6 @@ from app.models.PrevModel import PrevModel
 from app.common.tools.UnSerializer import UnSerializer
 from app.models.ErrorCode import ErrorCode
 import time
-
 
 
 class CaseBiz(UnSerializer):
@@ -385,9 +385,10 @@ class CaseBiz(UnSerializer):
         for init_case in init_cases:
             copy_init_case = InitModel()
             for init_attr in inspect(init_case).attrs.keys():
-                if init_attr not in ("init_id", "case_init_indate", "case_init_lastdate"):
+
+                if init_attr not in ("case_init_id", "case_init_indate", "case_init_lastdate"):
                     value = getattr(init_case, init_attr)
-                    if init_attr == "init_case_id":
+                    if init_attr == "case_init_case_id":
                         value = copycase.case_id
                     elif init_attr in ("case_init_inuser", "case_init_lastuser"):
                         value = case_author
