@@ -28,7 +28,7 @@ def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
-
+    celery.conf.update(app.config)
     app.app_redis = Redis(host=app.config['REDIS_HOST'],
                           port=app.config['REDIS_PORT'],
                           db=5,
