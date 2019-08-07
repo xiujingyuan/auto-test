@@ -64,27 +64,19 @@ def run_special_case(self):
 @celery.task(bind=True)
 def run_case_by_case_id(self, case_id):
     try:
-        case_biz = CaseBiz()
         case_ids = [case_id]
         email = "zhangtingli@kuainiugroup.com"
-        # for case in case_ids:
-        #     if not case_biz.check_execstatus_bycaseid(case):
-        #         print("FAILURE", "case_id:{0} 执行状态不正确不能被执行".format(case))
-        #         self.update_state(state='FAILURE',
-        #                                  meta={'current': 1,
-        #                                        'total': 1,
-        #                                        'status': "case_id:{0} 执行状态不正确不能被执行".format(case)})
+        exec_case_array_str = ','.join(str(case) for case in case_ids)
         server = jenkins.Jenkins(current_app.config["JENKINS_URL"],
                                  current_app.config["USER_ID"],
                                  current_app.config["USER_PWD"])
         next_build_number = server.get_job_info('Auto_Test_Api_Run_Case1')['nextBuildNumber']
         build_number = server.build_job("Auto_Test_Api_Run_Case1",
-                                        parameters={"case_ids": int(case_id),
+                                        parameters={"case_ids": exec_case_array_str,
                                                     "email_address": email,
                                                     "debug_model": "testDebug.py"})
         last_console_output = ""
-        total = 10
-        i = 0
+        total = len(case_ids) * 10
         while True:
             try:
                 build_info = server.get_build_info('Auto_Test_Api_Run_Case1', next_build_number)
@@ -96,7 +88,7 @@ def run_case_by_case_id(self, case_id):
                 if console_output:
                     if last_console_output:
                         console_output = console_output.replace(last_console_output, "")
-                    if console_output:
+                    if console_output and console_output not in last_console_output:
                         last_console_output += console_output
                         console_output = console_output.strip("\r\n").strip("\n")
                         print(console_output)
@@ -107,7 +99,7 @@ def run_case_by_case_id(self, case_id):
                     i += 1
                 if not build_info["building"]:
                     break
-                time.sleep(1)
+                time.sleep(0.1)
         return self.update_state(state='PROGRESS',
                                  meta={'current': total,
                                        'total': total,
