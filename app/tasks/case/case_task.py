@@ -77,6 +77,7 @@ def run_case_by_case_id(self, case_id):
                                                     "debug_model": "testDebug.py"})
         last_console_output = ""
         total = len(case_ids) * 10
+        i = 0
         while True:
             try:
                 build_info = server.get_build_info('Auto_Test_Api_Run_Case1', next_build_number)
