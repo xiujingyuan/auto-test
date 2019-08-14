@@ -54,11 +54,17 @@ class EncryBiz(UnSerializer):
         try:
             deencry_url = Config.DEENCRY_URL
             headers = {'content-type': 'application/json'}
-            req = requests.post(deencry_url, data=json.dumps(data), headers=headers,timeout=10)
+            print(data, type(data))
+            print(json.dumps(data))
+            if not isinstance(data, list):
+                new_data = [data]
+            req = requests.post(deencry_url, data=json.dumps(new_data), headers=headers,timeout=10)
+            print(deencry_url, json.dumps(data))
             result = req.json()
+            print(result)
             if result['code']==0:
                 return result['data']
-            return "test"
+            return result["message"]
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
@@ -97,7 +103,6 @@ class EncryBiz(UnSerializer):
                 "plain":value
             }
 
-
     def de_encry_data(self,request):
         try:
             result={}
@@ -110,12 +115,10 @@ class EncryBiz(UnSerializer):
                 result[key] = encry_data
                 new_result[key] = encry_data[value] if not isinstance(encry_data, int) else encry_data
 
-
             return {"old": result, "new": new_result}
         except Exception as e:
             current_app.logger.exception(e)
-            return ErrorCode.ERROR_CODE
-
+            return "{0}:{1} get error. {2}".format(key, value, encry_data)
 
     def generate_data_deencry(self,value):
         return {
