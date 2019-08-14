@@ -30,7 +30,7 @@ class Config:
     # ENCRY_URL ='http://test-encryptor.qianshengqian.com/encrypt/'
     # DEENCRY_URL = 'http://test-encryptor.qianshengqian.com/decrypt/plain/'
 
-    ENCRY_URL = 'http://kong-api-test.kuainiujinke.com/encryptor-test/'
+    ENCRY_URL = 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/'
     DEENCRY_URL = 'http://kong-api-test.kuainiujinke.com/encryptor-test/decrypt/plain/'
     CMDB_URL = "http://kong-api-test.kuainiujinke.com/cmdb1/v5/rate/calculate"
     SYNC_ENV_LIST =['biz1','biz2']
