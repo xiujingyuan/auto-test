@@ -40,7 +40,10 @@ class EncryBiz(UnSerializer):
         try:
             url = Config.ENCRY_URL
             headers = {'content-type': 'application/json'}
-            req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
+            new_data = []
+            if not isinstance(data, list):
+                new_data = [data]
+            req = requests.post(url, data=json.dumps(new_data), headers=headers,timeout=10)
             result = req.json()
             if result['code']==0:
                 return result['data'][0]['hash']
