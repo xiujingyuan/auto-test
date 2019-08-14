@@ -57,14 +57,10 @@ class EncryBiz(UnSerializer):
         try:
             deencry_url = Config.DEENCRY_URL
             headers = {'content-type': 'application/json'}
-            print(data, type(data))
-            print(json.dumps(data))
             if not isinstance(data, list):
                 new_data = [data]
             req = requests.post(deencry_url, data=json.dumps(new_data), headers=headers,timeout=10)
-            print(deencry_url, json.dumps(data))
             result = req.json()
-            print(result)
             if result['code']==0:
                 return result['data']
             return result["message"]
