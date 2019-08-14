@@ -44,7 +44,7 @@ class CapitalPlanModel(object):
         except Exception as e:
             current_app.logger.info(traceback.format_exc())
             current_app.logger.exception(e)
-            raise str(e)
+            return req.text
 
     @classmethod
     def build_all_params(cls,channel,item_no,period_count,period,sign_at,granted_amount,cmdb_no,calc_rate,fee_rate,interest_rate):

@@ -193,6 +193,8 @@ class CommonBiz(UnSerializer,Serializer):
             capital_plan_result = self.grant_capital_plan(result,env)
             if capital_plan_result==ErrorCode.ERROR_CODE or isinstance(capital_plan_result,str):
                 return capital_plan_result
+            else:
+                return capital_plan_result
 
         except Exception as e:
             current_app.logger.exception(e)
@@ -231,8 +233,11 @@ class CommonBiz(UnSerializer,Serializer):
             urls = defualt_capital.split(";")
             for url in urls:
                 print(url)
-                if  url is not None and url !="":
-                    CapitalPlanModel.http_request_post(params,url,headers)
+                if url is not None and url != "":
+                    res = CapitalPlanModel.http_request_post(params, url, headers)
+                    res["url"] = url
+                    if not isinstance(res, (dict, list)) or ("code" in res and res["code"] == 1):
+                        return res
             return params
         except Exception as e:
             current_app.logger.exception(e)
