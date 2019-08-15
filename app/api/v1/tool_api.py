@@ -45,4 +45,4 @@ def get_fourelement():
         current_app.logger.exception(e)
         error = "{0}:{1} get error. {2}".format(key, value, encry_data)
         return jsonify(CommonResult.fill_result(error))
-    return Response(json.dumps(result), mimetype='application/json')
+    return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
