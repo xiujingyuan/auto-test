@@ -30,9 +30,9 @@ def run_special_case():
                 return jsonify(CommonResult.fill_result(case,1,"case_id:{0} 执行状态不正确不能被执行".format(case)))
         exec_case_array = case_biz.get_exec_caseid(case_ids)
         exec_case_array_str = ','.join(str(case) for case in exec_case_array)
-        server = jenkins.Jenkins(jenkins_url,user_id,user_pwd)
+        server = jenkins.Jenkins(jenkins_url, user_id, user_pwd)
         next_build_number = server.get_job_info('Auto_Test_Api_Run_Case1')['nextBuildNumber']
-        build_number = server.build_job('Auto_Test_Api_Run_Case1',parameters={"case_ids":exec_case_array_str,"email_address":email,"debug_model":"TestRunCase.py"})
+        build_number = server.build_job('Auto_Test_Api_Run_Case1', parameters={"case_ids":exec_case_array_str,"email_address":email,"debug_model":"TestRunCase.py"})
         # from time import sleep
         # sleep(10)
         last_console_output = ""
