@@ -7,10 +7,12 @@
 from sqlalchemy.orm import class_mapper
 from sqlalchemy.sql.functions import current_user
 
+from app.common.redis.redis_cached import update_case_redis
 from app.common.tools.Serializer import Serializer
 from app.models.CaseModel import Case
 from app import db
-from flask import current_app, json
+from flask import current_app
+import json
 
 from sqlalchemy import or_, and_, func, inspect
 from app.bussinse.PrevBiz import PrevBiz
@@ -26,13 +28,13 @@ import time
 
 class CaseBiz(UnSerializer):
 
-    def  add_case(self,request):
+    def add_case(self, request):
         request = request.json['case']
         basicInfo = request['basicInfo']
-        prevInfo =request['prevInfo']
+        prevInfo = request['prevInfo']
         initInfo = request['initInfo']
         mockInfo = request['mockInfo']
-        if basicInfo is None or basicInfo =='':
+        if basicInfo is None or basicInfo == '':
             return 0
         try:
             case = Case()
@@ -66,6 +68,7 @@ class CaseBiz(UnSerializer):
                     mock.mock_id=None
                     db.session.add(mock)
             db.session.commit()
+            update_case_redis([case])
             return case_id
         except Exception as e:
             current_app.logger.exception(e)
@@ -74,13 +77,12 @@ class CaseBiz(UnSerializer):
         finally:
             return case_id
 
-
-    def get_bussinse_data(self,case_id):
+    def get_bussinse_data(self, case_id):
         try:
             res ={}
             if (self.check_exists_bycaseid(case_id)==False):
                 return None
-            basicInfo = self.get_case_byid(case_id);
+            basicInfo = self.get_case_byid(case_id)
             if basicInfo is not None:
                 res['basicInfo'] = basicInfo
                 res['prevInfo'] = PrevBiz().get_prev_byid(case_id)
@@ -90,7 +92,6 @@ class CaseBiz(UnSerializer):
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
-
 
     def change_case(self,data,case_id):
         try:
@@ -106,7 +107,6 @@ class CaseBiz(UnSerializer):
         try:
 
             result = db.session.query(Case).filter(Case.case_id == case_id).first()
-
             result.case_is_exec = -1
             print(result.case_is_exec)
             #db.session.query(Case).filter(Case.case_id == case_id).update()
@@ -120,6 +120,7 @@ class CaseBiz(UnSerializer):
             return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
+            update_case_redis([result], type="delete")
             return 0
 
     def get_case_byid(self,caseid):
@@ -269,7 +270,6 @@ class CaseBiz(UnSerializer):
         finally:
             db.session.commit()
 
-
     def get_maincaseid_caseid(self,case_id):
         query = db.session.query(Case).filter(Case.case_id==case_id).filter(Case.case_is_exec.in_([0,1]))
         result = query.first()
@@ -281,7 +281,6 @@ class CaseBiz(UnSerializer):
                 return main_result.case_id
 
         return case_id
-
 
     def get_summary_case(self):
         try:
@@ -295,7 +294,6 @@ class CaseBiz(UnSerializer):
             return ErrorCode.ERROR_CODE
         finally:
             db.session.commit()
-
 
     def copy_group_case(self,request):
         try:
@@ -321,15 +319,18 @@ class CaseBiz(UnSerializer):
             code = 0
             message = '复制成功'
             copy_time = int(time.time())
+            copycase_list = []
             if case_exec_group is None or case_exec_group == "":
-                self.copy_case_by_id(case_id, copy_time, case_exec_group)
+                copycase = self.copy_case_by_id(case_id, copy_time, case_exec_group)
+                copycase_list.append(copycase)
             else:
                 all_cases = Case.query.filter(Case.case_exec_group == case_exec_group).all()
                 if "_copy_" in case_exec_group:
                     case_exec_group = case_exec_group.split("_copy_")[0]
                 case_exec_group_new = "{0}_copy_{1}".format(case_exec_group, copy_time)
                 for item_case in all_cases:
-                    self.copy_case_by_id(item_case.case_id, copy_time, case_author, case_exec_group_new)
+                    copycase = self.copy_case_by_id(item_case.case_id, copy_time, case_author, case_exec_group_new)
+                    copycase_list.append(copycase)
                 # case_exec_group_new = str(case_exec_group)+'copy'
                 # if self.check_group_exists(case_exec_group_new):
                 #     error_message="复杂用例名称已经存在，不能再次复制"
@@ -341,6 +342,7 @@ class CaseBiz(UnSerializer):
                 # #db.session.execute("call gaea_framework.copy_case_from_exists_group (?,?,?,?,?)",result[1],result[0],case_exec_group,case_from_system,case_exec_group_new)
 
             db.session.commit()
+            update_case_redis(copycase_list)
         except Exception as e:
             current_app.logger.exception(e)
             code = ErrorCode.ERROR_CODE
@@ -394,6 +396,7 @@ class CaseBiz(UnSerializer):
                         value = case_author
                     setattr(copy_init_case, init_attr, value)
             db.session.add(copy_init_case)
+        return copycase
 
     def check_group_exists(self,case_exec_group):
         try:
@@ -455,8 +458,11 @@ class CaseBiz(UnSerializer):
                 all_cases = Case.query.filter(Case.case_exec_group_priority == "main")
                 for all_case in all_cases:
                     case_serialize = all_case.serialize()
-                    ret.append({"case_id": case_serialize["case_id"], "case_name": case_serialize["case_name"]})
-                current_app.app_redis.set("gaea_all_cases", json.dumps(ret))
+                    ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
+                        case_serialize["case_from_system"],
+                        case_serialize["case_category"],
+                        case_serialize["case_name"])})
+                current_app.app_redis.set("gaea_all_cases", json.dumps(ret, ensure_ascii=False))
         except Exception as e:
             current_app.logger.exception(e)
             return ret, ErrorCode.ERROR_CODE
