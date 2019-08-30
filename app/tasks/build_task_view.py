@@ -34,10 +34,8 @@ def build_task_status(run_id):
             'status': task.info.get('status', '') if task.info is not None else "",
             'message': task.info.get('message', '') if task.info is not None else ""
         }
-        if task is not None and task.info is not None and 'result' in task.info:
-            response['result'] = task.info['result']
-        else:
-            response['result'] = "error"
+        # if task is not None and task.info is not None and 'result' in task.info:
+        #     response['result'] = task.info['result']
     else:
         # something went wrong in the background job
         response = {

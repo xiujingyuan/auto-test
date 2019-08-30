@@ -60,13 +60,13 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                 if not build_info["building"]:
                     break
                 time.sleep(0.1)
-        return self.update_state(state='PROGRESS',
+        return self.update_state(state='SUCCESS',
                                  meta={'current': total,
                                        'total': total,
                                        'status': ""})
     except Exception as e:
         current_app.logger.exception(traceback.format_exc())
-        return self.update_state(state='PROGRESS',
+        return self.update_state(state='FAILURE',
                                  meta={'current': i,
                                        'total': total,
                                        'status': traceback.format_exc()})
