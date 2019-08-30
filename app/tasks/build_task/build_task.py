@@ -23,10 +23,9 @@ def run_build_task(self, build_task_id, jenkins_job, env):
     try:
         i = 0
         total = 100
+        result = "SUCCESS"
         email = "zhangtingli@kuainiugroup.com"
         print(current_app.config["JENKINS_URL"],
-              current_app.config["USER_ID"],
-              current_app.config["USER_PWD"],
               jenkins_job,
               env)
         server = jenkins.Jenkins(current_app.config["JENKINS_URL"],
@@ -60,14 +59,23 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                 if not build_info["building"]:
                     break
                 time.sleep(0.1)
-        return self.update_state(state='SUCCESS',
-                                 meta={'current': total,
-                                       'total': total,
-                                       'status': ""})
+        console_output_list = console_output.split("\n")
+        if not console_output_list[-1].startswith("Finished:"):
+            console_output = server.get_build_console_output(jenkins_job, next_build_number)
+            console_output = console_output.replace(last_console_output, "")
+        if "failure" in console_output.lower():
+            result = "FAILURE"
+        self.update_state(state="SUCCESS",
+                          meta={'current': total,
+                                'total': total,
+                                'result': result,
+                                'status': ""})
+        time.sleep(1)
     except Exception as e:
         current_app.logger.exception(traceback.format_exc())
-        return self.update_state(state='FAILURE',
-                                 meta={'current': i,
-                                       'total': total,
-                                       'status': traceback.format_exc()})
+        self.update_state(state='FAILURE',
+                          meta={'current': i,
+                                'total': total,
+                                'result': 'error',
+                                'status': traceback.format_exc()})
 
