@@ -59,12 +59,14 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                 if not build_info["building"]:
                     break
                 time.sleep(0.1)
-        console_output_list = console_output.split("\n")
-        if not console_output_list[-1].startswith("Finished:"):
+        while True:
             console_output = server.get_build_console_output(jenkins_job, next_build_number)
-            console_output = console_output.replace(last_console_output, "")
-        if "failure" in console_output.lower():
-            result = "FAILURE"
+            console_output_list = console_output.split("\n")
+            if console_output_list[-1].startswith("Finished:"):
+                if "failure" in console_output.lower():
+                    result = "FAILURE"
+                    break
+            time.sleep(0.1)
         self.update_state(state="SUCCESS",
                           meta={'current': total,
                                 'total': total,
