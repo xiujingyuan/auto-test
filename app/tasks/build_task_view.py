@@ -26,6 +26,7 @@ def build_task_status(run_id):
             'result': "",
             'total': 1,
             'status': 'Pending...',
+            'build_num': ""
         }
     else:
         response = {
@@ -33,7 +34,8 @@ def build_task_status(run_id):
             'current': task.info.get('current', 0) if task.info is not None else 1,
             'total': task.info.get('total', 1) if task.info is not None else 1,
             'result': task.info.get('result', "") if task.info is not None else "",
-            'status': task.info.get('status', '') if task.info is not None else ""
+            'status': task.info.get('status', '') if task.info is not None else "",
+            'build_num': task.info.get('build_num', '') if task.info is not None else ""
         }
     return jsonify(response)
 

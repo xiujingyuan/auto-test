@@ -50,26 +50,29 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                     if console_output and console_output not in last_console_output:
                         last_console_output += console_output
                         console_output = console_output.strip("\r\n").strip("\n")
-                        print(console_output)
                     self.update_state(state='PROGRESS',
                                       meta={'current': i,
                                             'total': total,
-                                            'status': console_output})
+                                            'status': console_output,
+                                            'build_num': next_build_number})
                     i += 1
                 if not build_info["building"]:
                     break
                 time.sleep(0.1)
-        console_output_list = console_output.split("\n")
-        if not console_output_list[-1].startswith("Finished:"):
+        while True:
             console_output = server.get_build_console_output(jenkins_job, next_build_number)
-            console_output = console_output.replace(last_console_output, "")
-        if "failure" in console_output.lower():
-            result = "FAILURE"
+            console_output_list = console_output.strip("\n").split("\n")
+            if console_output_list[-1].startswith("Finished:"):
+                if "failure" in console_output.lower():
+                    result = "FAILURE"
+                break
+            time.sleep(1)
         self.update_state(state="SUCCESS",
                           meta={'current': total,
                                 'total': total,
                                 'result': result,
-                                'status': ""})
+                                'status': "",
+                                'build_num': next_build_number})
         time.sleep(1)
     except Exception as e:
         current_app.logger.exception(traceback.format_exc())
@@ -77,5 +80,6 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                           meta={'current': i,
                                 'total': total,
                                 'result': 'error',
-                                'status': traceback.format_exc()})
+                                'status': traceback.format_exc(),
+                                'build_num': next_build_number})
 
