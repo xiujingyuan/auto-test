@@ -119,7 +119,7 @@ class CommonBiz(UnSerializer,Serializer):
                 call_back = request_json['call_back']
             if 'fee_rate' in request_json.keys():
                 fee_rate = request_json['fee_rate']
-            if 'call_back' in request_json.keys():
+            if 'interest_rate' in request_json.keys():
                 interest_rate = request_json['interest_rate']
 
             cmdb_url,cmdb_request = CapitalPlanModel.get_calculate_request(product_name,principal_amount,period_count,sign_date)
