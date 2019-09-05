@@ -12,7 +12,7 @@ from app.common.tools.CommonResult import CommonResult
 from app.bussinse.executesql import Executesql
 
 
-@api_v1.route("/execute-sql",method=["POST"])
+@api_v1.route("/execute-sql", methods=["POST"])
 def execute_sql():
     execute=Executesql()
     result = execute.executesql(request)
