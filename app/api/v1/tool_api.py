@@ -9,7 +9,10 @@
  @email:
 """
 import json
-from flask import Response, current_app, jsonify
+from flask import Response, request, current_app, jsonify
+from app import db
+from app.bussinse.CommonBiz import CommonBiz
+from app.models.CommonToolsModel import CommonToolsModel
 
 from app.api.v1 import api_v1
 from app.bussinse.EncryBiz import EncryBiz
@@ -46,3 +49,14 @@ def get_fourelement():
         error = "{0}:{1} get error. {2}".format(key, value, encry_data)
         return jsonify(CommonResult.fill_result(error))
     return Response(json.dumps(result, ensure_ascii=False), mimetype='application/json')
+
+
+@api_v1.route('/sql', methods=['POST'])
+def execul_sql():
+    req = request.json
+    sql = 'use %s' % req['db']
+    db.session.execute(sql)
+    for sql in req['values']:
+        db.session.execute(sql)
+
+    return jsonify(CommonResult.fill_result(None))

@@ -17,35 +17,25 @@ from app.tasks import task_url
 @task_url.route("/tasks/build_task_status/status/<run_id>", methods=["GET"])
 def build_task_status(run_id):
     task = run_build_task.AsyncResult(run_id)
+    print(task.state)
     if task.state == 'PENDING':
         # job did not start yet
         response = {
             'state': task.state,
             'current': 0,
+            'result': "",
             'total': 1,
             'status': 'Pending...',
-            'message': ''
+            'build_num': ""
         }
-    elif task.state != 'FAILURE':
+    else:
         response = {
             'state': task.state,
             'current': task.info.get('current', 0) if task.info is not None else 1,
             'total': task.info.get('total', 1) if task.info is not None else 1,
+            'result': task.info.get('result', "") if task.info is not None else "",
             'status': task.info.get('status', '') if task.info is not None else "",
-            'message': task.info.get('message', '') if task.info is not None else ""
-        }
-        if task is not None and task.info is not None and 'result' in task.info:
-            response['result'] = task.info['result']
-        else:
-            response['result'] = "error"
-    else:
-        # something went wrong in the background job
-        response = {
-            'state': task.state,
-            'current': 1,
-            'total': 1,
-            'status': str(task.info),  # this is the exception raised
-            'message': str(task.info)
+            'build_num': task.info.get('build_num', '') if task.info is not None else ""
         }
     return jsonify(response)
 
