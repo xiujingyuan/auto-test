@@ -105,10 +105,7 @@ class Executesql():
 
         results={}
         try:
-            if isinstance(request,dict)==False:
-                data=json.loads(request)
-            else:
-                data=request
+            data=request.json
             if 'db' not in data.keys() or data['db'] is None or len(str(data['db']))==0:
                 self._res_fail_data['message'] = str(Validation("未传入需要执行的数据库db,请检查"))
                 return self._res_fail_data
