@@ -455,7 +455,7 @@ class CaseBiz(UnSerializer):
                 ret = json.loads(current_app.app_redis.get("gaea_all_cases"))
             else:
                 ret = []
-                all_cases = Case.query.filter(Case.case_exec_group_priority == "main")
+                all_cases = Case.query.filter(or_(Case.case_exec_group_priority == "main", Case.case_exec_group_priority == ""))
                 for all_case in all_cases:
                     case_serialize = all_case.serialize()
                     ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
