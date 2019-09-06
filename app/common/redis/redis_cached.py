@@ -12,6 +12,7 @@
 import json
 
 from flask import current_app
+from sqlalchemy import or_
 
 from app.models.CaseModel import Case
 
@@ -22,7 +23,7 @@ def update_case_redis(cases, type="add"):
         print(ret)
         if type == "delete":
             for case in cases:
-                if case.case_exec_group_priority == "main":
+                if not case.case_exec_group_priority or case.case_exec_group_priority == "main":
                     case_serialize = case.serialize()
                     old_case = {"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
                         case_serialize["case_from_system"],
@@ -31,7 +32,7 @@ def update_case_redis(cases, type="add"):
                     ret.remove(old_case)
         else:
             for case in cases:
-                if case.case_exec_group_priority == "main":
+                if not case.case_exec_group_priority or case.case_exec_group_priority == "main":
                     case_serialize = case.serialize()
                     ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
                         case_serialize["case_from_system"],
@@ -40,7 +41,7 @@ def update_case_redis(cases, type="add"):
         current_app.app_redis.set("gaea_all_cases", json.dumps(ret, ensure_ascii=False))
     else:
         ret = []
-        all_cases = Case.query.filter(Case.case_exec_group_priority == "main").filter(Case.case_is_exec == 1)
+        all_cases = Case.query.filter(or_(Case.case_exec_group_priority == "main", Case.case_exec_group_priority == "")).filter(Case.case_is_exec == 1)
         for all_case in all_cases:
             case_serialize = all_case.serialize()
             ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
