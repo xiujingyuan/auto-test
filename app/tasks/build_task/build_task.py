@@ -10,9 +10,7 @@
 """
 
 from app import celery
-from app.bussinse.CaseBiz import CaseBiz
-from flask import jsonify, request,current_app
-from app.common.tools.CommonResult import CommonResult
+from flask import current_app
 import jenkins
 import traceback
 import time

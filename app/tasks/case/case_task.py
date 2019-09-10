@@ -11,7 +11,7 @@
 
 from app import celery
 from app.bussinse.CaseBiz import CaseBiz
-from flask import jsonify, request,current_app
+from flask import jsonify, request, current_app
 from app.common.tools.CommonResult import CommonResult
 import jenkins
 import traceback
