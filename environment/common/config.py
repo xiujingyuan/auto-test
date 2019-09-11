@@ -9,7 +9,7 @@
  @email:
 """
 
-import os,logging
+import os, logging
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -20,8 +20,8 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
-    SQLALCHEMY_ECHO=True
-    SQLALCHEMY_POOL_RECYCLE=1800
+    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_POOL_RECYCLE = 1800
     MAIL_SERVER = 'smtp.qq.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True
@@ -34,8 +34,8 @@ class Config:
     DEENCRY_URL = 'http://kong-api-test.kuainiujinke.com/encryptor-test/decrypt/plain/'
     CMDB_URL = "http://kong-api-test.kuainiujinke.com/cmdb1/v5/rate/calculate"
     # v6费率系统
-    CMDB_URL_v6="http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate"
-    SYNC_ENV_LIST =['biz1','biz2']
+    CMDB_URL_v6 = "http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate"
+    SYNC_ENV_LIST = ['biz1', 'biz2']
 
     JC_MOCK_MAIL_SUBJECT_PREFIX = '[Jc-Mock]'
     JC_MOCK_MAIL_SENDER = MAIL_USERNAME
@@ -62,8 +62,8 @@ class Config:
     CELERY_RESULT_BACKEND = "redis://:weidu@10.1.0.20:6379/7"
 
     JENKINS_URL = "https://jenkins-test.kuainiujinke.com/jenkins/"
-    USER_ID = "zhangtingli"
-    USER_PWD = "123456"
+    USER_ID = "yangxuechao"
+    USER_PWD = "11dcb4f46441f9ca3cafb7f239ecb06e26"
 
     REDIS_HOST = "127.0.0.1"
     REDIS_PORT = "6379"

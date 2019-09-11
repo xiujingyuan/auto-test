@@ -27,8 +27,8 @@ def run_build_task(self, build_task_id, jenkins_job, env):
               jenkins_job,
               env)
         server = jenkins.Jenkins(current_app.config["JENKINS_URL"],
-                                 current_app.config["USER_ID"],
-                                 current_app.config["USER_PWD"])
+                                 username=current_app.config["USER_ID"],
+                                 password=current_app.config["USER_PWD"])
         next_build_number = server.get_job_info(jenkins_job)['nextBuildNumber']
         build_number = server.build_job(jenkins_job,
                                         parameters=env)
