@@ -13,7 +13,7 @@ from flask import Blueprint
 
 task_url = Blueprint('tasks', __name__)
 
-from . import task_view, build_task_view
+from . import task_view
 
 
 
