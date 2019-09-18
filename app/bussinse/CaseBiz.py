@@ -308,7 +308,6 @@ class CaseBiz(UnSerializer):
 
     def copy_group_case(self,request):
         try:
-            print(request.json)
             input_params = request.json
             error_message =""
             case_id = ""
@@ -332,7 +331,7 @@ class CaseBiz(UnSerializer):
             copy_time = int(time.time())
             copycase_list = []
             if case_exec_group is None or case_exec_group == "":
-                copycase = self.copy_case_by_id(case_id, copy_time, case_exec_group)
+                copycase = self.copy_case_by_id(case_id, copy_time, case_author, case_exec_group)
                 copycase_list.append(copycase)
             else:
                 all_cases = Case.query.filter(Case.case_exec_group == case_exec_group).all()
