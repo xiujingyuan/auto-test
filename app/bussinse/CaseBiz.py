@@ -96,17 +96,22 @@ class CaseBiz(UnSerializer):
     def change_case(self,data,case_id):
         try:
             edit_case = Case.query.filter(Case.case_id == case_id).first()
-            if edit_case:
-                if edit_case.case_exec_group and edit_case.case_exec_group != data["case_exec_group"]:
-                    edit_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
-                    for sub_edit_case in edit_cases:
-                        sub_edit_case.case_exec_group = data["case_exec_group"]
-                        db.session.add(sub_edit_case)
-
-                db.session.query(Case).filter(Case.case_id == case_id).update(data)
-
+            if "flag" in data:
+                edit_case.case_is_exec = data["case_is_exec"]
+                edit_case.last_edit_user = data["last_edit_user"]
+                db.session.add(edit_case)
             else:
-                return "not found the case"
+                if edit_case:
+                    if edit_case.case_exec_group and edit_case.case_exec_group != data["case_exec_group"]:
+                        edit_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
+                        for sub_edit_case in edit_cases:
+                            sub_edit_case.case_exec_group = data["case_exec_group"]
+                            db.session.add(sub_edit_case)
+
+                    db.session.query(Case).filter(Case.case_id == case_id).update(data)
+
+                else:
+                    return "not found the case"
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()

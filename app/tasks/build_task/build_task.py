@@ -23,15 +23,22 @@ def run_build_task(self, build_task_id, jenkins_job, env):
         total = 100
         result = "SUCCESS"
         email = "zhangtingli@kuainiugroup.com"
-        print(current_app.config["JENKINS_URL"],
-              jenkins_job,
-              env)
+        current_app.logger.info("{0}, {1}, {2}, {3}, {4}".format(
+            current_app.config["JENKINS_URL"],
+            jenkins_job,
+            env,
+            current_app.config["USER_ID"],
+            current_app.config["USER_PWD"]
+        ))
+
         server = jenkins.Jenkins(current_app.config["JENKINS_URL"],
                                  username=current_app.config["USER_ID"],
                                  password=current_app.config["USER_PWD"])
         next_build_number = server.get_job_info(jenkins_job)['nextBuildNumber']
+        current_app.logger.info("next_build_number is : {0}".format(next_build_number))
         build_number = server.build_job(jenkins_job,
                                         parameters=env)
+        current_app.logger.info("build_number is : {0}".format(build_number))
         last_console_output = ""
 
         while True:
@@ -42,6 +49,8 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                 pass
             else:
                 console_output = console_output.strip("\r\n").strip("\n")
+                current_app.logger.info(console_output)
+                current_app.logger.info(last_console_output)
                 if console_output:
                     if last_console_output:
                         console_output = console_output.replace(last_console_output, "")
@@ -72,8 +81,16 @@ def run_build_task(self, build_task_id, jenkins_job, env):
                                 'status': "",
                                 'build_num': next_build_number})
         time.sleep(1)
+    except jenkins.JenkinsException:
+        current_app.logger.error("jenkins的的参数错误！")
+        self.update_state(state='FAILURE',
+                          meta={'current': i,
+                                'total': total,
+                                'result': 'error',
+                                'status': "jenkins任务构建失败",
+                                'build_num': next_build_number})
     except Exception as e:
-        current_app.logger.exception(traceback.format_exc())
+        current_app.logger.exception(e)
         self.update_state(state='FAILURE',
                           meta={'current': i,
                                 'total': total,

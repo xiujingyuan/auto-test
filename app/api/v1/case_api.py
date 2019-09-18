@@ -22,7 +22,7 @@ def get_case_data_bycaseid(caseid):
     cs = CaseBussinse()
     if request.method == "PUT":
         if cs.check_exists_bycaseid(caseid):
-            basicInfo = request.json['case']['basicInfo']
+            basicInfo = request.json if "flag" in request.json else request.json['case']['basicInfo']
             result = cs.change_case(basicInfo, caseid)
     elif request.method == "GET":
         result = cs.get_bussinse_data(caseid)
