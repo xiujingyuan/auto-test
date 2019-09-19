@@ -48,6 +48,28 @@ def add_case():
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/case/check_group', methods=['POST'])
+def check_group():
+    """
+    添加用例接口
+    :return: 返回是否添加成功
+    """
+    cs = CaseBussinse()
+    result, error_message = cs.check_group(request)
+    return jsonify(CommonResult.fill_result(result, message=error_message))
+
+
+@api_v1.route('/case/copy_all', methods=['POST'])
+def copy_case_all():
+    """
+    批量复制用例
+    :return: 返回复制是否成功
+    """
+    cs = CaseBussinse()
+    result, error_message = cs.copy_all(request)
+    return jsonify(CommonResult.fill_result(result, message=error_message))
+
+
 @api_v1.route('/case/search', methods=['POST'])
 def search_case():
     cs = CaseBussinse()

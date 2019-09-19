@@ -97,9 +97,21 @@ class CaseBiz(UnSerializer):
         try:
             edit_case = Case.query.filter(Case.case_id == case_id).first()
             if "flag" in data:
-                edit_case.case_is_exec = data["case_is_exec"]
-                edit_case.last_edit_user = data["last_edit_user"]
-                db.session.add(edit_case)
+                if data["flag"] == "case_exec_group":
+                    case_group = Case.query.filter(Case.case_exec_group == data["case_exec_group"]).first()
+                    if case_group:
+                        current_app.logger.error("The change case_exec_group is exist")
+                        return "The change case_exec_group is exist"
+                    else:
+                        all_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
+                        for sub_case in all_cases:
+                            sub_case.case_exec_group = data["case_exec_group"]
+                            sub_case.last_edit_user = data["last_edit_user"]
+                            db.session.add(sub_case)
+                elif data["flag"] == "case_is_exec":
+                    edit_case.case_is_exec = data["case_is_exec"]
+                    edit_case.last_edit_user = data["last_edit_user"]
+                    db.session.add(edit_case)
             else:
                 if edit_case:
                     if edit_case.case_exec_group and edit_case.case_exec_group != data["case_exec_group"]:
@@ -107,17 +119,16 @@ class CaseBiz(UnSerializer):
                         for sub_edit_case in edit_cases:
                             sub_edit_case.case_exec_group = data["case_exec_group"]
                             db.session.add(sub_edit_case)
-
                     db.session.query(Case).filter(Case.case_id == case_id).update(data)
 
                 else:
+                    current_app.logger.error("not found the case")
                     return "not found the case"
+            db.session.commit()
         except Exception as e:
             current_app.logger.exception(e)
             db.session.rollback()
             return ErrorCode.ERROR_CODE
-        finally:
-            db.session.commit()
 
     def delete_case_bycaseid(self,case_id):
         try:
@@ -366,6 +377,57 @@ class CaseBiz(UnSerializer):
         finally:
             return code, message
 
+    def check_group(self, request):
+        data = request.json
+        case = Case.query.filter(Case.case_exec_group == data["group_name"]).first()
+        code = ErrorCode.ERROR_CODE
+        msg = "group is exist"
+        if not case:
+            code = 0
+            msg = "success"
+        return code, msg
+
+    def copy_all(self, request):
+        """
+        批量复制用例
+        :param data:需要复制的用例ID，list
+        :return:返回复制是否成功
+        """
+        data = request.json
+        case_author = data["author"]
+
+        copycase_list = []
+        message = "复制成功"
+        code = 0
+        copy_time = int(time.time())
+        try:
+            for case_id in data["cases"]:
+                case_copy = Case.query.filter(Case.case_id == case_id).one()
+                case_exec_group = case_copy.case_exec_group
+                if case_exec_group is None or case_exec_group == "":
+                    # 用例为接口用例
+                    copycase = self.copy_case_by_id(case_id, copy_time, case_author, case_exec_group)
+                    copycase_list.append(copycase)
+                else:
+                    # 用例为场景用例
+                    all_cases = Case.query.filter(Case.case_exec_group == case_exec_group).all()
+                    if "_copy_" in case_exec_group:
+                        case_exec_group = case_exec_group.split("_copy_")[0]
+                    case_exec_group_new = "{0}_copy_{1}_{2}".format(case_exec_group, copy_time, case_copy.case_id)
+                    for item_case in all_cases:
+                        copycase = self.copy_case_by_id(item_case.case_id, copy_time, case_author, case_exec_group_new)
+                        copycase_list.append(copycase)
+                db.session.commit()
+                update_case_redis(copycase_list)
+        except Exception as e:
+            current_app.logger.exception(e)
+            code = ErrorCode.ERROR_CODE
+            message = str(e)
+            db.session.rollback()
+
+        finally:
+            return code, message
+
     def copy_case_by_id(self, case_id, copy_time, case_author, case_exec_group=None):
         oldcase = Case.query.filter(Case.case_id == case_id).one()
         pre_cases = PrevModel.query.filter(PrevModel.prev_case_id == case_id).all()
@@ -378,7 +440,7 @@ class CaseBiz(UnSerializer):
                 if attr == "case_name":
                     if "_copy_" in value:
                         value = value.split("_copy_")[0]
-                    value = value + "_copy_{0}".format(copy_time)
+                    value = value + "_copy_{0}_{1}".format(copy_time, case_id)
                 elif attr == "case_exec_group" and case_exec_group is not None:
                     value = case_exec_group
                 elif attr in ("case_author", "case_in_user", "case_last_user"):

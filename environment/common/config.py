@@ -11,6 +11,7 @@
 
 import os, logging
 basedir = os.path.abspath(os.path.dirname(__file__))
+from kombu import Exchange, Queue
 
 
 class Config:
@@ -68,6 +69,19 @@ class Config:
     REDIS_HOST = "127.0.0.1"
     REDIS_PORT = "6379"
     REDIS_PWD = "123456"
+
+    CELERY_TIMEZONE = 'Asia/Shanghai'
+
+    CELERY_QUEUES = (
+        Queue("default", Exchange("default"), routing_key="default"),
+        Queue("app.tasks.case.case_task.run_case_by_case_id", Exchange("for_run_case_task"),
+              routing_key="for_run_case_task"),
+    )
+    # celery路由
+    CELERY_ROUTES = {
+        'app.tasks.case.case_task.run_case_by_case_id': {"queue": "for_run_case_task",
+                                                         "routing_key": "for_run_case_task"},
+    }
 
     @staticmethod
     def init_app(app):
