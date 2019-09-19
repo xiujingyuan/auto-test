@@ -525,21 +525,29 @@ class CaseBiz(UnSerializer):
             return ret, "success"
 
     @staticmethod
-    def get_all_cases():
+    def get_all_cases(request):
         try:
-
+            system = request.args["testParam1"]
+            ret = []
             if current_app.app_redis.exists("gaea_all_cases"):
-                ret = json.loads(current_app.app_redis.get("gaea_all_cases"))
+                ret_data = json.loads(current_app.app_redis.get("gaea_all_cases"))
+                for item_data in ret_data:
+                    if not system or item_data["case_from_system"] == system:
+                        ret.append({"case_id": item_data["case_id"], "case_name": item_data["case_name"]})
             else:
-                ret = []
-                all_cases = Case.query.filter(or_(Case.case_exec_group_priority == "main", Case.case_exec_group_priority == ""))
+                ret_redis = []
+                all_cases = Case.query.filter(or_(Case.case_exec_group_priority == "main",
+                                                  Case.case_exec_group_priority == ""))
                 for all_case in all_cases:
                     case_serialize = all_case.serialize()
-                    ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
-                        case_serialize["case_from_system"],
-                        case_serialize["case_category"],
-                        case_serialize["case_name"])})
-                current_app.app_redis.set("gaea_all_cases", json.dumps(ret, ensure_ascii=False))
+                    ret_redis.append({"case_id": case_serialize["case_id"],
+                                      "case_name": case_serialize["case_name"],
+                                      "case_from_system": case_serialize["case_from_system"],
+                                      "case_category": case_serialize["case_category"]
+                                      })
+                    if not system or all_case.case_from_system == system:
+                        ret.append({"case_id": case_serialize["case_id"], "case_name": case_serialize["case_name"]})
+                current_app.app_redis.set("gaea_all_cases", json.dumps(ret_redis, ensure_ascii=False))
         except Exception as e:
             current_app.logger.exception(e)
             return ret, ErrorCode.ERROR_CODE
