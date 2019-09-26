@@ -17,6 +17,7 @@ class Case(db.Model,Serializer):
     case_id= db.Column(db.Integer, primary_key=True)
     case_exec_priority=db.Column(db.Integer)
     case_from_system=db.Column(db.String(255))
+    case_belong_business=db.Column(db.String(255))
     case_name=db.Column(db.String(255))
     case_description=db.Column(db.String(255))
     case_category=db.Column(db.String(255))

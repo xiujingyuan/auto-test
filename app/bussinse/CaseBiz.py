@@ -43,7 +43,7 @@ class CaseBiz(UnSerializer):
             db.session.add(case)
             db.session.flush()
             case_id = case.case_id
-            if  prevInfo is not None and len(prevInfo)>0:
+            if prevInfo is not None and len(prevInfo)>0:
                 print(request)
                 for single in prevInfo:
                     prev = PrevModel()
@@ -300,7 +300,7 @@ class CaseBiz(UnSerializer):
     def get_maincaseid_caseid(self,case_id):
         query = db.session.query(Case).filter(Case.case_id==case_id).filter(Case.case_is_exec.in_([0,1]))
         result = query.first()
-        if result.case_exec_group_priority=='main':
+        if result.case_exec_group_priority == 'main':
             return case_id
         else:
             main_result = db.session.query(Case).filter(Case.case_exec_group == result.case_exec_group).filter(Case.case_exec_group_priority=='main').first()
