@@ -77,6 +77,9 @@ class CaseBiz(UnSerializer):
         finally:
             return case_id
 
+
+
+
     def get_bussinse_data(self, case_id):
         try:
             res ={}
@@ -185,10 +188,14 @@ class CaseBiz(UnSerializer):
         try:
             if input_params is not None:
                 print(type(input_params))
-                if 'case_from_system' in input_params.keys():
-                    value = input_params['case_from_system']
-                    if value is not None and value!='':
-                        params.append(Case.case_from_system.like('%'+value+'%'))
+                # if 'case_from_system' in input_params.keys():
+                    # value = input_params['case_from_system']
+                    # if value is not None and value!='':
+                    #     params.append(Case.case_from_system.like('%'+value+'%'))
+
+                if "case_from_system" in input_params and input_params['case_from_system']:
+                    params.append(Case.case_from_system == int(input_params['case_from_system']))
+
                 if 'case_description' in input_params.keys():
                     value = input_params['case_description']
                     if value is not None and value!='':
@@ -216,6 +223,9 @@ class CaseBiz(UnSerializer):
                         value = self.get_maincaseid_caseid(value)
                         params.append(Case.case_id==value)
 
+                if 'case_ids' in input_params and input_params["case_ids"]:
+                    params.append(Case.case_id.in_(input_params["case_ids"]))
+
                 if 'case_exec_group' in input_params.keys():
                     value = input_params['case_exec_group']
                     if value is not None and value!='':
@@ -226,6 +236,8 @@ class CaseBiz(UnSerializer):
                     if value is not None and value!='':
                         params.append(Case.case_exec_priority==value)
 
+                if 'case_belong_business' in input_params and input_params['case_belong_business']:
+                    params.append(Case.case_belong_business == input_params['case_belong_business'])
 
                 if 'case_exec_group_priority' in input_params.keys():
                     value = input_params['case_exec_group_priority']
@@ -527,13 +539,16 @@ class CaseBiz(UnSerializer):
     @staticmethod
     def get_all_cases(request):
         try:
-            system = request.args["testParam1"]
+            system = int(request.args["program_id"])
+            business = request.args["business"]
             ret = []
             if current_app.app_redis.exists("gaea_all_cases"):
                 ret_data = json.loads(current_app.app_redis.get("gaea_all_cases"))
                 for item_data in ret_data:
-                    if not system or item_data["case_from_system"] == system:
-                        ret.append({"case_id": item_data["case_id"], "case_name": item_data["case_name"]})
+                    if (not system or item_data["case_from_system"] == system) and \
+                            (not business or item_data["case_belong_business"] == business):
+                        ret.append({"case_id": item_data["case_id"],
+                                    "case_name": item_data["case_name"]})
             else:
                 ret_redis = []
                 all_cases = Case.query.filter(or_(Case.case_exec_group_priority == "main",
@@ -543,10 +558,13 @@ class CaseBiz(UnSerializer):
                     ret_redis.append({"case_id": case_serialize["case_id"],
                                       "case_name": case_serialize["case_name"],
                                       "case_from_system": case_serialize["case_from_system"],
-                                      "case_category": case_serialize["case_category"]
+                                      "case_category": case_serialize["case_category"],
+                                      "case_belong_business": case_serialize["case_belong_business"]
                                       })
-                    if not system or all_case.case_from_system == system:
-                        ret.append({"case_id": case_serialize["case_id"], "case_name": case_serialize["case_name"]})
+                    if (not system or all_case["case_from_system"] == system) and \
+                            (not business or all_case["case_belong_business"] == business):
+                        ret.append({"case_id": case_serialize["case_id"],
+                                    "case_name": case_serialize["case_name"]})
                 current_app.app_redis.set("gaea_all_cases", json.dumps(ret_redis, ensure_ascii=False))
         except Exception as e:
             current_app.logger.exception(e)

@@ -14,6 +14,7 @@ class HistoryPrevModel(db.Model,Serializer):
     __tablename__ = 'history_prev_condition'
     history_id = db.Column(db.Integer,primary_key=True)
     run_id = db.Column(db.Integer,db.ForeignKey("history_finlab_cases.run_id"))
+    build_id = db.Column(db.String(255))
     prev_id = db.Column(db.Integer)
     prev_case_id=db.Column(db.Integer,db.ForeignKey("history_finlab_cases.history_case_id"))
     prev_task_type=db.Column(db.String(255))

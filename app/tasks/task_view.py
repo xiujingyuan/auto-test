@@ -87,8 +87,11 @@ def case_task_status(run_id):
     return jsonify(response)
 
 
-@task_url.route("/tasks/case_task_create/<task_id>", methods=["GET"])
-def case_task_create(task_id):
-    task = run_case_by_case_id.apply_async(args=[task_id])
+@task_url.route("/tasks/case_task_create/", methods=["POST"])
+def case_task_create():
+    req = request.json
+
+    task = run_case_by_case_id.apply_async(args=[req])
+
     return jsonify({"Location": '/tasks/case_task_status/status/{0}'.format(task.id), "code": 202})
 

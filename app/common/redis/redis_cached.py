@@ -25,27 +25,28 @@ def update_case_redis(cases, type="add"):
             for case in cases:
                 if not case.case_exec_group_priority or case.case_exec_group_priority == "main":
                     case_serialize = case.serialize()
-                    old_case = {"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
-                        case_serialize["case_from_system"],
-                        case_serialize["case_category"],
-                        case_serialize["case_name"])}
+                    old_case = {"case_id": case_serialize["case_id"], "case_name": case_serialize["case_name"]}
                     ret.remove(old_case)
         else:
             for case in cases:
                 if not case.case_exec_group_priority or case.case_exec_group_priority == "main":
                     case_serialize = case.serialize()
-                    ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
-                        case_serialize["case_from_system"],
-                        case_serialize["case_category"],
-                        case_serialize["case_name"])})
+                    ret.append({"case_id": case_serialize["case_id"],
+                                "case_name": case_serialize["case_name"],
+                                "case_from_system": case_serialize["case_from_system"],
+                                "case_category": case_serialize["case_category"],
+                                "case_belong_business": case_serialize["case_belong_business"]
+                                })
         current_app.app_redis.set("gaea_all_cases", json.dumps(ret, ensure_ascii=False))
     else:
         ret = []
         all_cases = Case.query.filter(or_(Case.case_exec_group_priority == "main", Case.case_exec_group_priority == "")).filter(Case.case_is_exec == 1)
         for all_case in all_cases:
             case_serialize = all_case.serialize()
-            ret.append({"case_id": case_serialize["case_id"], "case_name": "{0} {1} {2}".format(
-                case_serialize["case_from_system"],
-                case_serialize["case_category"],
-                case_serialize["case_name"])})
+            ret.append({"case_id": case_serialize["case_id"],
+                        "case_name": case_serialize["case_name"],
+                        "case_from_system": case_serialize["case_from_system"],
+                        "case_category": case_serialize["case_category"],
+                        "case_belong_business": case_serialize["case_belong_business"]
+                        })
         current_app.app_redis.set("gaea_all_cases", json.dumps(ret, ensure_ascii=False))

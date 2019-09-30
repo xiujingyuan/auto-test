@@ -13,7 +13,7 @@ from app.models.HistoryCaseModel import HistoryCaseModel
 from app.models.HistoryInitModel import HistoryInitModel
 from app.models.HistoryPrevModel import HistoryPrevModel
 from app.models.ErrorCode import ErrorCode
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from flask import current_app
 
 from app.models.RunCasesModel import RunCase
@@ -232,3 +232,24 @@ class HistoryBiz(object):
             return ret, ErrorCode.ERROR_CODE
         else:
             return ret, "success"
+
+    @staticmethod
+    def get_run_case(build_id):
+        ret = ""
+        run_case_list = HistoryCaseModel.query.filter(and_(HistoryCaseModel.build_id == build_id,
+                                                           HistoryCaseModel.history_case_exec_group_priority != "sub")
+                                                      ).all()
+        if run_case_list:
+            ret = HistoryCaseModel.serialize_list(run_case_list)
+        return ret, "success"
+
+    @staticmethod
+    def get_run_case_sub(build_id, exec_group):
+        ret = ""
+        run_case_list = HistoryCaseModel.query.filter(and_(HistoryCaseModel.build_id == build_id,
+                                                           HistoryCaseModel.history_case_exec_group_priority == "sub",
+                                                           HistoryCaseModel.history_case_exec_group == exec_group)
+                                                      ).all()
+        if run_case_list:
+            ret = HistoryCaseModel.serialize_list(run_case_list)
+        return ret, "success"

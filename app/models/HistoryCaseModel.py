@@ -18,6 +18,8 @@ class HistoryCaseModel(db.Model,Serializer):
     __tablename__ = 'history_finlab_cases'
     history_id = db.Column(db.Integer,primary_key=True)
     run_id = db.Column(db.Integer)
+    build_id = db.Column(db.String(255))
+    history_case_belong_business = db.Column(db.String(255))
     history_case_id= db.Column(db.Integer)
     history_case_exec_priority=db.Column(db.Integer)
     history_case_from_system=db.Column(db.String(255))
