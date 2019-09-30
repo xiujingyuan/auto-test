@@ -539,7 +539,7 @@ class CaseBiz(UnSerializer):
     @staticmethod
     def get_all_cases(request):
         try:
-            system = int(request.args["program_id"])
+            system = int(request.args["program_id"]) if request.args["program_id"] else ""
             business = request.args["business"]
             ret = []
             if current_app.app_redis.exists("gaea_all_cases"):
