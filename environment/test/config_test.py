@@ -22,5 +22,9 @@ class TestingConfig(Config):
     REDIS_PORT = "6379"
     REDIS_PWD = "weidu"
 
+    # celery 配置
     BROKER_URL = "redis://:weidu@10.1.0.20:6379/6"
     CELERY_RESULT_BACKEND = "redis://:weidu@10.1.0.20:6379/7"
+
+    # Jenkins run case 配置
+    JENKINS_RUN_JOB = "Auto_Test_Api_Run_Case12"

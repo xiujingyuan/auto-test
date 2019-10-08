@@ -68,12 +68,14 @@ def run_case_by_case_id(self, case_id):
         current_app.logger.info("case_id args is {0}".format(case_id))
         current_app.logger.info("case_id email is {0} ".format(email))
         exec_case_array_str = ','.join(str(case) for case in case_id)
+        total = len(case_id) * 10
+        i = 0
         server = jenkins.Jenkins(current_app.config["JENKINS_URL"],
                                  current_app.config["USER_ID"],
                                  current_app.config["USER_PWD"])
-        next_build_number = server.get_job_info('Auto_Test_Api_Run_Case12')['nextBuildNumber']
+        next_build_number = server.get_job_info(current_app.config["JENKINS_RUN_JOB"])['nextBuildNumber']
         current_app.logger.info("before request id is: {0} {1}".format(self.request.id, type(self.request.id)))
-        build_number = server.build_job("Auto_Test_Api_Run_Case12",
+        build_number = server.build_job(current_app.config["JENKINS_RUN_JOB"],
                                         parameters={"case_ids": exec_case_array_str,
                                                     "email_address": email,
                                                     "current_build_id": self.request.id})
@@ -81,12 +83,11 @@ def run_case_by_case_id(self, case_id):
         current_app.logger.info("case id is: {0}".format(exec_case_array_str))
         current_app.logger.info("request id is: {0} {1}".format(self.request.id, type(self.request.id)))
         last_console_output = ""
-        total = len(case_id) * 10
-        i = 0
+
         while True:
             try:
-                build_info = server.get_build_info('Auto_Test_Api_Run_Case12', next_build_number)
-                console_output = server.get_build_console_output("Auto_Test_Api_Run_Case12", next_build_number)
+                build_info = server.get_build_info(current_app.config["JENKINS_RUN_JOB"], next_build_number)
+                console_output = server.get_build_console_output(current_app.config["JENKINS_RUN_JOB"], next_build_number)
             except:
                 pass
             else:

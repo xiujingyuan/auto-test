@@ -26,7 +26,8 @@ def update_case_redis(cases, type="add"):
                 if not case.case_exec_group_priority or case.case_exec_group_priority == "main":
                     case_serialize = case.serialize()
                     old_case = {"case_id": case_serialize["case_id"], "case_name": case_serialize["case_name"]}
-                    ret.remove(old_case)
+                    if old_case in ret:
+                        ret.remove(old_case)
         else:
             for case in cases:
                 if not case.case_exec_group_priority or case.case_exec_group_priority == "main":
