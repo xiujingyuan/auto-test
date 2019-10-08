@@ -56,12 +56,6 @@ class Config:
     LOG_FILE_BACKUP_COUNT = 10
     SENTRY_DSN = ""
 
-    # CELERY_BROKER_URL = "redis://:123456@localhost:6379/6"
-    # CELERY_RESULT_BACKEND = "redis://:123456@localhost:6379/7"
-
-    CELERY_BROKER_URL = "redis://:weidu@10.1.0.20:6379/6"
-    CELERY_RESULT_BACKEND = "redis://:weidu@10.1.0.20:6379/7"
-
     JENKINS_URL = "https://jenkins-test.kuainiujinke.com/jenkins/"
     USER_ID = "yangxuechao"
     USER_PWD = "11dcb4f46441f9ca3cafb7f239ecb06e26"

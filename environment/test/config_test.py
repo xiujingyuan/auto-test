@@ -21,3 +21,6 @@ class TestingConfig(Config):
     REDIS_HOST = "10.1.0.20"
     REDIS_PORT = "6379"
     REDIS_PWD = "weidu"
+
+    BROKER_URL = "redis://:weidu@10.1.0.20:6379/6"
+    CELERY_RESULT_BACKEND = "redis://:weidu@10.1.0.20:6379/7"

@@ -13,15 +13,12 @@ from flask_sqlalchemy import SQLAlchemy
 from app.common.config.config import config
 from flask_wtf.csrf import CSRFProtect
 from celery import Celery
-from environment.common.config import Config
 from redis import Redis
 
 db = SQLAlchemy()
 csrf = CSRFProtect()
 
-celery = Celery(__name__,
-                broker=Config.CELERY_BROKER_URL,
-                backend=Config.CELERY_RESULT_BACKEND)
+celery = Celery(__name__)
 
 
 def create_app(config_name):
