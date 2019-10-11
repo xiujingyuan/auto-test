@@ -101,6 +101,8 @@ class CommonBiz(UnSerializer,Serializer):
             request_json = request.json
             interest_rate = 0.0
             fee_rate=0.0
+            risk_level=None
+            channel=None
             if 'product_name' in request_json.keys():
                 product_name = request_json['product_name']
             if 'principal_amount' in request_json.keys():
@@ -121,6 +123,19 @@ class CommonBiz(UnSerializer,Serializer):
                 fee_rate = request_json['fee_rate']
             if 'interest_rate' in request_json.keys():
                 interest_rate = request_json['interest_rate']
+            if 'risk_level' in request_json.keys():
+                risk_level=request_json['risk_level']
+
+            if channel=='qnn' and risk_level is not None:
+                if risk_level in [0,1,2]:
+                    product_name='qnn_lm_1_30d_20190103'
+                elif risk_level in [3,4,5]:
+                    product_name='qnn_lm_1_30d_180d_20190701'
+                elif risk_level in [6,7]:
+                    product_name='qnn_lm_1_30d_360d_20190701'
+                elif risk_level in [8,9,10,99]:
+                    product_name='qnn_lm_1_30d_540d_20190701'
+
 
             cmdb_url,cmdb_request = CapitalPlanModel.get_calculate_request(product_name,principal_amount,period_count,sign_date)
             current_app.logger.info(cmdb_request)
