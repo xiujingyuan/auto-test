@@ -312,12 +312,13 @@ class CaseBiz(UnSerializer):
     def get_maincaseid_caseid(self,case_id):
         query = db.session.query(Case).filter(Case.case_id==case_id).filter(Case.case_is_exec.in_([0,1]))
         result = query.first()
-        if result.case_exec_group_priority == 'main':
-            return case_id
-        else:
-            main_result = db.session.query(Case).filter(Case.case_exec_group == result.case_exec_group).filter(Case.case_exec_group_priority=='main').first()
-            if main_result is not None:
-                return main_result.case_id
+        if result is not None:
+            if result.case_exec_group_priority == 'main':
+                return case_id
+            else:
+                main_result = db.session.query(Case).filter(Case.case_exec_group == result.case_exec_group).filter(Case.case_exec_group_priority=='main').first()
+                if main_result is not None:
+                    return main_result.case_id
 
         return case_id
 
@@ -566,6 +567,25 @@ class CaseBiz(UnSerializer):
                         ret.append({"case_id": case_serialize["case_id"],
                                     "case_name": case_serialize["case_name"]})
                 current_app.app_redis.set("gaea_all_cases", json.dumps(ret_redis, ensure_ascii=False))
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ret, ErrorCode.ERROR_CODE
+        else:
+            return ret, "success"
+
+    @staticmethod
+    def calculate_case_count(request):
+        try:
+            ret = 0
+            case_id_list = request.json["case_id"]
+
+            all_case = Case.query.filter(Case.case_id.in_(case_id_list)).all()
+            ret = len(all_case)
+            for case in all_case:
+                if case.case_exec_group and case.case_exec_group_priority == "main":
+                    ret += Case.query.filter(and_(Case.case_is_exec == 1,
+                                                  Case.case_exec_group == case.case_exec_group,
+                                                  Case.case_exec_group_priority == "sub")).count()
         except Exception as e:
             current_app.logger.exception(e)
             return ret, ErrorCode.ERROR_CODE
