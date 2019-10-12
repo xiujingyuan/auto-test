@@ -182,12 +182,15 @@ class CommonBiz(UnSerializer,Serializer):
     def grantWithdrawSuccess(self,request):
         try:
             request_dict = request.json
+            risk_level=None
             if "item_no" in request_dict.keys():
                 item_no = request_dict['item_no']
             if "env" in request_dict.keys():
                 env = request_dict['env']
             if "call_back" in request_dict.keys():
                 call_back = request_dict['call_back']
+            if 'risk_level' in request_dict.keys():
+                risk_level = request_dict['risk_level']
             sql = '''
                 select task_request_data from {0}.task where task_order_no='{1}'
             '''.format(env,item_no)
@@ -217,6 +220,8 @@ class CommonBiz(UnSerializer,Serializer):
 
     def grant_capital_plan(self,request,env):
         try:
+            risk_level=None
+            channel=None
             request_json = request['data']['asset']
             if 'cmdb_product_number' in request_json.keys():
                 product_name = request_json['cmdb_product_number']
@@ -236,6 +241,19 @@ class CommonBiz(UnSerializer,Serializer):
                 fee_rate = request_json['fee_rate']
             if 'interest_rate' in request_json.keys():
                 interest_rate = request_json['interest_rate']
+            if 'risk_level' in request_json.keys():
+                risk_level=request_json['risk_level']
+
+            if channel=='qnn' and risk_level is not None:
+                if risk_level in [0,1,2]:
+                    product_name='qnn_lm_1_30d_20190103'
+                elif risk_level in [3,4,5]:
+                    product_name='qnn_lm_1_30d_180d_20190701'
+                elif risk_level in [6,7]:
+                    product_name='qnn_lm_1_30d_360d_20190701'
+                elif risk_level in [8,9,10,99]:
+                    product_name='qnn_lm_1_30d_540d_20190701'
+
             defualt_capital ="http://kong-api-test.kuainiujinke.com/{0}/capital-asset/asset-loan;http://kong-api-test.kuainiujinke.com/{1}/capital-asset/grant;".format(env[1:],'r'+env[1:])
             cmdb_url,cmdb_request = CapitalPlanModel.get_calculate_request(product_name,principal_amount,period_count,sign_date)
             print(cmdb_request)
@@ -244,7 +262,7 @@ class CommonBiz(UnSerializer,Serializer):
             params = CapitalPlanModel.build_all_params(channel,item_no,int(period_count),int(period),sign_date,principal_amount,product_name,result,fee_rate,interest_rate)
             if isinstance(params,str):
                 # return "汇率编号已经失效，无法生成资方还款计划"
-                return result["message"] if "message" in result else "汇率编号已经失效，无法生成资方还款计划"
+                return result["message"] if "message" in result else "费率编号已经失效，无法生成资方还款计划"
             urls = defualt_capital.split(";")
             for url in urls:
                 print(url)
