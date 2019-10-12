@@ -125,6 +125,10 @@ class CommonBiz(UnSerializer,Serializer):
                 interest_rate = request_json['interest_rate']
             if 'risk_level' in request_json.keys():
                 risk_level=request_json['risk_level']
+                try:
+                    risk_level=int(risk_level)
+                except:
+                    pass
 
             if channel=='qnn' and risk_level is not None:
                 if risk_level in [0,1,2]:
@@ -182,15 +186,13 @@ class CommonBiz(UnSerializer,Serializer):
     def grantWithdrawSuccess(self,request):
         try:
             request_dict = request.json
-            risk_level=None
             if "item_no" in request_dict.keys():
                 item_no = request_dict['item_no']
             if "env" in request_dict.keys():
                 env = request_dict['env']
             if "call_back" in request_dict.keys():
                 call_back = request_dict['call_back']
-            if 'risk_level' in request_dict.keys():
-                risk_level = request_dict['risk_level']
+
             sql = '''
                 select task_request_data from {0}.task where task_order_no='{1}'
             '''.format(env,item_no)
@@ -243,6 +245,10 @@ class CommonBiz(UnSerializer,Serializer):
                 interest_rate = request_json['interest_rate']
             if 'risk_level' in request_json.keys():
                 risk_level=request_json['risk_level']
+                try:
+                    risk_level=int(risk_level)
+                except:
+                    pass
 
             if channel=='qnn' and risk_level is not None:
                 if risk_level in [0,1,2]:
