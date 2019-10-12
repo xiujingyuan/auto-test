@@ -38,7 +38,7 @@ class db_connect():
         try:
             self._conn = pymysql.Connect(
                 port=3306,
-                host='10.0.1.15',
+                host='10.1.0.15',
                 passwd='Coh8Beyiusa7',
                 db='gbiz1',
                 user='root'
