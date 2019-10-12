@@ -105,3 +105,9 @@ def get_new_cases():
 def get_all_cases():
     result, error_message = CaseBussinse.get_all_cases(request)
     return jsonify(CommonResult.fill_result(result, message=error_message))
+
+
+@api_v1.route('/case/calculate', methods=['GET'])
+def calculate_case_count():
+    result, error_message = CaseBussinse.calculate_case_count(request)
+    return jsonify(CommonResult.fill_result(result, message=error_message))
