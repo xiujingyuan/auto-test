@@ -20,7 +20,8 @@ from app.models.WithdrawSuccessModel import WithdrawSuccessModel
 from email.header import Header
 from email.mime.text import MIMEText
 from app.models.ErrorCode import ErrorCode
-
+import datetime
+from app.bussinse import executesql
 
 
 class CommonBiz(UnSerializer,Serializer):
@@ -310,5 +311,62 @@ class CommonBiz(UnSerializer,Serializer):
         except Exception as e:
             current_app.logger.exception(e)
 
+    def getEveryDay(self,begin_day,end_day):
+        date_list = []
+        begin_date = datetime.datetime.strptime(begin_day, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(end_day, "%Y-%m-%d")
+        while begin_date <= end_date:
+            date_str = begin_date.strftime("%Y-%m-%d")
+            date_list.append(date_str)
+            begin_date += datetime.timedelta(days=1)
+        return date_list
+
+    def set_capital_loan_condition(self,request):
+        '''
+
+        :param request:
+        {
+        "env":4,
+        "channel":"qnn",
+        "period_count":1,
+        "begin_day":"2019-10-12",
+        "end_day":"2019-10-14"
+        }
+        :return:
+        '''
+
+        request_dict = request.json
+        env=request_dict['env']
+        env='biz'+str(env)
+        begin_day=request_dict['begin_day']
+        end_day = request_dict['end_day']
+        channel=request_dict['channel']
+        period_count=request_dict['period_count']
+        period_count=int(period_count)
+        if period_count == 1:
+            period_type='day'
+            period_day=30
+        else:
+            period_type = 'month'
+            period_day = 0
+        day_list=self.getEveryDay(begin_day,end_day)
+        db=executesql.db_connect()
 
 
+        if day_list is not None and len(day_list)>0:
+            for day in day_list:
+                clear_sql='''
+                delete  from {0}.capital_loan_condition where capital_loan_condition_channel= '{1}' and capital_loan_condition_period_count= {2} and capital_loan_condition_day= '{3}'
+                '''.format(env,channel,period_count,day)
+                m=db.do_sql(clear_sql,env)
+                print(m)
+                print(clear_sql)
+                insert_sql='''
+                INSERT INTO {0}.capital_loan_condition ( `capital_loan_condition_day`, `capital_loan_condition_channel`, `capital_loan_condition_description`, `capital_loan_condition_amount`, `capital_loan_condition_from_system`, `capital_loan_condition_sub_type`, `capital_loan_condition_period_count`, `capital_loan_condition_period_type`, `capital_loan_condition_period_days`, `capital_loan_condition_update_memo`, `capital_loan_condition_create_at`, `capital_loan_condition_update_at`)
+                VALUES
+                ( '{1}', '{2}', '分期贷款', 100000000, 'dsq', 'multiple', "{3}", '{4}', {5}, '接口插入', now(), now());
+        
+                '''.format(env,day,channel,period_count,period_type,period_day)
+                print(insert_sql)
+                m=db.do_sql(insert_sql,env)
+                print(m)

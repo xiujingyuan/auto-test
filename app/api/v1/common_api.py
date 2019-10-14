@@ -21,6 +21,7 @@ from app.bussinse.TableSyncBiz import TableSyncBiz
 from app.bussinse.ReportBiz import ReportBiz
 
 
+
 @api_v1.route('/common/getdblist', methods=['GET'])
 def get_variable_database_list():
     common = CommonBiz()
@@ -105,3 +106,8 @@ def upload_file():
 
 
 
+@api_v1.route('/common/set-capital-loan-condition',methods=['POST'])
+def set_capital_loan_condition():
+    common = CommonBiz()
+    result = common.set_capital_loan_condition(request)
+    return jsonify(CommonResult.fill_result(result))
