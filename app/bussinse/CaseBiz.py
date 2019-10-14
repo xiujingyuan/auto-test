@@ -118,12 +118,15 @@ class CaseBiz(UnSerializer):
             else:
                 if edit_case:
                     if edit_case.case_exec_group and edit_case.case_exec_group != data["case_exec_group"]:
-                        edit_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
-                        for sub_edit_case in edit_cases:
-                            sub_edit_case.case_exec_group = data["case_exec_group"]
-                            db.session.add(sub_edit_case)
+                        check_group = Case.query.filter(Case.case_exec_group == data["case_exec_group"]).first()
+                        if not check_group:
+                            edit_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
+                            for sub_edit_case in edit_cases:
+                                sub_edit_case.case_exec_group = data["case_exec_group"]
+                                db.session.add(sub_edit_case)
+                        else:
+                            return "复制用例名称已存在！"
                     db.session.query(Case).filter(Case.case_id == case_id).update(data)
-
                 else:
                     current_app.logger.error("not found the case")
                     return "not found the case"
