@@ -39,7 +39,7 @@ class CaseBiz(UnSerializer):
         try:
             case = Case()
             case.__dict__.update(UnSerializer.un_serialize(basicInfo))
-            case_id = None
+            # case_id = None
             db.session.add(case)
             db.session.flush()
             case_id = case.case_id
