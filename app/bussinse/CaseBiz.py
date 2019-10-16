@@ -39,7 +39,7 @@ class CaseBiz(UnSerializer):
         try:
             case = Case()
             case.__dict__.update(UnSerializer.un_serialize(basicInfo))
-            # case_id = None
+            case_id = None
             db.session.add(case)
             db.session.flush()
             case_id = case.case_id
@@ -338,32 +338,37 @@ class CaseBiz(UnSerializer):
         finally:
             db.session.commit()
 
-    def copy_group_case(self,request):
+    def copy_group_case(self, request):
         try:
             input_params = request.json
-            error_message =""
+            error_message = ""
             case_id = ""
-            case_from_system=""
-            case_exec_group=""
+            case_from_system = ""
+            case_exec_group = ""
+            case_run_group_property = "main"
             if input_params is not None:
                 if 'case_id' in input_params.keys():
                     case_id = input_params['case_id']
                 if 'case_exec_group' in input_params.keys():
                     case_exec_group = input_params['case_exec_group']
                 if 'case_from_system' in input_params.keys():
-                    case_from_system= input_params['case_from_system']
-                if case_id is None or case_id =="" \
-                    or case_from_system is None or case_from_system=="" :
-                    error_message ="case_id ,case_from_system 均不能为空"
-                    return ErrorCode.ERROR_CODE,error_message
+                    case_from_system = input_params['case_from_system']
+                if "case_run_group_property" in input_params:
+                    case_run_group_property = input_params['case_run_group_property']
+                if case_id is None or case_id == "" \
+                    or case_from_system is None or case_from_system == "":
+                    message = "case_id ,case_from_system 均不能为空"
+                    code = ErrorCode.ERROR_CODE
+                    return
                 if 'case_author' in input_params.keys():
                     case_author = input_params['case_author']
             code = 0
             message = '复制成功'
             copy_time = int(time.time())
             copycase_list = []
-            if case_exec_group is None or case_exec_group == "":
+            if case_exec_group is None or case_exec_group == "" or case_run_group_property == "sub":
                 copycase = self.copy_case_by_id(case_id, copy_time, case_author, case_exec_group)
+                code = copycase.case_id
                 copycase_list.append(copycase)
             else:
                 all_cases = Case.query.filter(Case.case_exec_group == case_exec_group).all()
