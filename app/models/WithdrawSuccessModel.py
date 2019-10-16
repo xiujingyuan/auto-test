@@ -114,6 +114,8 @@ class WithdrawSuccessModel(object):
         basic_info['ref_order_type'] = reqeust_body['data']['asset']['source_type']
         basic_info['withholding_amount'] = 0
         basic_info['sub_order_type'] = reqeust_body['data']['asset']['sub_order_type']
+        basic_info['overdue_guarantee_amount']=reqeust_body['data']['asset']['overdue_guarantee_amount']
+        basic_info['info'] = reqeust_body['data']['asset']['info']
         return basic_info
 
 
