@@ -169,6 +169,8 @@ class CommonBiz(UnSerializer,Serializer):
             else:
                 request_body = request_json['request_body'].replace("'",'"').replace('None','null')
                 request_body = json.loads(request_body)
+
+
             call_back = request_json['call_back']
             params = WithdrawSuccessModel.build_all_params(request_body)
             urls = call_back.split(";")
@@ -203,6 +205,9 @@ class CommonBiz(UnSerializer,Serializer):
                 return "放款成功通知失败，进件数据没有进件到gbiz 的task 表"
             call_back = defualt_withdraw +call_back
             result = json.loads(result.task_request_data)
+            result['data']['asset']['overdue_guarantee_amount']=0
+            result['data']['asset']['info']=""
+
             request_body = {
                 "request_body":result,
                 "call_back":call_back
@@ -225,6 +230,7 @@ class CommonBiz(UnSerializer,Serializer):
         try:
             risk_level=None
             channel=None
+            period_count=None
             request_json = request['data']['asset']
             if 'cmdb_product_number' in request_json.keys():
                 product_name = request_json['cmdb_product_number']
@@ -251,7 +257,7 @@ class CommonBiz(UnSerializer,Serializer):
                 except:
                     pass
 
-            if channel=='qnn' and risk_level is not None:
+            if channel=='qnn' and risk_level is not None and period_count == 1:
                 if risk_level in [0,1,2]:
                     product_name='qnn_lm_1_30d_20190103'
                 elif risk_level in [3,4,5]:
