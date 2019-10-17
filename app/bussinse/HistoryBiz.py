@@ -234,14 +234,24 @@ class HistoryBiz(object):
             return ret, "success"
 
     @staticmethod
-    def get_run_case(build_id):
-        ret = ""
+    def get_run_case(build_id, request):
+        data = {}
+        page_index = 1 if "page_index" not in request.json else int(request.json["page_index"])
+        page_size = 10 if "page_size" not in request.json else int(request.json["page_size"])
         run_case_list = HistoryCaseModel.query.filter(and_(HistoryCaseModel.build_id == build_id,
                                                            HistoryCaseModel.history_case_exec_group_priority != "sub")
-                                                      ).all()
+                                                      ).paginate(page=page_index,
+                                                                 per_page=page_size,
+                                                                 error_out=False)
         if run_case_list:
-            ret = HistoryCaseModel.serialize_list(run_case_list)
-        return ret, "success"
+            result = run_case_list.items
+            count = run_case_list.total
+            ret = HistoryCaseModel.serialize_list(result)
+            data['page_index'] = page_index
+            data['cases'] = ret
+            data['page_size'] = len(ret)
+            data['total'] = count
+        return data, "success"
 
     @staticmethod
     def get_run_case_sub(build_id, exec_group):

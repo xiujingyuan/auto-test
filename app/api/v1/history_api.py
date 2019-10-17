@@ -45,7 +45,7 @@ def get_run_case(build_id):
     获取最新执行的报告，前八
     :return:
     """
-    result = HistoryBiz.get_run_case(build_id)
+    result = HistoryBiz.get_run_case(build_id, request)
     return Response(json.dumps(CommonResult.fill_result(result)), mimetype='application/json')
 
 
