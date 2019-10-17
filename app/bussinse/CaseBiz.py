@@ -242,6 +242,8 @@ class CaseBiz(UnSerializer):
                 if 'case_belong_business' in input_params and input_params['case_belong_business']:
                     params.append(Case.case_belong_business == input_params['case_belong_business'])
 
+
+
                 if 'case_exec_group_priority' in input_params.keys():
                     value = input_params['case_exec_group_priority']
                     if value is not None and value!='':
@@ -257,12 +259,19 @@ class CaseBiz(UnSerializer):
                 if 'page_size' in input_params.keys():
                     page_size = input_params['page_size']
             # result = db.session.query(Case).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False).items
-            query = Case.query.filter(*params)
-            #current_app.logger.info(query)
-            if sort_field=="main":
-                result_paginate=query.order_by(Case.case_id.desc(),Case.case_exec_group).paginate(page=page_index, per_page=page_size, error_out=False)
+
+            if "case_id" in input_params.keys() and input_params["case_id"]:
+                result_paginate = Case.query.filter(Case.case_id == input_params["case_id"]).paginate(
+                    page=page_index,
+                    per_page=page_size,
+                    error_out=False)
             else:
-                result_paginate=query.order_by(Case.case_exec_priority.asc(),Case.case_exec_group).paginate(page=page_index, per_page=page_size, error_out=False)
+                query = Case.query.filter(*params)
+                #current_app.logger.info(query)
+                if sort_field=="main":
+                    result_paginate=query.order_by(Case.case_id.desc(),Case.case_exec_group).paginate(page=page_index, per_page=page_size, error_out=False)
+                else:
+                    result_paginate=query.order_by(Case.case_exec_priority.asc(),Case.case_exec_group).paginate(page=page_index, per_page=page_size, error_out=False)
             result = result_paginate.items
             count = result_paginate.total
             cases = Case.serialize_list(result)
