@@ -71,6 +71,27 @@ class PrevBiz(UnSerializer):
         finally:
             db.session.commit()
 
+    def prev_priority(self, request):
+        try:
+            prevInfo = request.json
+            prev = PrevModel.query.filter(PrevModel.prev_id == prevInfo["prev_id"]).first()
+            if prev is None:
+                ret = ErrorCode.ERROR_CODE
+            else:
+                prev.prev_priority = prevInfo["prev_priority"]
+                prev.prev_last_user = prevInfo["prev_last_user"]
+                db.session.add(prev)
+                db.session.flush()
+                ret = self.get_prev_byprevid(prev.prev_id)
+                db.session.commit()
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            ret = ErrorCode.ERROR_CODE
+        finally:
+            return ret
+
+
     def delete_prev_bycaseid(self,case_id):
         try:
             prevs = db.session.query(PrevModel).filter(PrevModel.prev_case_id == case_id).delete()
@@ -98,7 +119,8 @@ class PrevBiz(UnSerializer):
             return False
 
     def get_prev_byid(self,caseid):
-        result = db.session.query(PrevModel).filter(PrevModel.prev_case_id==caseid).all()
+        result = db.session.query(PrevModel).filter(PrevModel.prev_case_id==caseid).order_by(
+        PrevModel.prev_priority).all()
         return Serializer.serialize_list(result)
 
     def get_prev_byprevid(self,previd):

@@ -68,6 +68,26 @@ class InitBiz(UnSerializer):
         finally:
             db.session.commit()
 
+    def init_priority(self, request):
+        try:
+            initInfo = request.json
+            init = InitModel.query.filter(InitModel.case_init_id == initInfo["init_id"]).first()
+            if init is None:
+                ret = ErrorCode.ERROR_CODE
+            else:
+                init.case_priority = initInfo["case_priority"]
+                init.case_init_lastuser = initInfo["case_init_lastuser"]
+                db.session.add(init)
+                db.session.flush()
+                ret = self.get_init_byinitid(init.case_init_id)
+                db.session.commit()
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            ret = ErrorCode.ERROR_CODE
+        finally:
+            return ret
+
     def delete_init_bycaseid(self,case_id):
         try:
             init = db.session.query(InitModel).filter(InitModel.case_init_case_id == case_id).delete()
@@ -111,7 +131,8 @@ class InitBiz(UnSerializer):
 
     def get_init_byid(self,caseid):
         try:
-            result = db.session.query(InitModel).filter(InitModel.case_init_case_id==caseid).all()
+            result = db.session.query(InitModel).filter(InitModel.case_init_case_id==caseid).order_by(
+                InitModel.case_priority).all()
             return Serializer.serialize_list(result)
         except Exception as e:
             current_app.logger.exception(e)

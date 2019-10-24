@@ -19,6 +19,7 @@ class HistoryInitModel(db.Model,Serializer):
     case_init_case_id = db.Column(db.Integer,db.ForeignKey("history_finlab_cases.history_case_id"))
     case_init_type = db.Column(db.String(255))
     case_init_name= db.Column(db.String(255))
+    case_priority = db.Column(db.Integer)
     case_init_description= db.Column(db.String(255))
     case_init_api_address= db.Column(db.String(255))
     case_init_api_method= db.Column(db.String(255))
