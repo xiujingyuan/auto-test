@@ -387,16 +387,11 @@ class CaseBiz(UnSerializer):
                 for item_case in all_cases:
                     copycase = self.copy_case_by_id(item_case.case_id, copy_time, case_author, case_exec_group_new)
                     copycase_list.append(copycase)
-                # case_exec_group_new = str(case_exec_group)+'copy'
-                # if self.check_group_exists(case_exec_group_new):
-                #     error_message="复杂用例名称已经存在，不能再次复制"
-                #     return ErrorCode.ERROR_CODE,error_message
-                #
-                # result = self.get_maxandmin_caseid(case_id,case_exec_group,case_from_system)
-                #
-                # db.session.execute("call gaea_framework.copy_case_from_exists_group ('{0}','{1}','{2}','{3}','{4}','{5}')".format(result[1],result[0],case_exec_group,case_from_system,case_exec_group_new,case_author))
-                # #db.session.execute("call gaea_framework.copy_case_from_exists_group (?,?,?,?,?)",result[1],result[0],case_exec_group,case_from_system,case_exec_group_new)
 
+                main_case = Case.query.filter(and_(Case.case_exec_group == case_exec_group_new,
+                                                   Case.case_exec_group_priority == "main")).first()
+
+                code = main_case.case_id
             db.session.commit()
             update_case_redis(copycase_list)
         except Exception as e:
