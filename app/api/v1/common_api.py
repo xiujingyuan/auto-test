@@ -73,7 +73,7 @@ def capital_plan():
 @api_v1.route('/common/withdraw-success',methods=["POST"])
 def withdraw_success():
     common = CommonBiz()
-    result = common.withdrawSuccess(request)
+    result = common.grantWithdrawSuccess(request)
     return jsonify(CommonResult.fill_result(result))
 
 
