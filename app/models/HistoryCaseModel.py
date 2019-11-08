@@ -55,6 +55,11 @@ class HistoryCaseModel(db.Model,Serializer):
     history_case_in_user=db.Column(db.String(255))
     history_case_last_user=db.Column(db.String(255))
     history_case_last_date=db.Column(db.DateTime,default=datetime.now,onupdate=datetime.now)
+    history_case_result_info = db.Column(db.Text)
+    history_case_exec_count = db.Column(db.Integer)
+    action = db.Column(db.Text)
+    history_case_exec_index = db.Column(db.Integer)
+    history_main_case_exec_index = db.Column(db.Integer)
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.history_id

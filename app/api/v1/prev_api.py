@@ -26,6 +26,13 @@ def get_prev_bycaseid(case_id):
     return Response(json.dumps(CommonResult.fill_result(result)),mimetype='application/json')
 
 
+@api_v1.route('/history_prev/<int:case_id>/<string:build_id>', methods=['GET'])
+def get_history_prev_bycaseid(case_id, build_id):
+    prev = PrevBussinse()
+    result = prev.get_history_prev(case_id, build_id)
+    return Response(json.dumps(CommonResult.fill_result(result)), mimetype='application/json')
+
+
 @api_v1.route('/prev/id/<int:prev_id>', methods=['GET'])
 def get_prev_byprevid(prev_id):
     prev = PrevBussinse()

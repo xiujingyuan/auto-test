@@ -115,6 +115,10 @@ class CaseBiz(UnSerializer):
                     edit_case.case_is_exec = data["case_is_exec"]
                     edit_case.last_edit_user = data["last_edit_user"]
                     db.session.add(edit_case)
+                elif data["flag"] == "case_exec_count":
+                    edit_case.case_exec_count = int(data["case_exec_count"])
+                    edit_case.last_edit_user = data["last_edit_user"]
+                    db.session.add(edit_case)
             else:
                 if edit_case:
                     if edit_case.case_exec_group and edit_case.case_exec_group != data["case_exec_group"]:

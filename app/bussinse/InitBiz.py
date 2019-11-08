@@ -11,11 +11,14 @@
 # @Version:        1.0
 
 from app import db
+from app.models.HistoryInitModel import HistoryInitModel
 from app.models.InitModel import InitModel
 from app.models.ErrorCode import ErrorCode
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
 from flask import current_app
+from sqlalchemy import and_
+
 
 class InitBiz(UnSerializer):
 
@@ -24,6 +27,11 @@ class InitBiz(UnSerializer):
         if (self.check_exists_bycaseid(case_id)==False):
             return None
         return self.get_init_byid(case_id)
+
+    def get_history_init(self,case_id, build_id):
+        history_init = HistoryInitModel.query.filter(and_(HistoryInitModel.build_id == build_id,
+                                                          HistoryInitModel.case_init_case_id == case_id)).all()
+        return Serializer.serialize_list(history_init)
 
     def get_bussinse_data_by_initid(self,init_id):
         if (self.check_exists_byinitid(init_id)==False):

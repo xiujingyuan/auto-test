@@ -11,20 +11,27 @@
 # @Version:        1.0
 
 from app import db
+from app.models.HistoryPrevModel import HistoryPrevModel
 from app.models.PrevModel import PrevModel
 from app.models.ErrorCode import ErrorCode
 from app.common.tools.UnSerializer import UnSerializer
 from app.common.tools.Serializer import Serializer
 from flask import current_app
+from sqlalchemy import and_
+
 
 class PrevBiz(UnSerializer):
-
 
     def get_bussinse_data(self,case_id):
 
         if (self.check_exists_bycaseid(case_id)==False):
             return None
         return self.get_prev_byid(case_id)
+
+    def get_history_prev(self, case_id, build_id):
+        history_pres = HistoryPrevModel.query.filter(and_(HistoryPrevModel.build_id == build_id,
+                                                          HistoryPrevModel.prev_case_id == case_id)).all()
+        return Serializer.serialize_list(history_pres)
 
     def get_bussinse_data_byprevid(self,prev_id):
 

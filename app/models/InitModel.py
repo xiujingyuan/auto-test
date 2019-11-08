@@ -31,7 +31,7 @@ class InitModel(db.Model, Serializer):
     case_init_inuser = db.Column(db.String(255))
     case_init_lastuser= db.Column(db.String(255))
     case_init_lastdate=db.Column(db.DateTime,default=datetime.now(),onupdate=datetime.now())
-
+    init_exec_count = db.Column(db.Integer)
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.case_id
