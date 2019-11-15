@@ -32,13 +32,13 @@ class PrevModel(db.Model,Serializer):
     prev_params=db.Column(db.Text)
     prev_except_expression=db.Column(db.Text)
     prev_except_value=db.Column(db.Text)
-    prev_priority=db.Column(db.Integer)
+    prev_priority=db.Column(db.Integer, default=1)
     prev_wait_time=db.Column(db.Integer)
     prev_in_user=db.Column(db.String(255))
     prev_last_user=db.Column(db.String(255))
     prev_in_date=db.Column(db.DateTime,default=datetime.now())
     prev_last_date=db.Column(db.DateTime,default=datetime.now(),onupdate=datetime.now())
-    prev_exec_count = db.Column(db.Integer)
+    prev_exec_count = db.Column(db.Integer, default=1)
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.case_id

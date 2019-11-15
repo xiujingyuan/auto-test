@@ -42,11 +42,11 @@ class HistoryPrevModel(db.Model,Serializer):
     prev_in_date=db.Column(db.DateTime,default=datetime.now())
     prev_last_date=db.Column(db.DateTime,default=datetime.now(),onupdate=datetime.now())
     action = db.Column(db.Text)
-    prev_exec_count = db.Column(db.Integer)
-    prev_exec_index = db.Column(db.Integer)
+    prev_exec_count = db.Column(db.Integer, default=1)
+    prev_exec_index = db.Column(db.Integer, default=1)
     prev_exec_result = db.Column(db.String(200))
-    case_exec_index = db.Column(db.Integer)
-    main_case_exec_index = db.Column(db.Integer)
+    case_exec_index = db.Column(db.Integer, default=1)
+    main_case_exec_index = db.Column(db.Integer, default=1)
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.history_id
