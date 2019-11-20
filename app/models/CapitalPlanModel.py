@@ -76,7 +76,19 @@ class CapitalPlanModel(object):
         basic_info['granted_amount'] = granted_amount
 
         if period_count == 1:
-            delta3 = dt.timedelta(days=+period)
+            if channel=='qnn':
+                due_at={
+                    "qnn_lm_1_30d_20190103":30,
+                    "qnn_lm_1_30d_180d_20190701":180,
+                    "qnn_lm_1_30d_360d_20190701":360,
+                    "qnn_lm_1_30d_540d_20190701":540
+                }
+                try:
+                    delta3 = dt.timedelta(days=+due_at[cmdb_no])
+                except:
+                    delta3 = dt.timedelta(days=+period)
+            else:
+                delta3 = dt.timedelta(days=+period)
         else:
             delta3 = relativedelta(months=+ period_count)
         basic_info['due_at'] = cls.date_to_datetime(base_at+delta3)
