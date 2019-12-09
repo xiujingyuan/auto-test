@@ -383,7 +383,7 @@ class CommonBiz(UnSerializer,Serializer):
     def repayWithholdSuccess(self,request):
          try:
              #获取还款的一些基本参数
-            request_repay = request
+            request_repay = request.json
             if "item_no" in request_repay.keys():
                 item_no = request_repay['item_no']
             if "env" in request_repay.keys():
