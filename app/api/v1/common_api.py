@@ -98,12 +98,18 @@ def grant_withdraw_success():
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/repay/withhold-success',methods=["POST"])
+def repay_withhold_success():
+    common = CommonBiz()
+    result = common.repayWithholdSuccess(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
 @api_v1.route('/common/upload/file',methods=['POST'])
 def upload_file():
     cmmon = CommonBiz()
     result = cmmon.upload_save_file(request)
     return jsonify(CommonResult.fill_result(result))
-
 
 
 @api_v1.route('/common/set-capital-loan-condition',methods=['POST'])
