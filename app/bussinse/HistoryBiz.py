@@ -13,16 +13,13 @@ from app.models.HistoryCaseModel import HistoryCaseModel
 from app.models.HistoryInitModel import HistoryInitModel
 from app.models.HistoryPrevModel import HistoryPrevModel
 from app.models.ErrorCode import ErrorCode
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from flask import current_app
 
 from app.models.RunCasesModel import RunCase
 
 
 class HistoryBiz(object):
-
-
-
 
     def search_history(self,request):
         try:
@@ -31,6 +28,9 @@ class HistoryBiz(object):
             params =[]
             page_index =1
             page_size=10
+            params.append(HistoryCaseModel.history_case_in_date.between("2019-07-01 00:00:00", "2019-07-02 00:00:00"))
+            params.append(HistoryCaseModel.history_case_exec_group_priority == "main")
+            params.append(HistoryCaseModel.history_case_from_system == "manaowan")
             if input_params is not None:
                 if 'history_id' in input_params.keys():
                     value = input_params['history_id']
@@ -121,7 +121,7 @@ class HistoryBiz(object):
                 result_paginate=query.paginate(page=page_index, per_page=page_size, error_out=False)
                 current_app.logger.info(int(time.time()))
                 result = result_paginate.items
-                #count = result_paginate.total
+                count = result_paginate.total
                 col_name = ('history_id',
                             'history_case_name',
                             'run_id',
@@ -174,7 +174,7 @@ class HistoryBiz(object):
                 data['page_index'] = page_index
                 data['cases'] = results
                 data['page_size'] = len(results)
-                data['total'] = 10
+                data['total'] = count
                 return data
         except Exception as e:
             current_app.logger.exception(e)
@@ -232,3 +232,34 @@ class HistoryBiz(object):
             return ret, ErrorCode.ERROR_CODE
         else:
             return ret, "success"
+
+    @staticmethod
+    def get_run_case(build_id, request):
+        data = {}
+        page_index = 1 if "page_index" not in request.json else int(request.json["page_index"])
+        page_size = 10 if "page_size" not in request.json else int(request.json["page_size"])
+        run_case_list = HistoryCaseModel.query.filter(and_(HistoryCaseModel.build_id == build_id,
+                                                           HistoryCaseModel.history_case_exec_group_priority != "sub")
+                                                      ).paginate(page=page_index,
+                                                                 per_page=page_size,
+                                                                 error_out=False)
+        if run_case_list:
+            result = run_case_list.items
+            count = run_case_list.total
+            ret = HistoryCaseModel.serialize_list(result)
+            data['page_index'] = page_index
+            data['cases'] = ret
+            data['page_size'] = len(ret)
+            data['total'] = count
+        return data, "success"
+
+    @staticmethod
+    def get_run_case_sub(build_id, exec_group):
+        ret = ""
+        run_case_list = HistoryCaseModel.query.filter(and_(HistoryCaseModel.build_id == build_id,
+                                                           HistoryCaseModel.history_case_exec_group_priority == "sub",
+                                                           HistoryCaseModel.history_case_exec_group == exec_group)
+                                                      ).all()
+        if run_case_list:
+            ret = HistoryCaseModel.serialize_list(run_case_list)
+        return ret, "success"

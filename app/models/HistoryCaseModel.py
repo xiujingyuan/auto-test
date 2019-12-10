@@ -18,6 +18,8 @@ class HistoryCaseModel(db.Model,Serializer):
     __tablename__ = 'history_finlab_cases'
     history_id = db.Column(db.Integer,primary_key=True)
     run_id = db.Column(db.Integer)
+    build_id = db.Column(db.String(255))
+    history_case_belong_business = db.Column(db.String(255))
     history_case_id= db.Column(db.Integer)
     history_case_exec_priority=db.Column(db.Integer)
     history_case_from_system=db.Column(db.String(255))
@@ -53,6 +55,11 @@ class HistoryCaseModel(db.Model,Serializer):
     history_case_in_user=db.Column(db.String(255))
     history_case_last_user=db.Column(db.String(255))
     history_case_last_date=db.Column(db.DateTime,default=datetime.now,onupdate=datetime.now)
+    history_case_result_info = db.Column(db.Text)
+    history_case_exec_count = db.Column(db.Integer, default=1)
+    action = db.Column(db.Text)
+    history_case_exec_index = db.Column(db.Integer, default=1)
+    history_main_case_exec_index = db.Column(db.Integer, default=1)
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.history_id

@@ -33,15 +33,23 @@ def change_params(params_id):
         result = params.change_params(paramsInfo,params_id)
     return jsonify(CommonResult.fill_result(result))
 
-@api_v1.route('/params' , methods=['POST'])
+
+@api_v1.route('/params', methods=['POST'])
 def add_params():
     params = ParamsBiz()
     result = params.add_params(request)
     return jsonify(CommonResult.fill_result(result))
 
 
-@api_v1.route('/params/search' , methods=['POST'])
+@api_v1.route('/params/search', methods=['POST'])
 def search_params():
     params = ParamsBiz()
     result = params.search_params(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/params/<string:params_name>/<string:params_value>/<string:user>', methods=['POST'])
+def change_params_value(params_name, params_value, user):
+    params = ParamsBiz()
+    result = params.change_params_value(params_name, params_value, user)
     return jsonify(CommonResult.fill_result(result))

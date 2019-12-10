@@ -37,3 +37,23 @@ def last_update_history():
     """
     result = HistoryBiz.last_update_history()
     return Response(json.dumps(CommonResult.fill_result(result)), mimetype='application/json')
+
+
+@api_v1.route('/history/run_case/<string:build_id>', methods=['GET'])
+def get_run_case(build_id):
+    """
+    获取最新执行的报告，前八
+    :return:
+    """
+    result = HistoryBiz.get_run_case(build_id, request)
+    return Response(json.dumps(CommonResult.fill_result(result)), mimetype='application/json')
+
+
+@api_v1.route('/history/run_case/<string:build_id>/<string:exec_group>/', methods=['GET'])
+def get_run_case_sub(build_id, exec_group):
+    """
+    获取最新执行的报告，前八
+    :return:
+    """
+    result = HistoryBiz.get_run_case_sub(build_id, exec_group)
+    return Response(json.dumps(CommonResult.fill_result(result)), mimetype='application/json')

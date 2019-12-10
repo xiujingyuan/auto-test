@@ -21,6 +21,7 @@ from app.bussinse.TableSyncBiz import TableSyncBiz
 from app.bussinse.ReportBiz import ReportBiz
 
 
+
 @api_v1.route('/common/getdblist', methods=['GET'])
 def get_variable_database_list():
     common = CommonBiz()
@@ -72,7 +73,7 @@ def capital_plan():
 @api_v1.route('/common/withdraw-success',methods=["POST"])
 def withdraw_success():
     common = CommonBiz()
-    result = common.withdrawSuccess(request)
+    result = common.grantWithdrawSuccess(request)
     return jsonify(CommonResult.fill_result(result))
 
 
@@ -97,6 +98,13 @@ def grant_withdraw_success():
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/repay/withhold-success',methods=["POST"])
+def repay_withhold_success():
+    common = CommonBiz()
+    result = common.repayWithholdSuccess(request)
+    return jsonify(CommonResult.fill_result(result))
+
+
 @api_v1.route('/common/upload/file',methods=['POST'])
 def upload_file():
     cmmon = CommonBiz()
@@ -104,4 +112,8 @@ def upload_file():
     return jsonify(CommonResult.fill_result(result))
 
 
-
+@api_v1.route('/common/set-capital-loan-condition',methods=['POST'])
+def set_capital_loan_condition():
+    common = CommonBiz()
+    result = common.set_capital_loan_condition(request)
+    return jsonify(CommonResult.fill_result(result))

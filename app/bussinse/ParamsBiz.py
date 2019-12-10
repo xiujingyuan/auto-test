@@ -98,5 +98,13 @@ class ParamsBiz(UnSerializer):
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
 
-
-
+    def change_params_value(self, params_name, params_value, user):
+        try:
+            db.session.query(ParamsModel).filter(ParamsModel.name == params_name).update({"value": params_value,
+                                                                                          "lastuser": user})
+        except Exception as e:
+            current_app.logger.exception(e)
+            db.session.rollback()
+            return ErrorCode.ERROR_CODE
+        finally:
+            db.session.commit()

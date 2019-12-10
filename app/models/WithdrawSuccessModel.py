@@ -98,15 +98,23 @@ class WithdrawSuccessModel(object):
         basic_info['payoff_at'] = due_at
         basic_info['from_system'] = 'dsq' #reqeust_body['from_system']
         basic_info['status'] = 'repay'
-        basic_info['principal_amount'] = int(reqeust_body['data']['asset']['principal_amount']*100)
-        basic_info['granted_principal_amount'] = int(reqeust_body['data']['asset']['principal_amount']*100)
+        #basic_info['principal_amount'] = int(reqeust_body['data']['asset']['principal_amount']*100)
+        basic_info['principal_amount'] = round(float(reqeust_body['data']['asset']['principal_amount']*100))
+        #basic_info['granted_principal_amount'] = int(reqeust_body['data']['asset']['principal_amount']*100)
+        basic_info['granted_principal_amount'] = round(float(reqeust_body['data']['asset']['principal_amount']*100))
         basic_info['loan_channel'] = reqeust_body['data']['asset']['loan_channel']
         basic_info['alias_name'] = reqeust_body['data']['asset']['item_no']
-        basic_info['interest_amount'] = int(reqeust_body['data']['asset']['interest_amount'] *100)
-        basic_info['fee_amount'] = int(reqeust_body['data']['asset']['fee_amount']*100)
+        #basic_info['interest_amount'] = int(reqeust_body['data']['asset']['interest_amount'] *100)
+        basic_info['interest_amount'] = round(float(reqeust_body['data']['asset']['interest_amount']*100))
+
+        #basic_info['fee_amount'] = int(reqeust_body['data']['asset']['fee_amount']*100)
+        basic_info['fee_amount'] = round(float(reqeust_body['data']['asset']['fee_amount']*100))
+
         basic_info['balance_amount'] = 0
         basic_info['repaid_amount'] = 0
-        basic_info['total_amount'] = int(reqeust_body['data']['asset']['total_amount']*100)
+        #basic_info['total_amount'] = int(reqeust_body['data']['asset']['total_amount']*100)
+        basic_info['total_amount'] = round(float(reqeust_body['data']['asset']['total_amount']*100))
+
         basic_info['version'] = 1
         basic_info['interest_rate'] = reqeust_body['data']['asset']['interest_rate']
         basic_info['charge_type'] = reqeust_body['data']['asset']['charge_type']
@@ -114,6 +122,8 @@ class WithdrawSuccessModel(object):
         basic_info['ref_order_type'] = reqeust_body['data']['asset']['source_type']
         basic_info['withholding_amount'] = 0
         basic_info['sub_order_type'] = reqeust_body['data']['asset']['sub_order_type']
+        basic_info['overdue_guarantee_amount']=reqeust_body['data']['asset']['overdue_guarantee_amount']
+        basic_info['info'] = reqeust_body['data']['asset']['info']
         return basic_info
 
 
@@ -122,7 +132,9 @@ class WithdrawSuccessModel(object):
         basic_info = {}
         base_at = cls.string_to_datetime(reqeust_body['data']['asset']['grant_at'])
         basic_info['asset_item_no'] = reqeust_body['data']['asset']['item_no']
-        basic_info['amount'] = int(reqeust_body['data']['asset']['principal_amount']) * 100
+        #basic_info['amount'] = int(reqeust_body['data']['asset']['principal_amount']) * 100
+        basic_info['amount'] = round(float(reqeust_body['data']['asset']['principal_amount']*100))
+
         basic_info['withholding_amount'] = 0
         basic_info['channel'] = reqeust_body['data']['asset']['loan_channel']
         basic_info['status'] = 6
@@ -184,11 +196,14 @@ class WithdrawSuccessModel(object):
                 tran_info['repay_priority']=1
                 tran_info['category']='principal'
 
-            tran_info['amount']= int(dtransactions[i]['dtransaction_amount'] * 100)
+            # tran_info['amount']= int(dtransactions[i]['dtransaction_amount'] * 100)
+            tran_info['amount']=round(float(dtransactions[i]['dtransaction_amount']*100))
             tran_info['decrease_amount']=0
             tran_info['repaid_amount']=0
             tran_info['balance_amount']=0
-            tran_info['total_amount']= int(dtransactions[i]['dtransaction_total_amount']*100)
+            #tran_info['total_amount']= int(dtransactions[i]['dtransaction_total_amount']*100)
+            tran_info['total_amount']= round(float(dtransactions[i]['dtransaction_total_amount']*100))
+
             tran_infos.append(tran_info)
         for i in range(len(fees)):
             tran_info = {}
@@ -205,11 +220,11 @@ class WithdrawSuccessModel(object):
             tran_info['category']='fee'
             tran_info['description']='技术服务费'
             tran_info['repay_priority']=21
-            tran_info['amount']= int(fees[i]['fee_amount'] * 100)
+            tran_info['amount']= round(float(fees[i]['fee_amount']*100))
             tran_info['decrease_amount']=0
             tran_info['repaid_amount']=0
             tran_info['balance_amount']=0
-            tran_info['total_amount']= int(fees[i]['fee_total_amount']*100)
+            tran_info['total_amount']= round(float(fees[i]['fee_total_amount']*100))
             fee_infos.append(tran_info)
 
 

@@ -17,6 +17,7 @@ class Case(db.Model,Serializer):
     case_id= db.Column(db.Integer, primary_key=True)
     case_exec_priority=db.Column(db.Integer)
     case_from_system=db.Column(db.String(255))
+    case_belong_business=db.Column(db.String(255))
     case_name=db.Column(db.String(255))
     case_description=db.Column(db.String(255))
     case_category=db.Column(db.String(255))
@@ -46,7 +47,7 @@ class Case(db.Model,Serializer):
     case_in_user=db.Column(db.String(255))
     case_last_user=db.Column(db.String(255))
     case_last_date=db.Column(db.DateTime,default=datetime.now,onupdate=datetime.now)
-
+    case_exec_count = db.Column(db.Integer, default=1)
 
     def __repr__(self):
         return '<finlab_cases %r>' % self.case_id
