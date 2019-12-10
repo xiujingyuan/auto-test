@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 公元19-04-11 下午5:34
 # @Author  : 张廷利
-# @Site    : 
+# @Site    :
 # @File    : FourElement.py
 # @Software: IntelliJ IDEA
 
@@ -18,14 +18,9 @@ import random
 from faker import Faker
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from flask_restful import Api,Resource
-from flask import Flask
-from app.models.ErrorCode import ErrorCode
 
-app = Flask(__name__)
-api = Api(app)
-class FourElement(Resource):
 
+class FourElement(object):
     def __init__(self):
         self.faker = Faker('zh_CN')
 
@@ -55,15 +50,15 @@ class FourElement(Resource):
                      '110109',
                      '110111',
                      '110112',
-                     '110113',
-                     '110114',
-                     '110115',
-                     '110116',
-                     '110117']
+                     '110103',
+                     '110200',
+                     '110221',
+                     '110224',
+                     '110226']
 
 
-        year_max = datetime.now().year -18
-        year_min =datetime.now().year-60
+        year_max = datetime.now().year -25
+        year_min =datetime.now().year-47
         birth_day_year = str(random.randint(year_min,year_max))+'-01-01 0:00:00'
         birth_day_month = random.randint(0,365)
         value = datetime.strptime(birth_day_year,"%Y-%m-%d %H:%M:%S") + relativedelta(days=+birth_day_month)
@@ -89,7 +84,7 @@ class FourElement(Resource):
     def get_phone_number(self):
         # prelist=["130","131","132","133","134","135","136","137","138","139","147","150","151","152","153","155","156","157","158","159","186","187","188"]
         # prefix = random.choice(prelist)
-        # number = str(random.randint(0,ErrorCode.ERROR_CODEErrorCode.ERROR_CODE)).zfill(8)
+        # number = str(random.randint(0,99999999)).zfill(8)
         # return prefix + number
         return self.faker.phone_number()
 
@@ -105,16 +100,15 @@ class FourElement(Resource):
         # else:
         #     bank_info = self.dao.get_card_zone(id,'card')
         #bank_code_length = bank_info.card_zone_length
-        id = random.randint(0,5)
+        id = random.randint(0,2)
         bank_code_length =19
         #bank_code_bin = bank_info.card_zone_code
         bank_code_bin = ['622846',
-                         '622200',
-                         '622260',
-                         '622280'
+                        '622200',
+                        '622280'
                          ]
         width = bank_code_length-len(bank_code_bin[id])-1
-        max_string = 'ErrorCode.ERROR_CODEErrorCode.ERROR_CODEErrorCode.ERROR_CODE9'
+        max_string = '9999999999999'
         max = int(max_string[0:width])
         random_code = str(random.randint(0,max)).zfill(width)
         bank_code = str(bank_code_bin[id])+random_code

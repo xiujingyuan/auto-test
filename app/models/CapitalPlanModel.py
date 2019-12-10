@@ -19,16 +19,15 @@ class CapitalPlanModel(object):
     @classmethod
     def get_calculate_request(cls,product_name,principal_amount,period_count,sign_date):
         guid = str(uuid.uuid4())
-        return Config.CMDB_URL, {
+        return Config.CMDB_URL_v6, {
             "from_system" : "BIZ",
             "key" : guid,
             "type" : "CalculateRepayPlan",
             "data" : {
                 "sign_date" : sign_date,
-                "principal_amount" : principal_amount,
+                "apply_amount" : principal_amount,
                 "period_count" : period_count,
-                "product_number" : product_name,
-                "borrow_days" :None
+                "product_number" : product_name
             }
         }
 
@@ -44,14 +43,14 @@ class CapitalPlanModel(object):
         except Exception as e:
             current_app.logger.info(traceback.format_exc())
             current_app.logger.exception(e)
-            raise str(e)
+            return req.text
 
     @classmethod
     def build_all_params(cls,channel,item_no,period_count,period,sign_at,granted_amount,cmdb_no,calc_rate,fee_rate,interest_rate):
         if calc_rate['code']==400:
-            return "汇率编号已经失效"
+            return "获取费率系统失败"
         basic_info = cls.build_basic_params(channel,item_no,period_count,period,sign_at,granted_amount,cmdb_no)
-        trans_info = cls.build_transaction_params(calc_rate,period_count,item_no,sign_at,fee_rate,interest_rate)
+        trans_info = cls.build_transaction_params_new(calc_rate,period_count,item_no,sign_at,fee_rate,interest_rate)
         basic_info['capital_transactions']=trans_info
         return basic_info
 
@@ -77,7 +76,19 @@ class CapitalPlanModel(object):
         basic_info['granted_amount'] = granted_amount
 
         if period_count == 1:
-            delta3 = dt.timedelta(days=+period)
+            if channel=='qnn':
+                due_at={
+                    "qnn_lm_1_30d_20190103":30,
+                    "qnn_lm_1_30d_180d_20190701":180,
+                    "qnn_lm_1_30d_360d_20190701":360,
+                    "qnn_lm_1_30d_540d_20190701":540
+                }
+                try:
+                    delta3 = dt.timedelta(days=+due_at[cmdb_no])
+                except:
+                    delta3 = dt.timedelta(days=+period)
+            else:
+                delta3 = dt.timedelta(days=+period)
         else:
             delta3 = relativedelta(months=+ period_count)
         basic_info['due_at'] = cls.date_to_datetime(base_at+delta3)
@@ -88,6 +99,68 @@ class CapitalPlanModel(object):
         basic_info['update_at'] = cls.date_to_datetime(base_at+delta2)
         basic_info['finish_at'] = "1000-01-01 00:00:00"
         return basic_info
+
+    @classmethod
+    def build_transaction_params_new(cls,calc_rate,period_count,item_no,sign_at,fee_rate,interest_rate):
+        tran_info_list = []
+
+        principal_list=None
+        interest_list = None
+        service_list = None
+        technical_service_list=None
+        after_loan_manage_list=None
+        technical_service1_list=None
+
+        principal = None
+        service = None
+        interest = None
+        technical_service=None
+        after_loan_manage=None
+        technical_service1=None
+
+        trans = calc_rate['data']['calculate_result']
+        if 'principal' in trans.keys():
+            principal = trans['principal']
+        if 'interest' in trans.keys():
+            interest = trans['interest']
+        if 'fee' in trans.keys():
+            fees = trans['fee']
+            if 'technical_service' in fees.keys():
+                technical_service = trans['fee']['technical_service']
+            if 'after_loan_manage' in fees.keys():
+                after_loan_manage = trans['fee']['after_loan_manage']
+            if 'service' in fees.keys():
+                service=trans['fee']['service']
+            if 'technical_service1' in fees.keys():
+                technical_service1 = trans['fee']['technical_service1']
+
+        if principal is not None and len(principal)>0:
+            principal_list=cls.generate_params_trans('principal',principal,period_count,sign_at,item_no,fee_rate,interest_rate)
+        if interest is not None and len(interest)>0:
+            interest_list=cls.generate_params_trans('interest',interest,period_count,sign_at,item_no,fee_rate,interest_rate)
+        if service is not None and len(service)>0:
+            service_list=cls.generate_params_trans('service',service,period_count,sign_at,item_no,fee_rate,interest_rate)
+        if technical_service is not None and len(technical_service)>0:
+            technical_service_list=cls.generate_params_trans('technical_service',technical_service,period_count,sign_at,item_no,fee_rate,interest_rate)
+        if after_loan_manage is not None and len(after_loan_manage) > 0:
+            after_loan_manage_list = cls.generate_params_trans('after_loan_manage', after_loan_manage, period_count,sign_at, item_no, fee_rate, interest_rate)
+        if technical_service1 is not None and len(technical_service1) > 0:
+            technical_service1_list = cls.generate_params_trans('technical_service1', technical_service1, period_count, sign_at, item_no, fee_rate,interest_rate)
+
+        if principal_list is not None and len(principal_list)>0:
+            tran_info_list.extend(principal_list)
+        if interest_list is not None and len(interest_list)>0:
+            tran_info_list.extend(interest_list)
+        if service_list is not None and len(service_list)>0:
+            tran_info_list.extend(service_list)
+        if technical_service_list is not None and len(technical_service_list)>0:
+            tran_info_list.extend(technical_service_list)
+        if after_loan_manage_list is not None and len(after_loan_manage_list)>0:
+            tran_info_list.extend(after_loan_manage_list)
+        if technical_service1_list is not None and len(technical_service1_list)>0:
+            tran_info_list.extend(technical_service1_list)
+
+        return tran_info_list
 
     @classmethod
     def build_transaction_params(cls,calc_rate,period_count,item_no,sign_at,fee_rate,interest_rate):

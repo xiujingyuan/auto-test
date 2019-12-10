@@ -16,12 +16,12 @@ class UnSerializer(object):
     def un_serialize(o):
         return {c: UnSerializer.format_date(o[c]) for c in o.keys()}
 
-    #将datetime转成时间
+    # 将datetime转成时间
     @staticmethod
     def format_date(value):
-        if isinstance(value,datetime):
+        if isinstance(value, datetime):
             value = value.strftime("%Y-%m-%d %H:%M:%S")
-        elif isinstance(value,dict):
+        elif isinstance(value, (list, dict)):
             try:
                 value = json.dumps(value)
             except:
