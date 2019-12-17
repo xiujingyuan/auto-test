@@ -10,4 +10,5 @@
  
  **4.生成依赖**
  ####  pip freeze > requirements.txt
+ #### venv/bin/celery worker -A celery_worker.celery --loglevel=info
 
