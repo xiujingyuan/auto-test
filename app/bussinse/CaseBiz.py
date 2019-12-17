@@ -246,8 +246,6 @@ class CaseBiz(UnSerializer):
                 if 'case_belong_business' in input_params and input_params['case_belong_business']:
                     params.append(Case.case_belong_business == input_params['case_belong_business'])
 
-
-
                 if 'case_exec_group_priority' in input_params.keys():
                     value = input_params['case_exec_group_priority']
                     if value is not None and value!='':
@@ -256,7 +254,6 @@ class CaseBiz(UnSerializer):
                 else:
                     sort_field='main'
                     params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
-
 
                 if 'page_index' in input_params.keys():
                     page_index = input_params['page_index']
@@ -557,7 +554,7 @@ class CaseBiz(UnSerializer):
     def get_all_cases(request):
         try:
             system = int(request.args["program_id"]) if request.args["program_id"] else ""
-            business = request.args["business"]
+            business = request.args["business"] if 'business' in request.args else ""
             ret = []
             if current_app.app_redis.exists("gaea_all_cases"):
                 ret_data = json.loads(current_app.app_redis.get("gaea_all_cases"))
@@ -578,8 +575,8 @@ class CaseBiz(UnSerializer):
                                       "case_category": case_serialize["case_category"],
                                       "case_belong_business": case_serialize["case_belong_business"]
                                       })
-                    if (not system or all_case["case_from_system"] == system) and \
-                            (not business or all_case["case_belong_business"] == business):
+                    if (not system or case_serialize["case_from_system"] == system) and \
+                            (not business or case_serialize["case_belong_business"] == business):
                         ret.append({"case_id": case_serialize["case_id"],
                                     "case_name": case_serialize["case_name"]})
                 current_app.app_redis.set("gaea_all_cases", json.dumps(ret_redis, ensure_ascii=False))

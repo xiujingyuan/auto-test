@@ -7,3 +7,7 @@
 
  **3.Celery任务项目运行**
  #### venv/bin/celery worker -A celery_worker.celery --loglevel=info -Q for_run_case_task
+ 
+ **4.生成依赖**
+ ####  pip freeze > requirements.txt
+

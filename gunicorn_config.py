@@ -32,10 +32,10 @@ debug = False
 
 proc_name = 'gaea'
 
-pidfile = 'logs/gunicorn.pid'
+pidfile = '/data1/gaea-api/gunicon/logs/gunicorn.pid'
 
-errorlog = 'logs/gunicorn.log'
+errorlog = '/data1/gaea-api/gunicon/logs/gunicorn.log'
 
-logfile = 'logs/info.log'
+logfile = '/data1/gaea-api/gunicon/logs/info.log'
 
-accesslog = 'logs/access.log'
+accesslog = '/data1/gaea-api/gunicon/logs/access.log'
