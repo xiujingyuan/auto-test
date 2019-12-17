@@ -21,9 +21,8 @@ from app.models.RepaySuccessModel import RepaySuccessModel
 from email.header import Header
 from email.mime.text import MIMEText
 from app.models.ErrorCode import ErrorCode
-import datetime
 from app.bussinse import executesql
-import time
+import time,datetime
 
 
 class CommonBiz(UnSerializer,Serializer):
@@ -390,18 +389,27 @@ class CommonBiz(UnSerializer,Serializer):
                 env = request_repay['env']
             if "period" in request_repay.keys():
                 period = str(request_repay['period'])[1:-1]
-            #print("还款期次:",period,type(period))
             if "finished" in request_repay.keys():
                 finished = request_repay['finished']
             if "qsq_channel" in request_repay.keys():
                 qsq_channel = request_repay['qsq_channel']
             if "channel_channel" in request_repay.keys():
                 channel_channel = request_repay['channel_channel']
+            if "expect_repay" in request_repay.keys():
+                expect_repay = request_repay['expect_repay']
+            if "expect_finish" in request_repay.keys():
+                expect_finish = request_repay['expect_finish']
 
             # 引入数据库相关方法
             db = executesql.db_connect()
 
             headers = {'content-type': 'application/json'}
+
+            if expect_repay == 'Y':
+                sql_atr = ''' update {0}.asset_tran set asset_tran_due_at = '{1}' where asset_tran_asset_item_no = '{2}' and asset_tran_period = {3}
+                '''.format(env,expect_finish,item_no,period[0:1])
+                db.select_sql(sql_atr)
+                time.sleep(2)
 
             #先刷一次罚息
             late_url = "http://kong-api-test.kuainiujinke.com/{0}/asset/refreshLateFee;".format(env)
@@ -412,38 +420,51 @@ class CommonBiz(UnSerializer,Serializer):
             msg_ids = db.select_sql(msg_id_sql)[1]
             if msg_ids:
                  msg_id = msg_ids[0][0]
-                 print(msg_id)
                  RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id))
 
             #查询还款金额，sql执行后返回的数据是个元祖
             sql_amount = ''' select sum(`asset_tran_balance_amount`) from {0}.asset_tran where asset_tran_asset_item_no='{1}' and asset_tran_period in ({2}) '''.format(
                  env, item_no, period)
             result_amount=db.select_sql(sql_amount)
+            if result_amount[1] is None:
+                 return "资产不存在，请自行检查asset和asset_tran表"
             amount = str(result_amount[1][0][0])
-            #print("应还金额:",amount,type(amount))
+            if int(amount) <= 1:
+                return "还款金额小于1元，请自行检查资产情况"
             #查询还款用户的四要素，直接使用加密后的数据
-            sql_use = '''
-                 select card_acc_num_encrypt,card_acc_id_num_encrypt,card_acc_name_encrypt,card_acc_tel_encrypt from {0}.card_asset
+            sql_use = '''select card_acc_num_encrypt,card_acc_id_num_encrypt,card_acc_name_encrypt,card_acc_tel_encrypt from {0}.card_asset
                  left join {0}.card on card_asset_card_no = card_no
                  where card_asset_asset_item_no = '{1}' and card_asset_type = 'repay'
              '''.format(env, item_no)
             result_use = db.select_sql(sql_use)
+            if not result_use[1]:
+                return "还款人信息不存在数据库，请自行检查还款人 card_asset 表信息"
             use = result_use[1][0]
-            #print("还款用户身份证号码:",use[1],type(use[1]))
+
+            #检查到日期和放款日之间是否满足15天
+            sql_grant_time = ''' select asset_actual_grant_at from {0}.asset where asset_item_no = '{1}' '''.format(env,item_no)
+            grant_time1 = db.select_sql(sql_grant_time)
+            grant_time = grant_time1[1][0][0]
+            sql_expect_time = ''' 
+                select asset_tran_due_at from {0}.asset_tran where asset_tran_asset_item_no='{1}' and asset_tran_period in ({2}) and asset_tran_category = 'principal'
+                '''.format(env,item_no,period[0:1])
+            expect_time1 = db.select_sql(sql_expect_time)
+            expect_time = expect_time1[1][0][0]
+
+            if (expect_time-grant_time).days < 15:
+                return "放款日期和到期日之间相差小于15天"
 
             #请求还款接口的参数准备
             repay_url = "http://kong-api-test.kuainiujinke.com/{0}/paydayloan/repay/combo-active;".format(env)
             repay_request = RepaySuccessModel.get_combo_active_request(use[0],use[1],use[2],use[3],amount,item_no,amount)
             #发起还款
             repay_result = RepaySuccessModel.http_request_post(repay_request,repay_url,headers)
-            print(repay_result)
             if repay_result['code'] != 0:
                 return repay_result
 
             #通过还款结果得到代扣流水号，并使用代扣流水号发起回调
             #因为测试环境有时候mock会被换，感觉用回调保险些，但是要注意拆分代扣可能是两个流水号
             merchant_key1 = repay_result['data']['project_list'][0]['order_no']
-            print("代扣流水号:", merchant_key1, type(merchant_key1))
 
             callback_headers = {'content-type': 'text/plain'}
             callback_url = "http://kong-api-test.kuainiujinke.com/{0}/paysvr/callback;".format(env)
@@ -452,22 +473,35 @@ class CommonBiz(UnSerializer,Serializer):
 
             if len(repay_result['data']['project_list']) > 1:
                  merchant_key2 = repay_result['data']['project_list'][1]['order_no']
-                 print("代扣流水号:", merchant_key2, type(merchant_key2))
                  callback_request2 = RepaySuccessModel.callback(merchant_key2, finished, channel_channel)
                  RepaySuccessModel.http_request_plain(callback_request2, callback_url, callback_headers)
+                 # 回调成功后，执行task
+                 task_result = RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
+                 if task_result['code'] != 0:
+                     return task_result
+                 # 休息5秒钟后再执行msg
+                 time.sleep(5)
+                 msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no in ('{1}','{2}','{3}') and sendmsg_status ='open' 
+                 '''.format(env, merchant_key2, use[1], item_no)
+                 db.select_sql(msg_id_sql)
+                 msg_id = db.select_sql(msg_id_sql)[1]
+                 if msg_id:
+                     i = 0
+                     j = len(msg_id)
+                     while i < j:
+                         RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id[i][0]))
+                         i = i + 1
 
             #回调成功后，执行task
             RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
             RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key1))
-            RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
 
-         #休息5秒钟后再执行msg，不然msg_id会查询不全
+            #休息5秒钟后再执行msg，不然msg_id会查询不全
             time.sleep(5)
             msg_id_sql = ''' 
-                select sendmsg_id from {0}.sendmsg where sendmsg_order_no in ('{1}','{2}','{3}','{3}') and sendmsg_status ='open' 
-                '''.format(env, merchant_key1,merchant_key2,use[1],item_no)
-            msg = db.select_sql(msg_id_sql)
-            print("msg:", msg, type(msg))
+                select sendmsg_id from {0}.sendmsg where sendmsg_order_no in ('{1}','{2}','{3}') and sendmsg_status ='open' 
+                '''.format(env,merchant_key1,use[1],item_no)
+            db.select_sql(msg_id_sql)
             msg_id = db.select_sql(msg_id_sql)[1]
             if msg_id:
                 i = 0
@@ -475,6 +509,10 @@ class CommonBiz(UnSerializer,Serializer):
                 while i < j:
                     RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env,msg_id[i][0]))
                     i = i + 1
+
+            return "还款成功"
+
+
 
          except Exception as e:
              current_app.logger.exception(e)
