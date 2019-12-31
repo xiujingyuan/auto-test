@@ -104,6 +104,12 @@ def repay_withhold_success():
     result = common.repayWithholdSuccess(request)
     return jsonify(CommonResult.fill_result(result))
 
+@api_v1.route('/quickly-repay',methods=["POST"])
+def quickly_repay():
+    common = CommonBiz()
+    result = common.QuicklyRepay(request)
+    return jsonify(CommonResult.fill_result(result))
+
 
 @api_v1.route('/common/upload/file',methods=['POST'])
 def upload_file():

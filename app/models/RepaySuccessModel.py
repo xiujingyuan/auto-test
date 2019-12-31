@@ -1,10 +1,6 @@
 import traceback
 import uuid,requests,json
-import datetime as dt
-import datetime
-from environment.common.config import Config
 from flask import current_app
-from dateutil.relativedelta import relativedelta
 
 class RepaySuccessModel(object):
 
@@ -68,14 +64,13 @@ class RepaySuccessModel(object):
         }
 
 
-
     @classmethod
     def http_request_post(cls,data,url,headers):
         try:
             req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
-            #current_app.logger.info(req)
+            current_app.logger.info(req)
             result = req.json()
-            #current_app.logger.info(url+str(result))
+            current_app.logger.info(url+str(result))
             return result
         except Exception as e:
             current_app.logger.info(traceback.format_exc())
@@ -87,9 +82,9 @@ class RepaySuccessModel(object):
     def http_request_plain(cls,data,url,headers):
         try:
             req = requests.post(url, data, headers,timeout=10)
-            #current_app.logger.info(req)
+            current_app.logger.info(req)
             result = req.content
-            #current_app.logger.info(url+str(result))
+            current_app.logger.info(url+str(result))
             return result
         except Exception as e:
             current_app.logger.info(traceback.format_exc())
@@ -101,9 +96,9 @@ class RepaySuccessModel(object):
     def http_request_get(cls,url):
         try:
             req = requests.get(url,timeout=10)
-            #current_app.logger.info(req)
+            current_app.logger.info(req)
             result = req.json()
-            #current_app.logger.info(url+str(result))
+            current_app.logger.info(url+str(result))
             return result
         except Exception as e:
             current_app.logger.info(traceback.format_exc())
