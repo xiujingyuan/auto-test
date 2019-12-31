@@ -189,7 +189,10 @@ class CommonBiz(UnSerializer,Serializer):
 
     def grantWithdrawSuccess(self,request):
         try:
-            request_dict = request.json
+            if isinstance(request,dict):
+                request_dict = request
+            else:
+                request_dict = request.json
             if "item_no" in request_dict.keys():
                 item_no = request_dict['item_no']
             if "env" in request_dict.keys():
@@ -381,14 +384,19 @@ class CommonBiz(UnSerializer,Serializer):
 
     def repayWithholdSuccess(self,request):
          try:
-             #获取还款的一些基本参数
-            request_repay = request.json
+            # 获取一些基本参数
+            if isinstance(request, dict):
+                request_repay = request
+            else:
+                request_repay = request.json
             if "item_no" in request_repay.keys():
                 item_no = request_repay['item_no']
             if "env" in request_repay.keys():
-                env = request_repay['env']
+                env = "r" + request_repay['env']
             if "period" in request_repay.keys():
                 period = str(request_repay['period'])[1:-1]
+            if "amount" in request_repay.keys():
+                amount = request_repay['amount']
             if "finished" in request_repay.keys():
                 finished = request_repay['finished']
             if "qsq_channel" in request_repay.keys():
@@ -422,15 +430,15 @@ class CommonBiz(UnSerializer,Serializer):
                  msg_id = msg_ids[0][0]
                  RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id))
 
-            #查询还款金额，sql执行后返回的数据是个元祖
-            sql_amount = ''' select sum(`asset_tran_balance_amount`) from {0}.asset_tran where asset_tran_asset_item_no='{1}' and asset_tran_period in ({2}) '''.format(
-                 env, item_no, period)
-            result_amount=db.select_sql(sql_amount)
-            if result_amount[1] is None:
-                 return "资产不存在，请自行检查asset和asset_tran表"
-            amount = str(result_amount[1][0][0])
+            if amount is '':
+                #查询还款金额，sql执行后返回的数据是个元祖
+                sql_amount = ''' select sum(`asset_tran_balance_amount`) from {0}.asset_tran where asset_tran_asset_item_no='{1}' and asset_tran_period in ({2}) '''.format(env, item_no, period)
+                result_amount=db.select_sql(sql_amount)
+                if result_amount[1] is None:
+                    return "资产不存在，请自行检查asset和asset_tran表"
+                amount = str(result_amount[1][0][0])
             if int(amount) <= 1:
-                return "还款金额小于1元，请自行检查资产情况"
+                    return "还款金额小于1元，请自行检查资产情况"
             #查询还款用户的四要素，直接使用加密后的数据
             sql_use = '''select card_acc_num_encrypt,card_acc_id_num_encrypt,card_acc_name_encrypt,card_acc_tel_encrypt from {0}.card_asset
                  left join {0}.card on card_asset_card_no = card_no
@@ -440,6 +448,8 @@ class CommonBiz(UnSerializer,Serializer):
             if not result_use[1]:
                 return "还款人信息不存在数据库，请自行检查还款人 card_asset 表信息"
             use = result_use[1][0]
+
+            print(type(amount),amount)
 
             #检查到日期和放款日之间是否满足15天
             sql_grant_time = ''' select asset_actual_grant_at from {0}.asset where asset_item_no = '{1}' '''.format(env,item_no)
@@ -473,12 +483,11 @@ class CommonBiz(UnSerializer,Serializer):
 
             if len(repay_result['data']['project_list']) > 1:
                  merchant_key2 = repay_result['data']['project_list'][1]['order_no']
-                 callback_request2 = RepaySuccessModel.callback(merchant_key2, finished, channel_channel)
+                 callback_request2 = RepaySuccessModel.callback(merchant_key2, finished, qsq_channel)
                  RepaySuccessModel.http_request_plain(callback_request2, callback_url, callback_headers)
                  # 回调成功后，执行task
-                 task_result = RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
-                 if task_result['code'] != 0:
-                     return task_result
+                 RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
+                 RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
                  # 休息5秒钟后再执行msg
                  time.sleep(5)
                  msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no in ('{1}','{2}','{3}') and sendmsg_status ='open' 
@@ -510,6 +519,16 @@ class CommonBiz(UnSerializer,Serializer):
                     RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env,msg_id[i][0]))
                     i = i + 1
 
+            #如果是逾期还款，需要手动修改dtr的到期日
+            if expect_repay == 'Y':
+                sql_dtr = ''' update {0}.dtransaction left join {0}.asset on dtransaction_asset_id = asset_id 
+                                    set dtransaction_expect_finish_time = '{1}'  
+                                    where asset_item_no = '{2}' and dtransaction_period = {3}
+                                '''.format(env[1:], expect_finish, item_no, period[0:1])
+                print(sql_dtr)
+                db.select_sql(sql_dtr)
+                time.sleep(2)
+
             return "还款成功"
 
 
@@ -519,6 +538,90 @@ class CommonBiz(UnSerializer,Serializer):
              return ErrorCode.ERROR_CODE
 
 
+    def QuicklyRepay(self,request):
+        try:
+            # 获取一些基本参数
+            if isinstance(request, dict):
+                request_params = request
+            else:
+                request_params = request.json
+            if "item_no" in request_params.keys():
+                item_no = request_params['item_no']
+            if "env" in request_params.keys():
+                env = request_params['env']
+                g_env = "g" + env
+            if "asset_actual_grant_at" in request_params.keys():
+                asset_actual_grant_at = request_params['asset_actual_grant_at']
+            if "need_repay" in request_params.keys():
+                need_repay = request_params['need_repay']
 
+            db = executesql.db_connect()
+
+            #检查资产是否已到biz环境
+            asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env,item_no)
+            is_asset = db.select_sql(asset_sql)
+            if is_asset[1][0][0] == 0:
+                RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env,item_no))
+
+            #检查大单资产是否已完成放款
+            cap_asset_sql = ''' select count(*) from {0}.capital_asset where capital_asset_item_no = '{1}' '''.format(env,item_no)
+            is_cap_asset = db.select_sql(cap_asset_sql)
+            if is_cap_asset[1][0][0] == 0:
+            #调用放款成功的工具
+                grant_url = "http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive".format(env)
+                grant_sql = ''' select task_request_data from {0}.task where task_order_no = '{1}' and  task_type = 'AssetImport' '''.format(g_env,item_no)
+                gtant_p1 = db.select_sql(grant_sql)[1][0][0]
+                gtant_p = json.loads(gtant_p1)
+            #dumps: <class 'str'>  loads: <class 'dict'>
+                gtant_p['data']['asset']['overdue_guarantee_amount'] = 0
+                gtant_p['data']['asset']['info'] = ""
+                request_body = {
+                    "request_body": gtant_p,
+                    "call_back": grant_url
+                }
+                result = self.withdrawSuccess(request_body)
+                time.sleep(10)
+
+            #调用还款计划
+                result = self.grant_capital_plan(gtant_p,g_env)
+                time.sleep(10)
+
+            #检查小单资产是否已完成放款
+            item_no_x_sql = ''' select asset_extend_ref_order_no from {0}.asset_extend where asset_extend_asset_item_no = '{1}' '''.format(g_env, item_no)
+            item_no_x = db.select_sql(item_no_x_sql)[1][0][0]
+            asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' and asset_status = 'repay' '''.format(env, item_no_x)
+            is_asset = db.select_sql(asset_sql)
+            if is_asset[1][0][0] == 0:
+            #小单放款
+                asset_sql_x = ''' select count(*) from {0}.task where task_order_no = '{1}' '''.format(g_env, item_no_x)
+                is_asset_x = db.select_sql(asset_sql_x)[1][0][0]
+                if is_asset_x == 0:
+                    return "小单还未进件"
+            #修改大单的放款时间，使小单能够走流程放款成功
+                grant_at_sql = ''' update {0}.asset set asset_status='repay',asset_actual_grant_at='{1}', asset_effect_at='{1}' where asset_item_no ='{2}'  '''.format(g_env,asset_actual_grant_at,item_no)
+                db.select_sql(grant_at_sql)
+            #执行小单task
+                task_id = 1
+                while task_id > 0:
+                    RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(g_env,item_no_x))
+                    task_sql = ''' select count(*) from {0}.task where task_order_no = '{1}' and task_status = 'open' '''.format(g_env, item_no_x)
+                    task_id = int(db.select_sql(task_sql)[1][0][0])
+            #执行小单sendmsg
+                msg_id = 1
+                while msg_id > 0:
+                    RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env,item_no_x))
+                    msg_sql = ''' select count(*) from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status = 'open' '''.format(g_env, item_no_x)
+                    msg_id = int(db.select_sql(msg_sql)[1][0][0])
+
+            #至此大小单放款均成功，开始还款
+            if need_repay == 'Y':
+                time.sleep(60)
+                result = self.repayWithholdSuccess(request_params)
+
+            return result
+
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ErrorCode.ERROR_CODE
 
 
