@@ -35,7 +35,7 @@ class Config:
     DEENCRY_URL = 'http://kong-api-test.kuainiujinke.com/encryptor-test/decrypt/plain/'
     CMDB_URL = "http://kong-api-test.kuainiujinke.com/cmdb1/v5/rate/calculate"
     # v6费率系统
-    CMDB_URL_v6 = "http://kong-api-test.kuainiujinke.com/cmdb2/v6/rate/repay/calculate"
+    CMDB_URL_v6 = "http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate"
     SYNC_ENV_LIST = ['biz1', 'biz2']
 
     JC_MOCK_MAIL_SUBJECT_PREFIX = '[Jc-Mock]'
