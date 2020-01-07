@@ -123,3 +123,9 @@ def set_capital_loan_condition():
     common = CommonBiz()
     result = common.set_capital_loan_condition(request)
     return jsonify(CommonResult.fill_result(result))
+
+@api_v1.route('/grant/auto_route',methods=["POST"])
+def grant_auto_route_success():
+    common = CommonBiz()
+    result, msg = common.grant_auto_route_success(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))

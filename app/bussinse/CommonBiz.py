@@ -624,4 +624,62 @@ class CommonBiz(UnSerializer,Serializer):
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
 
+    def grant_auto_route_success(self, request):
+        try:
+            # 获取一些基本参数
+            if isinstance(request, dict):
+                request_params = request
+            else:
+                request_params = request.json
+            if "channel" in request_params.keys():
+                channel = request_params['channel']
+            if "env" in request_params.keys():
+                env = request_params['env']
+                g_env = "gbiz" + str(env)
+                b_env = "biz" + str(env)
+            if "period_count" in request_params.keys():
+                period_count = request_params['period_count']
+
+
+            # 引入数据库相关方法
+            db = executesql.db_connect()
+
+            #定义time_local参数
+            time_local = time.strftime("%Y-%m-%d", time.localtime())
+
+            #删除biz当前时间资金方的金额
+            sql_biz_delete = '''delete from {0}.capital_loan_condition where capital_loan_condition_day ='{1}' and capital_loan_condition_channel ='{2}';'''.format(b_env,time_local,channel)
+            db.delete_sql(sql_biz_delete)
+            #更新非所需资金方的金额
+            sql_biz_update_notchannel='''update  {0}.capital_loan_condition set capital_loan_condition_amount=0 where capital_loan_condition_day='{1}' and capital_loan_condition_channel <>'{2}';'''.format(b_env, time_local,channel)
+
+            db.select_sql(sql_biz_update_notchannel)
+            #随机获取一条所需资金方记录
+            sql_biz_select = '''select capital_loan_condition_id from {0}.capital_loan_condition where capital_loan_condition_channel='{1}' and capital_loan_condition_period_count= '{2}' limit 1 '''.format(b_env, channel,period_count)
+            res = db.select_sql(sql_biz_select)
+            get_capital_loan_condition_id = res[1][0][0]
+
+            #更新biz里获取到的那一条数据的金额
+            sql_biz_update_channel = '''update  {0}.capital_loan_condition set capital_loan_condition_day= '{1}',capital_loan_condition_amount='100000000' where capital_loan_condition_id={2};'''.format(
+            b_env, time_local,get_capital_loan_condition_id)
+            db.select_sql(sql_biz_update_channel)
+
+            #修改gbiz的权重
+            sql_gbiz_update_channel = '''update {0}.route_weight_config set route_weight_config_weight='99999999',route_weight_config_first_route_status=0,
+            route_weight_config_second_route_status=0,route_weight_config_status=0 where route_weight_config_channel='{1}'
+            and route_weight_config_period_count='{2}';'''.format(
+            g_env, channel,period_count)
+            db.select_sql(sql_gbiz_update_channel)
+
+            #修改gbiz其他资金方权重为0
+            sql_gbiz_update_notchannel = '''update {0}.route_weight_config set route_weight_config_weight='0' where route_weight_config_channel <>'{1}';'''.format(
+            g_env, channel)
+            db.select_sql(sql_gbiz_update_notchannel)
+            return 0, "路由修改成功，请等待20s后进行路由"
+
+
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ErrorCode.ERROR_CODE
+
 

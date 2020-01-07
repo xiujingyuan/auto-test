@@ -83,6 +83,17 @@ class db_connect():
             except Exception as e:
                 return self.err_code,str(e)
 
+    def delete_sql(self, sql):
+        if self.err_code != '000000':
+            return self.err_code, self.error_msg
+        else:
+            try:
+                self._cur.execute(sql)
+                self._conn.commit()
+                return 0, self._cur.fetchall()
+            except Exception as e:
+                return self.err_code, str(e)
+
 
 class Executesql():
 
