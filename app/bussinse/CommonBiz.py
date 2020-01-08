@@ -683,3 +683,50 @@ class CommonBiz(UnSerializer,Serializer):
             return ErrorCode.ERROR_CODE
 
 
+    def grant_four_elements_success(self, request):
+        try:
+            # 获取一些基本参数
+            if isinstance(request, dict):
+                request_params = request
+            else:
+                request_params = request.json
+            if "channel" in request_params.keys():
+                channel = request_params['channel']
+            if "env" in request_params.keys():
+                env = request_params['env']
+                g_env = "gbiz" + str(env)
+
+                # 引入数据库相关方法
+                db = executesql.db_connect()
+
+                # 获取gbiz库中曾经放款成功的四要素
+                sql_get_four_elements = '''select capital_account_name_encrypt,capital_account_idnum_encrypt,capital_account_card_number_encrypt,capital_account_mobile_encrypt from {0}.asset_card,{0}.asset_loan_record,{0}.capital_account,{0}.capital_asset where 
+                    asset_card.asset_card_owner_idnum_encrypt=capital_account.capital_account_idnum_encrypt 
+                    and asset_card.asset_card_asset_item_no=asset_loan_record.asset_loan_record_asset_item_no
+                    and capital_asset.capital_asset_item_no=asset_loan_record.asset_loan_record_asset_item_no
+                    and asset_loan_record_status=6 and asset_loan_record_channel='{1}'
+                    and capital_account_status=0 
+                    and capital_account_name_encrypt is not null and capital_account_name_encrypt <> ''
+                    and capital_account_idnum_encrypt is not null and capital_account_idnum_encrypt<> ''
+                    and capital_account_card_number_encrypt is not null and capital_account_card_number_encrypt <> '' 
+                    and capital_account_mobile_encrypt  is not null and capital_account_mobile_encrypt <> '' limit 1;'''.format(
+                    g_env, channel)
+                db.delete_sql(sql_get_four_elements)
+
+            res_fe = db.delete_sql(sql_get_four_elements)
+
+            name_encrypt = res_fe[1][0][0]
+
+            idnum_encrypt= res_fe[1][0][1]
+
+            card_number_encrypt = res_fe[1][0][2]
+
+            mobile_encrypt= res_fe[1][0][3]
+
+
+            re_dirct={"name_encrypt":name_encrypt,"idnum_encrypt":idnum_encrypt,"card_number_encrypt":card_number_encrypt,"mobile_encrypt":mobile_encrypt}
+            return re_dirct, "获取开户成功的四要素成功"
+
+        except Exception as e:
+            current_app.logger.exception(e)
+            return ErrorCode.ERROR_CODE
