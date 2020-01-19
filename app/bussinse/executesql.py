@@ -81,6 +81,7 @@ class db_connect():
                 self._cur.execute(sql)
                 self._conn.commit()
                 result = self._cur.fetchall()
+                print(result)
                 return 0,result
             except Exception as e:
                 return self.err_code,str(e)
@@ -94,6 +95,7 @@ class db_connect():
                 self._cur.execute(sql)
                 self._conn.commit()
                 result = self._cur.fetchall()
+                print(result)
                 return 0,result
             except Exception as e:
                 return self.err_code, str(e)
