@@ -129,3 +129,9 @@ def grant_auto_route_success():
     common = CommonBiz()
     result, msg = common.grant_auto_route_success(request)
     return jsonify(CommonResult.fill_result(result, message=msg))
+
+@api_v1.route('/grant/success_four_elements',methods=["POST"])
+def grant_four_elements_success():
+    common = CommonBiz()
+    result, msg = common.grant_four_elements_success(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
