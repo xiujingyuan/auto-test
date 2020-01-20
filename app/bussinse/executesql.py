@@ -12,6 +12,7 @@
 import json
 
 import pymysql,time
+from flask import current_app
 
 
 
@@ -73,24 +74,30 @@ class db_connect():
                 return self.err_code,str(e)
 
     def select_sql(self,sql):
+        current_app.logger.info(str(url))
         if self.err_code !='000000':
             return self.err_code,self.error_msg
         else:
             try:
                 self._cur.execute(sql)
                 self._conn.commit()
-                return 0,self._cur.fetchall()
+                result = self._cur.fetchall()
+                current_app.logger.info(str(result))
+                return 0,result
             except Exception as e:
                 return self.err_code,str(e)
 
     def delete_sql(self, sql):
+        current_app.logger.info(str(url))
         if self.err_code != '000000':
             return self.err_code, self.error_msg
         else:
             try:
                 self._cur.execute(sql)
                 self._conn.commit()
-                return 0, self._cur.fetchall()
+                result = self._cur.fetchall()
+                current_app.logger.info(str(result))
+                return 0,result
             except Exception as e:
                 return self.err_code, str(e)
 
