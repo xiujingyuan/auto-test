@@ -714,6 +714,11 @@ class CommonBiz(UnSerializer, Serializer):
     def grant_four_elements_success(self, request):
         try:
             # 获取一些基本参数
+            result = {
+                "code": 0,
+                "msg": "",
+                "data": 0,
+            }
             if isinstance(request, dict):
                 request_params = request
             else:
@@ -753,8 +758,12 @@ class CommonBiz(UnSerializer, Serializer):
 
 
             re_dirct={"name_encrypt":name_encrypt,"idnum_encrypt":idnum_encrypt,"card_number_encrypt":card_number_encrypt,"mobile_encrypt":mobile_encrypt}
-            return re_dirct, "获取开户成功的四要素成功"
+            result["data"] = re_dirct
+            result["msg"] = "获取开户成功的四要素成功"
+            return result, "获取开户成功的四要素成功"
 
         except Exception as e:
             current_app.logger.exception(e)
-            return ErrorCode.ERROR_CODE
+            result["data"] = ErrorCode.ERROR_CODE
+            result["msg"] = str(e)
+            return result, "异常"
