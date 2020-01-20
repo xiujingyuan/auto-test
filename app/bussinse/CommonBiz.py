@@ -647,6 +647,11 @@ class CommonBiz(UnSerializer, Serializer):
     def grant_auto_route_success(self, request):
         try:
             # 获取一些基本参数
+            result = {
+                    "code": 0,
+                    "msg": "",
+                    "data": 0,
+                }
             if isinstance(request, dict):
                 request_params = request
             else:
@@ -697,8 +702,11 @@ class CommonBiz(UnSerializer, Serializer):
             sql_gbiz_update_notchannel = '''update {0}.route_weight_config set route_weight_config_weight='0' where route_weight_config_channel <>'{1}';'''.format(
                 g_env, channel)
             db.select_sql(sql_gbiz_update_notchannel)
-            return 0, "路由修改成功，请等待20s后进行路由"
+            result["msg"] = "路由修改成功，请等待20s后进行路由"
+            return result, "修改成功"
 
         except Exception as e:
             current_app.logger.exception(e)
-            return ErrorCode.ERROR_CODE, str(e)
+            result["msg"] = str(e)
+            result["data"] = ErrorCode.ERROR_CODE
+            return result, str(e)
