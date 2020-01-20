@@ -758,4 +758,3 @@ class CommonBiz(UnSerializer, Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
->>>>>>> c0b5315976f66446a41632d865383c3636b3df72
