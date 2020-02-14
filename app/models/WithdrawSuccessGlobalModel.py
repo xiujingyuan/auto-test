@@ -63,7 +63,7 @@ class WithdrawSuccessGlobalModel(object):
         loan_record_info["asset_item_no"] = asset_item_no
         loan_record_info["amount"] = alr_db["asset_loan_record_amount"]
         loan_record_info["withholding_amount"] = round(
-            float(float(alr_db["asset_loan_record_withholding_amount"]) * 0.2))
+            float(float(alr_db["asset_loan_record_amount"]) * 0.2))
         loan_record_info["channel"] = alr_db["asset_loan_record_channel"]
         loan_record_info["status"] = 6
         loan_record_info["identifier"] = alr_db["asset_loan_record_identifier"]

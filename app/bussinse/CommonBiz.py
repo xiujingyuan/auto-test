@@ -798,9 +798,9 @@ class CommonBiz(UnSerializer, Serializer):
             header = {"Content-Type": "application/json"}
 
             resp = requests.post(call_back, json=body, headers=header, timeout=10)
-            print(resp.json())
+            print(resp.content)
 
-            return resp.json(), ''
+            return resp.content, ''
 
         except Exception as e:
             result = {}
