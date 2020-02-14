@@ -137,3 +137,10 @@ def grant_four_elements_success():
     common = CommonBiz()
     result, msg = common.grant_four_elements_success(request)
     return jsonify(CommonResult.fill_result(result, message=msg))
+
+
+@api_v1.route('/grant-global/withdraw-success',methods=["POST"])
+def grant_global_withdraw_success():
+    common = CommonBiz()
+    result, msg = common.grant_global_withdraw_success(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))

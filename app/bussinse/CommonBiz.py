@@ -4,6 +4,9 @@
 # @Description: TODO
 # @author fyi zhang
 # @date 2019/1/19 22:29
+import uuid
+
+import requests
 
 import app.common.config.config as config
 import smtplib, json, os
@@ -18,6 +21,7 @@ from app.models.CapitalPlanModel import CapitalPlanModel
 from app.models.CaseModel import Case
 from app.models.WithdrawSuccessModel import WithdrawSuccessModel
 from app.models.RepaySuccessModel import RepaySuccessModel
+from app.models.WithdrawSuccessGlobalModel import WithdrawSuccessGlobalModel
 from email.header import Header
 from email.mime.text import MIMEText
 from app.models.ErrorCode import ErrorCode
@@ -763,6 +767,43 @@ class CommonBiz(UnSerializer, Serializer):
             return result, "获取开户成功的四要素成功"
 
         except Exception as e:
+            current_app.logger.exception(e)
+            result["data"] = ErrorCode.ERROR_CODE
+            result["msg"] = str(e)
+            return result, "异常"
+
+    def grant_global_withdraw_success(self, request):
+        try:
+            if isinstance(request, dict):
+                request_dict = request
+            else:
+                request_dict = request.json
+            if "item_no" in request_dict.keys():
+                item_no = request_dict['item_no']
+            if "env" in request_dict.keys():
+                env = request_dict['env']
+            if "call_back" in request_dict.keys():
+                call_back = request_dict['call_back']
+
+            body = {
+                "type": "AssetWithdrawSuccess",
+                "key": str(uuid.uuid4()),
+                "data": {}}
+            body["data"]["asset"] = WithdrawSuccessGlobalModel.build_asset_info(env, item_no)
+            body["data"]["loan_record"] = WithdrawSuccessGlobalModel.build_loan_record_info(env, item_no)
+            body["data"]["borrower"] = WithdrawSuccessGlobalModel.build_borrower_info(env, item_no)
+            body["data"]["trans"] = WithdrawSuccessGlobalModel.build_trans_info(env, item_no)
+            from pprint import pprint
+            pprint(body)
+            header = {"Content-Type": "application/json"}
+
+            resp = requests.post(call_back, json=body, headers=header, timeout=10)
+            print(resp.json())
+
+            return resp.json(), ''
+
+        except Exception as e:
+            result = {}
             current_app.logger.exception(e)
             result["data"] = ErrorCode.ERROR_CODE
             result["msg"] = str(e)
