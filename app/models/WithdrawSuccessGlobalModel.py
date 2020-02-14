@@ -50,7 +50,10 @@ class WithdrawSuccessGlobalModel(object):
         asset["withholding_amount"] = round(float(float(asset_info["amount"]) * 0.2))
         asset["sub_order_type"] = None
         asset["overdue_guarantee_amount"] = 0
-        asset["info"] = ""
+        asset["owner"] = asset_db.asset_owner
+        asset["from_app"] = asset_db.asset_from_app
+        asset["risk_level"] = "1"
+        asset["product_name"] = asset_db.asset_product_name
         return asset
 
     @classmethod
