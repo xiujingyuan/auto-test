@@ -44,7 +44,7 @@ class WithdrawSuccessGlobalModel(object):
         asset["total_amount"] = asset_db.asset_total_amount
         asset["version"] = str(datetime.now().timestamp()).split('.')[0]
         asset["interest_rate"] = round(float(asset_db.asset_interest_rate), 3)
-        asset["charge_type"] = 1
+        asset["charge_type"] = 0
         asset["ref_order_no"] = ""
         asset["ref_order_type"] = ""
         asset["withholding_amount"] = round(float(float(asset_info["amount"]) * 0.2))
