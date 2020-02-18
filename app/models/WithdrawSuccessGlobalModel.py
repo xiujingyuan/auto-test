@@ -54,6 +54,7 @@ class WithdrawSuccessGlobalModel(object):
         asset["from_app"] = asset_db.asset_from_app
         asset["risk_level"] = "1"
         asset["product_name"] = asset_db.asset_product_name
+        asset["from_system_name"] = "贷上钱"
         return asset
 
     @classmethod
