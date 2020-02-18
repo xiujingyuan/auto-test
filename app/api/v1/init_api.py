@@ -26,6 +26,14 @@ def get_init_bycaseid(case_id):
     return jsonify(CommonResult.fill_result(result))
 
 
+@api_v1.route('/history_init/<int:case_id>/<string:build_id>', methods=['GET'])
+def get_history_init_bycaseid(case_id, build_id):
+
+    init = InitBussinse()
+    result = init.get_history_init(case_id, build_id)
+    return jsonify(CommonResult.fill_result(result))
+
+
 @api_v1.route('/init/id/<int:inid_id>', methods=['GET'])
 def get_init_byinitid(inid_id):
 
@@ -44,15 +52,23 @@ def change_init(init_id):
             result = init.change_init(initInfo,init_id)
     return jsonify(CommonResult.fill_result(result))
 
-@api_v1.route('/init' , methods=['POST'])
+
+@api_v1.route('/init', methods=['POST'])
 def add_init():
     init = InitBussinse()
     result = init.add_init(request)
     return jsonify(CommonResult.fill_result(result))
 
-@api_v1.route('/init/<int:init_id>' , methods=['DELETE'])
+
+@api_v1.route('/init/<int:init_id>', methods=['DELETE'])
 def delete_init(init_id):
     init = InitBussinse()
     result = init.delete_init(init_id)
     return jsonify(CommonResult.fill_result(result))
 
+
+@api_v1.route('/init_priority', methods=['PUT'])
+def init_priority():
+    init = InitBussinse()
+    result = init.init_priority(request)
+    return jsonify(CommonResult.fill_result(result))

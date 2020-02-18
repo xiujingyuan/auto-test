@@ -5,24 +5,26 @@
 # @author fyi zhang
 # @date 2019/1/6 16:00
 
-from app.models.ErrorCode import  ErrorCode
-class CommonResult(object):
+from app.models.ErrorCode import ErrorCode
 
+
+class CommonResult(object):
     @staticmethod
-    def fill_result(data,code=None,message=None):
+    def fill_result(data, code=None, message=None):
+        data = data if not isinstance(data, bytes) else data.decode("utf-8")
         if message is None:
-            message ="success"
+            message = "success"
         if code is None:
-            if isinstance(data,int) and data ==ErrorCode.ERROR_CODE:
-                code=1
-                message="fail"
+            if isinstance(data,int) and data == ErrorCode.ERROR_CODE:
+                code = 1
+                message = "fail"
             else:
-                code=0
+                code = 0
 
         res = {
-            "code":code,
-            "msg" : message,
-            "data":data,
+            "code": code,
+            "msg": message,
+            "data": data,
         }
         return res
 
