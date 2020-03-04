@@ -144,3 +144,9 @@ def grant_global_withdraw_success():
     common = CommonBiz()
     result, msg = common.grant_global_withdraw_success(request)
     return jsonify(CommonResult.fill_result(result, message=msg))
+
+@api_v1.route('/grant/account_test',methods=["POST"])
+def grant_open_account_success():
+    common = CommonBiz()
+    result, msg = common.grant_open_account_success(request)
+    return jsonify(CommonResult.fill_result(result,message=msg))
