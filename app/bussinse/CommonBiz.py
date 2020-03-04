@@ -1274,7 +1274,7 @@ class CommonBiz(UnSerializer, Serializer):
             server = SSHTunnelForwarder(
                 ("47.116.2.104", 22),
                 ssh_username="ssh-proxy",
-                ssh_pkey="./../resources/dx_ssh_proxy",
+                ssh_pkey="./app/resources/dx_ssh_proxy",
                 remote_bind_address=("rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com", 3306),
                 local_bind_address=('127.0.0.1', 3555))
             server.start()
