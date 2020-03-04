@@ -6,7 +6,10 @@
 # @date 2019/1/19 22:29
 import uuid
 
+import pymysql
 import requests
+from DBUtils.PooledDB import PooledDB
+from sshtunnel import SSHTunnelForwarder
 
 import app.common.config.config as config
 import smtplib, json, os
@@ -652,10 +655,10 @@ class CommonBiz(UnSerializer, Serializer):
         try:
             # 获取一些基本参数
             result = {
-                    "code": 0,
-                    "msg": "",
-                    "data": 0,
-                }
+                "code": 0,
+                "msg": "",
+                "data": 0,
+            }
             if isinstance(request, dict):
                 request_params = request
             else:
@@ -753,19 +756,18 @@ class CommonBiz(UnSerializer, Serializer):
                                             and capital_account_mobile_encrypt  is not null and capital_account_mobile_encrypt <> '' ORDER BY rand() LIMIT 1;'''.format(
                     g_env, channel)
 
-
             res_fe = db.delete_sql(sql_get_four_elements)
 
             name_encrypt = res_fe[1][0][0]
 
-            idnum_encrypt= res_fe[1][0][1]
+            idnum_encrypt = res_fe[1][0][1]
 
             card_number_encrypt = res_fe[1][0][2]
 
-            mobile_encrypt= res_fe[1][0][3]
+            mobile_encrypt = res_fe[1][0][3]
 
-
-            re_dirct={"name_encrypt":name_encrypt,"idnum_encrypt":idnum_encrypt,"card_number_encrypt":card_number_encrypt,"mobile_encrypt":mobile_encrypt}
+            re_dirct = {"name_encrypt": name_encrypt, "idnum_encrypt": idnum_encrypt,
+                        "card_number_encrypt": card_number_encrypt, "mobile_encrypt": mobile_encrypt}
             result["data"] = re_dirct
             result["msg"] = "获取开户成功的四要素成功"
             return result, "获取开户成功的四要素成功"
@@ -776,7 +778,7 @@ class CommonBiz(UnSerializer, Serializer):
             result["msg"] = str(e)
             return result, "异常"
 
-    #支支写的，mark,只能用同一四要素
+    # 支支写的，mark,只能用同一四要素
     def grant_open_account_success(self, request):
         try:
             # 获取一些基本参数
@@ -799,15 +801,15 @@ class CommonBiz(UnSerializer, Serializer):
                 banknumber_encrypt = request_params['banknumber_encrypt']
             if "channel" in request_params.keys():
                 channel = request_params['channel']
-                paydayloan_channel=str(channel)+"_paydayloan"
+                paydayloan_channel = str(channel) + "_paydayloan"
             if "env" in request_params.keys():
                 env = request_params['env']
                 g_env = "gbiz" + str(env)
-                b_env="biz"+ str(env)
+                b_env = "biz" + str(env)
 
                 # 引入数据库相关方法
                 db = executesql.db_connect()
-                #先改对应资金方的基地址
+                # 先改对应资金方的基地址
                 a = '''
                     {
                     "base_url":"http://easy.mock.kuainiu.io/mock/5e27b835d53ef1165b982299/zhenjinfu",
@@ -890,10 +892,11 @@ class CommonBiz(UnSerializer, Serializer):
                     ]
                 }
                 '''
-                sql_update_paydayloan='''update {0}.keyvalue set keyvalue_value='{1}' where keyvalue_key='{2}'; '''.format(b_env,a,paydayloan_channel)
+                sql_update_paydayloan = '''update {0}.keyvalue set keyvalue_value='{1}' where keyvalue_key='{2}'; '''.format(
+                    b_env, a, paydayloan_channel)
                 db.select_sql(sql_update_paydayloan)
-                #修改协议支付基地址
-                b='''
+                # 修改协议支付基地址
+                b = '''
                     {
                   "url": "http://paysvr-staging.paysvr.kuainiujinke.com/",
                   "payment_url": "http://easy.mock.kuainiu.io/mock/5e27b835d53ef1165b982299/zhenjinfu",
@@ -1154,34 +1157,40 @@ class CommonBiz(UnSerializer, Serializer):
                     g_env, userid_encrypt)
                 db.delete_sql(sql_delete_account_result)
 
-
                 sql_delete_account_card_result = '''delete from {0}.capital_account_card where capital_account_card_account_id in (select capital_account_id from capital_account  where capital_account_idnum_encrypt ='{1}');'''.format(
                     g_env, userid_encrypt)
 
                 db.delete_sql(sql_delete_account_card_result)
 
-                #调用开户查询接口
-                res=self.post_account_query(userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env)
-                #如果查询到没有开户则调用开户接口
-                if res['data']['result']==4:
+                # 调用开户查询接口
+                res = self.post_account_query(userid_encrypt, name_encrypt, userphone_encrypt, banknumber_encrypt,
+                                              channel, g_env)
+                # 如果查询到没有开户则调用开户接口
+                if res['data']['result'] == 4:
                     # 调用开户接口
-                    res1=self.post_account_open(userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env)
-                    if res1['data']['type']=='URL':
-                        #调用开户查询接口.此处需要先改mock TODO
-                        res2=self.post_account_query(userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env)
-                    elif res1['data']['type']=='SMS':
-                        #调用获取短信验证码接口
-                        res3=self.post_account_sms(userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env)
-                        if res3['code']==0:
-                            #调用协议支付接口
-                            res4=self.post_account_ProtocolSign(userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env)
-                            if res4['data']['type']=='SMS':
-                                #调用获取短信验证码接口
-                                res5 = self.post_account_sms(userid_encrypt, name_encrypt, userphone_encrypt,banknumber_encrypt, channel,g_env)
-                            else :
-                                #调用开户查询接口
-                                res5=self.post_account_query(userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env)
-                return result,"成功"
+                    res1 = self.post_account_open(userid_encrypt, name_encrypt, userphone_encrypt, banknumber_encrypt,
+                                                  channel, g_env)
+                    if res1['data']['type'] == 'URL':
+                        # 调用开户查询接口.此处需要先改mock TODO
+                        res2 = self.post_account_query(userid_encrypt, name_encrypt, userphone_encrypt,
+                                                       banknumber_encrypt, channel, g_env)
+                    elif res1['data']['type'] == 'SMS':
+                        # 调用获取短信验证码接口
+                        res3 = self.post_account_sms(userid_encrypt, name_encrypt, userphone_encrypt,
+                                                     banknumber_encrypt, channel, g_env)
+                        if res3['code'] == 0:
+                            # 调用协议支付接口
+                            res4 = self.post_account_ProtocolSign(userid_encrypt, name_encrypt, userphone_encrypt,
+                                                                  banknumber_encrypt, channel, g_env)
+                            if res4['data']['type'] == 'SMS':
+                                # 调用获取短信验证码接口
+                                res5 = self.post_account_sms(userid_encrypt, name_encrypt, userphone_encrypt,
+                                                             banknumber_encrypt, channel, g_env)
+                            else:
+                                # 调用开户查询接口
+                                res5 = self.post_account_query(userid_encrypt, name_encrypt, userphone_encrypt,
+                                                               banknumber_encrypt, channel, g_env)
+                return result, "成功"
 
 
 
@@ -1191,25 +1200,104 @@ class CommonBiz(UnSerializer, Serializer):
             result["msg"] = str(e)
             return result, "异常"
 
-    #调用开户查询接口,by支支
-    def post_account_query(cls, userid_encrypt,name_encrypt,userphone_encrypt,banknumber_encrypt,channel,g_env):
-                    guid = str(uuid.uuid4())
-                    data= {
-                            "from_system": "DSQ",
-                            "key": guid,
-                            "type": "AccountRegisterQuery",
-                            "data": {
-                                "serial_no": guid,
-                                "id_num_encrypt": userid_encrypt,
-                                "card_num_encrypt": banknumber_encrypt,
-                                "action": "Account",
-                                "channel": channel,
-                                "username_encrypt": name_encrypt,
-                                "mobile_encrypt": userphone_encrypt,
-                                "source_type": "youxi_bill",
-                                 "bank_code":"abc",
-                                 "item_no":"ZZ_khzcbh_111111"
-                            }}
-                    res = requests.post(
-                        "http://kong-api-test.kuainiujinke.com/{0}/capital/action-result-new".format(g_env), json=data)
-                    return res.json()
+    # 调用开户查询接口,by支支
+    def post_account_query(cls, userid_encrypt, name_encrypt, userphone_encrypt, banknumber_encrypt, channel, g_env):
+        guid = str(uuid.uuid4())
+        data = {
+            "from_system": "DSQ",
+            "key": guid,
+            "type": "AccountRegisterQuery",
+            "data": {
+                "serial_no": guid,
+                "id_num_encrypt": userid_encrypt,
+                "card_num_encrypt": banknumber_encrypt,
+                "action": "Account",
+                "channel": channel,
+                "username_encrypt": name_encrypt,
+                "mobile_encrypt": userphone_encrypt,
+                "source_type": "youxi_bill",
+                "bank_code": "abc",
+                "item_no": "ZZ_khzcbh_111111"
+            }}
+        res = requests.post(
+            "http://kong-api-test.kuainiujinke.com/{0}/capital/action-result-new".format(g_env), json=data)
+        return res.json()
+
+    def grant_global_withdraw_success(self, request):
+        try:
+            if isinstance(request, dict):
+                request_dict = request
+            else:
+                request_dict = request.json
+            if "item_no" in request_dict.keys():
+                item_no = request_dict['item_no']
+            if "env" in request_dict.keys():
+                env = request_dict['env']
+            if "call_back" in request_dict.keys():
+                call_back = request_dict['call_back']
+
+            body = {
+                "type": "AssetWithdrawSuccess",
+                "key": str(uuid.uuid4()),
+                "data": {}}
+            body["data"]["asset"] = WithdrawSuccessGlobalModel.build_asset_info(env, item_no)
+            body["data"]["loan_record"] = WithdrawSuccessGlobalModel.build_loan_record_info(env, item_no)
+            body["data"]["borrower"] = WithdrawSuccessGlobalModel.build_borrower_info(env, item_no)
+            body["data"]["trans"] = WithdrawSuccessGlobalModel.build_trans_info(env, item_no)
+            from pprint import pprint
+            pprint(body)
+            header = {"Content-Type": "application/json"}
+
+            resp = requests.post(call_back, json=body, headers=header, timeout=10)
+            print(resp.json())
+
+            return resp.json(), ''
+
+        except Exception as e:
+            result = {}
+            current_app.logger.exception(e)
+            result["data"] = ErrorCode.ERROR_CODE
+            result["msg"] = str(e)
+            return result, "异常"
+
+    def grant_global_clean_bond(self, request):
+        try:
+            if isinstance(request, dict):
+                request_dict = request
+            else:
+                request_dict = request.json
+            env = id_num_encrypt = None
+            if "id_num_encrypt" in request_dict.keys():
+                id_num_encrypt = request_dict['id_num_encrypt']
+            if "env" in request_dict.keys():
+                env = request_dict['env']
+            server = SSHTunnelForwarder(
+                ("47.116.2.104", 22),
+                ssh_username="ssh-proxy",
+                ssh_pkey="./../resources/dx_ssh_proxy",
+                remote_bind_address=("rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com", 3306),
+                local_bind_address=('127.0.0.1', 3555))
+            server.start()
+            pool = PooledDB(pymysql, 5,
+                            host="127.0.0.1",
+                            user="biz_test",
+                            passwd="1Swb3hAN0Hax9p",
+                            db="global_gbiz1",
+                            port=3555)
+            connect = pool.connection()
+            cursor = connect.cursor(pymysql.cursors.DictCursor)
+            sql = "update global_gbiz%s.asset set asset_status='payoff' where asset_idnum_encrypt='%s'" % (env, id_num_encrypt)
+            print(sql)
+            cursor.execute(sql)
+            connect.commit()
+            cursor.fetchall()
+            connect.close()
+            pool.close()
+            server.close()
+            return {"status":"success"}, ""
+        except Exception as e:
+            result = {}
+            current_app.logger.exception(e)
+            result["data"] = ErrorCode.ERROR_CODE
+            result["msg"] = str(e)
+            return result, "异常"
