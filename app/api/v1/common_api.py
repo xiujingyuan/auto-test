@@ -158,3 +158,11 @@ def grant_global_clean_bond():
     common = CommonBiz()
     result, msg = common.grant_global_clean_bond(request)
     return jsonify(CommonResult.fill_result(result, message=msg))
+
+
+@api_v1.route('/grant-global/route-first',methods=["POST"])
+def grant_global_route_first():
+    common = CommonBiz()
+    result, msg = common.grant_global_route_first(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
+

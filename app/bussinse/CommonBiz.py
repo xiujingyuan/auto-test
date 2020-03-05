@@ -896,260 +896,105 @@ class CommonBiz(UnSerializer, Serializer):
                     b_env, a, paydayloan_channel)
                 db.select_sql(sql_update_paydayloan)
                 # 修改协议支付基地址
-                b = '''
-                    {
-                  "url": "http://paysvr-staging.paysvr.kuainiujinke.com/",
-                  "payment_url": "http://easy.mock.kuainiu.io/mock/5e27b835d53ef1165b982299/zhenjinfu",
-                  "auto_withdraw_route": true,
-                  "sign": [
-                    {
-                      "name": "biz",
-                      "merchant_id": 3,
-                      "merchant_md5": "b21f3f04444c407f0008bf46649d2bbe"
-                    }
-                  ],
-                  "warn_available": 1000000,
-                  "channel_list": [
-                    {
-                      "channel_name": "tongrongmiyang",
-                      "withdraw_account": [
-                        "baidu_tq3_quick"
-                      ],
-                      "bind_card_account": [
-                        "baidu_tq3_quick"
-                      ]
+                b = '''{ "url":"http://paysvr-staging.paysvr.kuainiujinke.com/",
+                    "payment_url":"http://easy.mock.kuainiu.io/mock/5e27b835d53ef1165b982299/zhenjinfu",
+                    "subject":{
+                        "my":{
+                            "channel_list":[
+                                "allinpay_my_protocol",
+                                "qsq_jd_my_protocol",
+                                "baofoo_my_protocol"
+                            ],
+                            "url":"http://easy.mock.kuainiu.io/mock/5e27b835d53ef1165b982299/zhenjinfu",
+                            "sign":[
+                                {
+                                    "name":"biz",
+                                    "merchant_id":3,
+                                    "merchant_md5":"b21f3f04444c407f0008bf46649d2bbe"
+                                }
+                            ]
+                        },
+                        "tq":{
+                            "channel_list":[
+                                "baidu_dr_quick",
+                                "allinpay_tq_protocol"
+                            ],
+                            "url":"http://easy.mock.kuainiu.io/mock/5e27b835d53ef1165b982299/zhenjinfu",
+                            "sign":[
+                                {
+                                    "name":"biz",
+                                    "merchant_id":3,
+                                    "merchant_md5":"b21f3f04444c407f0008bf46649d2bbe"
+                                }
+                            ]
+                        }
                     },
-                    {
-                      "channel_name": "duolaidianmiyangnew",
-                      "withdraw_account": [
-                        "qsq_baofoo_my_protocol"
-                      ],
-                      "bind_card_account": [
-                        "baofoo_my_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_nilaijie",
-                      "withdraw_account": [
-                        "qsq_xf_sh1_protocol"
-                      ],
-                      "bind_card_account": [
-                        "xf_sh1_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_shuqianbao",
-                      "withdraw_account": [
-                        "qsq_baofoo_tq4"
-                      ],
-                      "bind_card_account": [
-                        "baofoo_tq5_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_sbd",
-                      "withdraw_account": [
-                        "qsq_baofoo_tq4"
-                      ],
-                      "bind_card_account": [
-                        "xf_sh1_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_fulidai",
-                      "withdraw_account": [
-                        "qsq_baofoo_tq4"
-                      ],
-                      "bind_card_account": [
-                        "xf_sh1_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_hhd",
-                      "withdraw_account": [
-                        "qsq_xf_sh1_protocol"
-                      ],
-                      "bind_card_account": [
-                        "baofoo_sh2_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_lequhua",
-                      "withdraw_account": [
-                        "qsq_baofoo_tq4"
-                      ],
-                      "bind_card_account": [
-                        "baofoo_tq5_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "jiawan_guoyu",
-                      "withdraw_account": [
-                        "qsq_cpcn_quick"
-                      ],
-                      "bind_card_account": [
-                        "cpcn_quick"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_haoyundai",
-                      "withdraw_account": [
-                        "qsq_xf_sh1_protocol"
-                      ],
-                      "bind_card_account": [
-                        "xf_sh1_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_jisuqian",
-                      "withdraw_account": [
-                        "qsq_baofoo_tq4"
-                      ],
-                      "bind_card_account": [
-                        "xf_sh1_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_hualehuan",
-                      "withdraw_account": [
-                        "qsq_baofoo_tq4"
-                      ],
-                      "bind_card_account": [
-                        "xf_sh1_protocol"
-                      ]
-                    },
-                    {
-                      "channel_name": "stb_yikoudai",
-                      "withdraw_account": [
-                        "qsq_cpcn_stb_ykd_quick"
-                      ],
-                      "bind_card_account": [
-                        "xf_stb_ykd_protocol"
-                      ]
-                    }
-                  ],
-                  "maintain_bank": [
-                    {
-                      "bank_code": "boc",
-                      "start_time": "2018-10-20 00:00:00",
-                      "end_time": "2018-10-21 00:10:00"
-                    },
-                    {
-                      "bank_code": "ICBC",
-                      "start_time": "2018-10-10 00:00:00",
-                      "end_time": "2018-10-20 00:10:00"
-                    }
-                  ],
-                  "delay_withdraw_messges": [
-                    "可取余额不足",
-                    "可取金额不足",
-                    "可用垫资额度不足"
-                  ],
-                  "withdraw_failed_messges": [
-                    "接收失败",
-                    "代付异常",
-                    "其它错误",
-                    "不支持该银行",
-                    "银联风险受限",
-                    "收款账户无效",
-                    "收款账户已过期",
-                    "收款账户状态异常",
-                    "发卡行交易权限受限",
-                    "收款姓名与账号不符",
-                    "可取余额小于预警余额",
-                    "接收成功-流水号不存在",
-                    "接收成功-失败-银联风险受限",
-                    "接收成功-姓名/账号有误，请检查",
-                    "接收成功-失败-支付卡已超过有效期",
-                    "接收成功-失败-银行卡未开通认证支付",
-                    "接收成功-失败-系统繁忙，请稍后再试",
-                    "接收成功-失败-您的银行卡暂不支持该业务",
-                    "接收成功-失败-输入的卡号无效，请确认后输入",
-                    "接收成功-失败-交易失败，详情请咨询您的发卡行",
-                    "接收成功-失败-输入的密码、有效期或CVN2有误，交易失败",
-                    "接收成功-失败-发卡行交易权限受限，详情请咨询您的发卡行",
-                    "接收成功-失败-持卡人身份信息或手机号输入不正确，验证失败",
-                    "接收成功-银行卡未开通认证支付，请联系发卡行/银联客服申请开通",
-                    "接收成功-划付失败\\[\\w+\\]",
-                    "接收成功-银联风险受限\\[\\d+\\]",
-                    "接收成功-支付卡已超过有效期\\[\\d+\\]",
-                    "接收成功-银行卡未开通认证支付\\[\\d+\\]",
-                    "接收成功-您的卡已冻结，详询发卡行\\[\\d+\\]",
-                    "接收成功-单位返回信息:银联风险受限\\[\\d+\\]",
-                    "接收成功-银联风险受限，请持卡人联系银联客服\\[\\d+\\]",
-                    "接收成功-输入的卡号无效，请确认后输入\\[\\d+\\]",
-                    "接收成功-交易失败，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-银联结果:银行卡未开通认证支付\\[\\d+\\]",
-                    "接收成功-您输入的卡号已注销，详询发卡行\\[\\d+\\]",
-                    "接收成功-银联结果:输入的卡号无效，请确认后输入\\[\\d+\\]",
-                    "接收成功-银联结果:您输入的卡号无效，详询发卡行\\[\\d+\\]",
-                    "接收成功-输入的密码、有效期或CVN2有误，交易失败\\[\\d+\\]",
-                    "接收成功-银联结果:交易失败，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-发卡行交易权限受限，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-您的银行卡暂不支持该业务，请向您的银行或\\[\\d+\\]咨询\\[\\d+\\]]",
-                    "接收成功-持卡人身份信息、手机号或CVN2输入不正确，验证失败\\[\\d+\\]",
-                    "接收成功-银联结果:持卡人身份信息、手机号或CVN2输入不正确，验证失败\\[\\d+\\]",
-                    "接收成功-银联结果:您的银行卡暂不支持该业务，请向您的银行或\\[\\d+\\]咨询\\[\\d+\\]",
-                    "服务异常导致的失败",
-                    "发卡行交易权限受限，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-账户为银行黑名单账户或因风控拒绝交易",
-                    "银联风险受限\\[\\d+\\]",
-                    "接收成功-交易失败，详情请咨询您的发卡行\\[\\w+\\]",
-                    "接收成功-风控阻断，异常银行卡",
-                    "接收成功-银联结果:您的银行卡暂不支持该业务，请向您的银行或95516咨询\\[\\d+\\]",
-                    "接收成功-银联结果:发卡行交易权限受限，详情请咨询您的发卡行\\[\\d+\\]",
-                    "订单不存在-",
-                    "batch同步查询：交易失败，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-您的银行卡暂不支持该业务，请向您的银行或95516咨询\\[\\d+\\]",
-                    "您输入的身份验证信息有误，请确认后重试\\[\\d+\\]",
-                    "接收成功-失败-您的银行卡暂不支持该业务",
-                    "接收成功-您输入的卡号无效，详询发卡行\\[\\d+\\]",
-                    "YBLA01826216@@YBLA01826216收付控制状态为封存，不允许交易#106001#FBSPQRY0##@@扣账失",
-                    "接收成功-余额不足",
-                    "batch同步查询：余额不足",
-                    "接收成功-发卡行交易权限受限，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-账号状态不正确\\[\\w+\\]",
-                    "接收成功-个人资料未认证，请至柜台办理",
-                    "接收成功-银联风险受限，请持卡人联系银联客服95516",
-                    "接收成功-输入的账号无效，请确认后输入\\[\\w+\\]",
-                    "输入的卡号无效，请确认后输入\\[\\d+\\]",
-                    "您输入的卡号已注销，详询发卡行\\[\\d+\\]",
-                    "交易并发超过阈值",
-                    "您的银行卡暂不支持该业务，请向您的银行或95516咨询\\[\\d+\\]",
-                    "接收成功-系统异常，请重新发起",
-                    "支付账户余额不足，请充值后再试！",
-                    "接收成功-划付失败\\[\\w+\\]",
-                    "交易失败，详情请咨询您的发卡行\\[\\d+\\]",
-                    "接收成功-您的卡暂不支持该业务，请更换卡后重试\\[\\d+\\]",
-                    "银行卡未开通认证支付\\[\\d+\\]",
-                    "接收成功-暂停非柜面交易，请至柜台办理\\(\\w+\\)",
-                    "风控预警，请稍后重新发起交易。",
-                    "密码输入次数超限\\[\\d+\\]",
-                    "接收成功-银联结果:支付卡已超过有效期\\[\\d+\\]",
-                    "商户账户余额不足",
-                    "batch同步查询：订单不存在，请稍后查询交易状态",
-                    "支付卡已超过有效期\\[\\d+\\]",
-                    "接收成功-划付失败\\[\\w+\\]",
-                    "您的卡暂不支持该业务，请更换卡后重试\\[\\d+\\]",
-                    "失败-银行卡未开通认证支付",
-                    "失败-银联风险受限",
-                    "失败xxx"
-                  ],
-                  "withdraw_terminate_messges": [
-                    "风险交易: 疑似重复放款",
-                    "订单不存在",
-                    "验签失败-HMAC内容不匹配",
-                    "单卡当日累计金额超限",
-                    "无可用通道"
-                  ],
-                  "delay_withdraw_hours": 3,
-                  "not_support_balance_channel_list": [
-                    "stb_sbd"
-                  ]
+                    "auto_withdraw_route":true,
+                    "sign":[
+                        {
+                            "name":"biz",
+                            "merchant_id":3,
+                            "merchant_md5":"b21f3f04444c407f0008bf46649d2bbe"
+                        }
+                    ],
+                    "warn_available":1000000,
+                    "channel_list":[
+                        {
+                            "channel_name":"tongrongmiyang",
+                            "withdraw_account":[
+                                "baidu_tq3_quick"
+                            ],
+                            "bind_card_account":[
+                                "baidu_tq3_quick"
+                            ]
+                        },
+                        {
+                            "channel_name":"duolaidianmiyangnew",
+                            "withdraw_account":[
+                                "qsq_baofoo_my_protocol"
+                            ],
+                            "bind_card_account":[
+                                "baofoo_my_protocol"
+                            ]
+                        }
+                    ],
+                    "maintain_bank":[
+                        {
+                            "bank_code":"boc",
+                            "start_time":"2018-10-20 00:00:00",
+                            "end_time":"2018-10-21 00:10:00"
+                        },
+                        {
+                            "bank_code":"ICBC",
+                            "start_time":"2018-10-10 00:00:00",
+                            "end_time":"2018-10-20 00:10:00"
+                        }
+                    ],
+                    "delay_withdraw_messges":[
+                        "可取余额不足",
+                        "可取金额不足",
+                        "可用垫资额度不足"
+                    ],
+                    "withdraw_failed_messges":[
+                        "接收失败",
+                        "代付异常"
+                    ],
+                    "withdraw_terminate_messges":[
+                        "风险交易: 疑似重复放款",
+                        "订单不存在",
+                        "验签失败-HMAC内容不匹配",
+                        "单卡当日累计金额超限",
+                        "无可用通道"
+                    ],
+                    "delay_withdraw_hours":3,
+                    "not_support_balance_channel_list":[
+                        "stb_sbd"
+                    ]
                 }
                 '''
                 sql_update_paysvr = '''update {0}.keyvalue set keyvalue_value='{1}' where keyvalue_key='gbiz_paysvr_channel_config'; '''.format(
                     b_env, b)
+                print(sql_update_paysvr)
                 db.select_sql(sql_update_paysvr)
 
                 # 先删除该用户的开户记录
@@ -1223,6 +1068,121 @@ class CommonBiz(UnSerializer, Serializer):
             "http://kong-api-test.kuainiujinke.com/{0}/capital/action-result-new".format(g_env), json=data)
         return res.json()
 
+    # 调用开户接口,by支支
+    def post_account_open(cls, userid_encrypt, name_encrypt, userphone_encrypt, banknumber_encrypt, channel, g_env):
+        guid = str(uuid.uuid4())
+        data = {
+            "from_system": "DSQ",
+            "key": guid,
+            "type": "AccountRegister",
+            "data": {
+                "channel": channel,
+                "mobile_encrypt": userphone_encrypt,
+                "id_num_encrypt": userid_encrypt,
+                "username_encrypt": name_encrypt,
+                "card_num_encrypt": banknumber_encrypt,
+                "return_url": "http://paydayloanliying.testing2.kuainiujinke.com/v4/home/jump",
+                "callback_url": "http://paydayloanliying.testing2.kuainiujinke.com/internal/shop/callback",
+                "seq": "",
+                "code": "111111",
+                "device_type": "ios",
+                "amount": "200000",
+                "source_type": "youxi",
+                "item_no": "ZZ_khzcbh_111111",
+                "extend": {
+                    "income": 1200000,
+                    "industry": "4",
+                    "phone_encrypt": userphone_encrypt,
+                    "profession": None,
+                    "bank_name": "中国农业银行",
+                    "bank_code": "ABC",
+                    "native_place": "洛阳市偃师市河南省",
+                    "residence": "河南省洛阳市偃师市偃师市首阳山街道办",
+                    "residence_encrypt": "enc_06_35841345230_938",
+                    "loan_quota": 400000,
+                    "loan_usage": None,
+                    "loan_amount": 4000,
+                    "period_count": 3,
+                    "period_type": "month",
+                    "period_day": 90,
+                    "id_photo_positive_url": "http://paydayloanv4-1251122539.cossh.myqcloud.com/2018/09/20/0920_094621_c4656fe2-ebe7-43e9-91d3-58d2ccc549ed.jpg",
+                    "id_photo_opposite_url": "http://paydayloanv4-1251122539.cossh.myqcloud.com/2018/09/20/0920_094644_0fb7de00-3de6-4507-82eb-6db37e0b08eb.jpg"
+                }
+            }
+        }
+        res_account = requests.post(
+            "http://kong-api-test.kuainiujinke.com/{0}/capital/register-new".format(g_env), json=data)
+        return res_account.json()
+
+    # 调用协议支付获取短信验证码接口，by支支
+    def post_account_sms(cls, userid_encrypt, name_encrypt, userphone_encrypt, banknumber_encrypt, channel, g_env):
+        guid = str(uuid.uuid4())
+        data = {
+            "from_system": "DSQ",
+            "key": guid,
+            "type": "GetSmsVerifyCode",
+            "data": {
+                "channel": channel,
+                "mobile_encrypt": userphone_encrypt,
+                "id_num_encrypt": userid_encrypt,
+                "username_encrypt": name_encrypt,
+                "card_num_encrypt": banknumber_encrypt,
+                "source_type": "youxi",
+                "bank_code": "ABC",
+                "item_no": "ZZ_khzcbh_111111"
+            }
+        }
+        res_sms = requests.post(
+            "http://kong-api-test.kuainiujinke.com/{0}/capital/get-sms-verifycode-new".format(g_env), json=data)
+        return res_sms.json()
+
+    # 调用协议支付签约接口，by支支
+    def post_account_ProtocolSign(cls, userid_encrypt, name_encrypt, userphone_encrypt, banknumber_encrypt, channel,
+                                  g_env):
+        guid = str(uuid.uuid4())
+        data = {
+            "from_system": "DSQ",
+            "key": guid,
+            "type": "ProtocolSign",
+            "data": {
+                "channel": channel,
+                "mobile_encrypt": userphone_encrypt,
+                "id_num_encrypt": userid_encrypt,
+                "username_encrypt": name_encrypt,
+                "card_num_encrypt": banknumber_encrypt,
+                "return_url": "http://paydayloanliying.testing2.kuainiujinke.com/v4/home/jump",
+                "callback_url": "http://paydayloanliying.testing2.kuainiujinke.com/internal/shop/callback",
+                "seq": "1234567890",
+                "code": "111111",
+                "device_type": "ios",
+                "amount": "200000",
+                "source_type": "youxi",
+                "item_no": "ZZ_khzcbh_111111",
+                "extend": {
+                    "income": 1200000,
+                    "industry": "4",
+                    "phone_encrypt": userphone_encrypt,
+                    "profession": None,
+                    "bank_name": "中国农业银行",
+                    "bank_code": "ABC",
+                    "native_place": "洛阳市偃师市河南省",
+                    "residence": "河南省洛阳市偃师市偃师市首阳山街道办",
+                    "residence_encrypt": "enc_06_35841345230_938",
+                    "loan_quota": 400000,
+                    "loan_usage": None,
+                    "loan_amount": 4000,
+                    "period_count": 3,
+                    "period_type": "month",
+                    "period_day": 90,
+                    "id_photo_positive_url": "http://paydayloanv4-1251122539.cossh.myqcloud.com/2018/09/20/0920_094621_c4656fe2-ebe7-43e9-91d3-58d2ccc549ed.jpg",
+                    "id_photo_opposite_url": "http://paydayloanv4-1251122539.cossh.myqcloud.com/2018/09/20/0920_094644_0fb7de00-3de6-4507-82eb-6db37e0b08eb.jpg"
+                }
+            }
+        }
+        res_ProtocolSign = requests.post("http://kong-api-test.kuainiujinke.com/{0}/capital/register-new".format(g_env),
+                                         json=data)
+        return res_ProtocolSign.json()
+
     def grant_global_withdraw_success(self, request):
         try:
             if isinstance(request, dict):
@@ -1287,6 +1247,7 @@ class CommonBiz(UnSerializer, Serializer):
             connect = pool.connection()
             cursor = connect.cursor(pymysql.cursors.DictCursor)
             sql = "update global_gbiz%s.asset set asset_status='payoff' where asset_idnum_encrypt='%s'" % (env, id_num_encrypt)
+
             print(sql)
             cursor.execute(sql)
             connect.commit()
@@ -1295,6 +1256,103 @@ class CommonBiz(UnSerializer, Serializer):
             pool.close()
             server.close()
             return {"status":"success"}, ""
+        except Exception as e:
+            result = {}
+            current_app.logger.exception(e)
+            result["data"] = ErrorCode.ERROR_CODE
+            result["msg"] = str(e)
+            return result, "异常"
+
+
+    ####海外路由设置，供DSQ使用
+    def grant_global_route_first(self, request):
+        try:
+            if isinstance(request, dict):
+                request_dict = request
+            else:
+                request_dict = request.json
+            if "channel" in request_dict.keys():
+                channel = request_dict['channel']
+            if "env" in request_dict.keys():
+                env = request_dict['env']
+            if "period_count" in request_dict.keys():
+                period_count = request_dict['period_count']
+            if "period_day" in request_dict.keys():
+                period_day = request_dict['period_day']
+            server = SSHTunnelForwarder(
+                ("47.116.2.104", 22),
+                ssh_username="ssh-proxy",
+                ssh_pkey="./app/resources/dx_ssh_proxy",
+                remote_bind_address=("rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com", 3306),
+                local_bind_address=('127.0.0.1', 3555))
+            server.start()
+            pool = PooledDB(pymysql, 5,
+                            host="127.0.0.1",
+                            user="biz_test",
+                            passwd="1Swb3hAN0Hax9p",
+                            db="global_gbiz1",
+                            port=3555)
+            connect = pool.connection()
+            cursor = connect.cursor(pymysql.cursors.DictCursor)
+            # 定义time_local参数
+            time_local = time.strftime("%Y-%m-%d", time.localtime())
+
+            # 删除biz当前时间资金方的金额
+            sql_biz_delete = '''delete from global_gbiz{0}.capital_loan_condition where capital_loan_condition_day 
+            ='{1}' and capital_loan_condition_channel ='{2}';'''.format(
+                env, time_local, channel)
+            cursor.execute(sql_biz_delete)
+            # 更新非所需资金方的金额
+            sql_biz_update_notchannel = '''update global_gbiz{0}.capital_loan_condition set 
+            capital_loan_condition_amount=0 where capital_loan_condition_day='{1}' and 
+            capital_loan_condition_channel <>'{2}';'''.format(
+                env, time_local, channel)
+            cursor.execute(sql_biz_update_notchannel)
+            # 插入数据库对应的期次金额
+            if request_dict['period_count'] ==1:
+                sql_insert_day = '''INSERT INTO global_gbiz{0}.capital_loan_condition ( `capital_loan_condition_day`, 
+                `capital_loan_condition_channel`, `capital_loan_condition_amount`, `capital_loan_condition_from_system`,
+                 `capital_loan_condition_sub_type`, `capital_loan_condition_period_count`, 
+                 `capital_loan_condition_period_type`, `capital_loan_condition_period_days`, 
+                 `capital_loan_condition_description`, `capital_loan_condition_update_memo`, 
+                 `capital_loan_condition_create_at`, `capital_loan_condition_update_at`)
+                VALUES ( '{1}', '{2}', 150000000, 'dsq', 'multiple', {3}, 'day', {4}, '{3}期{4}天分期贷', '页面工具DSQ
+                调用手动插入', '{1} 10:20:01', '{1} 06:27:43');'''.format(
+                    env, time_local, channel, period_count, period_day)
+                cursor.execute(sql_insert_day)
+            else:
+                sql_insert_month='''INSERT INTO global_gbiz{0}.capital_loan_condition ( `capital_loan_condition_day`, 
+                `capital_loan_condition_channel`, `capital_loan_condition_amount`, `capital_loan_condition_from_system`,
+                 `capital_loan_condition_sub_type`, `capital_loan_condition_period_count`, 
+                 `capital_loan_condition_period_type`, `capital_loan_condition_period_days`, 
+                 `capital_loan_condition_description`, `capital_loan_condition_update_memo`, 
+                 `capital_loan_condition_create_at`, `capital_loan_condition_update_at`) VALUES ( '{1}', '{2}', 
+                 150000000, 'dsq', 'multiple', {3}, 'month', {4}, '{3}期{4}天分期贷', '页面工具DSQ调用手动插入', 
+                 '{1} 10:20:01', '{1} 06:27:43');'''.format(
+                env,time_local, channel, period_count,period_day)
+                cursor.execute(sql_insert_month)
+
+            # 修改权重
+            sql_update_weight_channel = '''update global_gbiz{0}.route_weight_config set 
+            route_weight_config_weight='99999999',route_weight_config_first_route_status=0,
+                   route_weight_config_second_route_status=0,route_weight_config_status=0 
+                   where route_weight_config_channel='{1}'
+                   and route_weight_config_period_count='{2}';'''.format(
+                env, channel, period_count)
+            cursor.execute(sql_update_weight_channel)
+
+            # 修改gbiz其他资金方权重为0
+            sql_gbiz_update_notchannel = '''update global_gbiz{0}.route_weight_config set route_weight_config_weight='0'
+             where route_weight_config_channel <>'{1}';'''.format(
+                env, channel)
+            cursor.execute(sql_gbiz_update_notchannel)
+
+            connect.commit()
+            cursor.fetchall()
+            connect.close()
+            pool.close()
+            server.close()
+            return {"status": "该资金方的路由金额以及权重配置成功"}, "请等待20s后重试"
         except Exception as e:
             result = {}
             current_app.logger.exception(e)
