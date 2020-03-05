@@ -26,3 +26,6 @@ conf/*.conf
 
 # 忽略测试Controller文件
 controller/Test*
+
+# 忽略测试文件
+*.iml
