@@ -1296,38 +1296,36 @@ class CommonBiz(UnSerializer, Serializer):
             cursor = connect.cursor(pymysql.cursors.DictCursor)
             # 定义time_local参数
             time_local = time.strftime("%Y-%m-%d", time.localtime())
-
             # 删除biz当前时间资金方的金额
             sql_biz_delete = '''delete from global_gbiz{0}.capital_loan_condition where capital_loan_condition_day 
-            ='{1}' and capital_loan_condition_channel ='{2}';'''.format(
-                env, time_local, channel)
+            ='{1}' and capital_loan_condition_channel ='{2}' and capital_loan_condition_period_count='{3}';'''.format(
+                env, time_local, channel,period_count)
             cursor.execute(sql_biz_delete)
             # 更新非所需资金方的金额
             sql_biz_update_notchannel = '''update global_gbiz{0}.capital_loan_condition set 
-            capital_loan_condition_amount=0 where capital_loan_condition_day='{1}' and 
+            capital_loan_condition_amount=100000 where capital_loan_condition_day='{1}' and 
             capital_loan_condition_channel <>'{2}';'''.format(
                 env, time_local, channel)
             cursor.execute(sql_biz_update_notchannel)
             # 插入数据库对应的期次金额
-            if request_dict['period_count'] ==1:
+            if request_dict['period_count'] == '1':
                 sql_insert_day = '''INSERT INTO global_gbiz{0}.capital_loan_condition ( `capital_loan_condition_day`, 
                 `capital_loan_condition_channel`, `capital_loan_condition_amount`, `capital_loan_condition_from_system`,
                  `capital_loan_condition_sub_type`, `capital_loan_condition_period_count`, 
                  `capital_loan_condition_period_type`, `capital_loan_condition_period_days`, 
                  `capital_loan_condition_description`, `capital_loan_condition_update_memo`, 
                  `capital_loan_condition_create_at`, `capital_loan_condition_update_at`)
-                VALUES ( '{1}', '{2}', 150000000, 'dsq', 'multiple', {3}, 'day', {4}, '{3}期{4}天分期贷', '页面工具DSQ
-                调用手动插入', '{1} 10:20:01', '{1} 06:27:43');'''.format(
+                VALUES ( '{1}', '{2}', 9999999900, 'dsq', 'multiple', {3}, 'day', {4}, '{3}期{4}天分期贷', '页面工具DSQ调用手动插入', '{1} 10:20:01', '{1} 06:27:43');'''.format(
                     env, time_local, channel, period_count, period_day)
                 cursor.execute(sql_insert_day)
             else:
-                sql_insert_month='''INSERT INTO global_gbiz{0}.capital_loan_condition ( `capital_loan_condition_day`, 
+                sql_insert_month = '''INSERT INTO global_gbiz{0}.capital_loan_condition ( `capital_loan_condition_day`, 
                 `capital_loan_condition_channel`, `capital_loan_condition_amount`, `capital_loan_condition_from_system`,
                  `capital_loan_condition_sub_type`, `capital_loan_condition_period_count`, 
                  `capital_loan_condition_period_type`, `capital_loan_condition_period_days`, 
                  `capital_loan_condition_description`, `capital_loan_condition_update_memo`, 
                  `capital_loan_condition_create_at`, `capital_loan_condition_update_at`) VALUES ( '{1}', '{2}', 
-                 150000000, 'dsq', 'multiple', {3}, 'month', {4}, '{3}期{4}天分期贷', '页面工具DSQ调用手动插入', 
+                 9999999900, 'dsq', 'multiple', {3}, 'month', {4}, '{3}期{4}天分期贷', '页面工具DSQ调用手动插入', 
                  '{1} 10:20:01', '{1} 06:27:43');'''.format(
                 env,time_local, channel, period_count,period_day)
                 cursor.execute(sql_insert_month)
@@ -1352,7 +1350,7 @@ class CommonBiz(UnSerializer, Serializer):
             connect.close()
             pool.close()
             server.close()
-            return {"status": "该资金方的路由金额以及权重配置成功"}, "请等待20s后重试"
+            return {"message": "该资金方的路由金额以及权重配置成功"}, "请等待20s后重试"
         except Exception as e:
             result = {}
             current_app.logger.exception(e)
