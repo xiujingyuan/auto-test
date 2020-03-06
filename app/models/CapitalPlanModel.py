@@ -35,7 +35,7 @@ class CapitalPlanModel(object):
     @classmethod
     def http_request_post(cls,data,url,headers):
         try:
-            req = requests.post(url, data=json.dumps(data), headers=headers,timeout=10)
+            req = requests.post(url, data=json.dumps(data), headers=headers,timeout=1000)
             current_app.logger.info(req)
             result = req.json()
             current_app.logger.info(url+str(result))
@@ -110,6 +110,8 @@ class CapitalPlanModel(object):
         technical_service_list=None
         after_loan_manage_list=None
         technical_service1_list=None
+        guarantee_list=None
+        guarantee_service_list=None
 
         principal = None
         service = None
@@ -117,6 +119,8 @@ class CapitalPlanModel(object):
         technical_service=None
         after_loan_manage=None
         technical_service1=None
+        guarantee=None
+        guarantee_service=None
         current_app.logger.info("calc_rate is {0}".format(calc_rate))
         trans = calc_rate['data']['calculate_result']
         if 'principal' in trans.keys():
@@ -133,6 +137,10 @@ class CapitalPlanModel(object):
                 service=trans['fee']['service']
             if 'technical_service1' in fees.keys():
                 technical_service1 = trans['fee']['technical_service1']
+            if 'guarantee' in fees.keys():
+                guarantee = trans['fee']['guarantee']
+            if 'guarantee_service' in fees.keys():
+                guarantee_service = trans['fee']['guarantee_service']
 
         if principal is not None and len(principal)>0:
             principal_list=cls.generate_params_trans('principal',principal,period_count,sign_at,item_no,fee_rate,interest_rate)
@@ -146,6 +154,10 @@ class CapitalPlanModel(object):
             after_loan_manage_list = cls.generate_params_trans('after_loan_manage', after_loan_manage, period_count,sign_at, item_no, fee_rate, interest_rate)
         if technical_service1 is not None and len(technical_service1) > 0:
             technical_service1_list = cls.generate_params_trans('technical_service1', technical_service1, period_count, sign_at, item_no, fee_rate,interest_rate)
+        if guarantee is not None and len(guarantee) > 0:
+            guarantee_list = cls.generate_params_trans('guarantee', guarantee, period_count, sign_at, item_no, fee_rate,interest_rate)
+        if guarantee_service is not None and len(guarantee_service) > 0:
+            guarantee_service_list = cls.generate_params_trans('guarantee_service', guarantee_service, period_count, sign_at, item_no, fee_rate,interest_rate)
 
         if principal_list is not None and len(principal_list)>0:
             tran_info_list.extend(principal_list)
@@ -159,6 +171,10 @@ class CapitalPlanModel(object):
             tran_info_list.extend(after_loan_manage_list)
         if technical_service1_list is not None and len(technical_service1_list)>0:
             tran_info_list.extend(technical_service1_list)
+        if guarantee_list is not None and len(guarantee_list)>0:
+            tran_info_list.extend(guarantee_list)
+        if guarantee_service_list is not None and len(guarantee_service_list)>0:
+            tran_info_list.extend(guarantee_service_list)
 
         return tran_info_list
 
