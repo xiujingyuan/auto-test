@@ -104,6 +104,12 @@ def repay_withhold_success():
     result = common.repayWithholdSuccess(request)
     return jsonify(CommonResult.fill_result(result))
 
+@api_v1.route('/quickly-repay',methods=["POST"])
+def quickly_repay():
+    common = CommonBiz()
+    result = common.QuicklyRepay(request)
+    return jsonify(CommonResult.fill_result(result))
+
 
 @api_v1.route('/common/upload/file',methods=['POST'])
 def upload_file():
@@ -117,3 +123,46 @@ def set_capital_loan_condition():
     common = CommonBiz()
     result = common.set_capital_loan_condition(request)
     return jsonify(CommonResult.fill_result(result))
+
+
+@api_v1.route('/grant/auto_route',methods=["POST"])
+def grant_auto_route_success():
+    common = CommonBiz()
+    result, msg = common.grant_auto_route_success(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
+
+
+@api_v1.route('/grant/success_four_elements',methods=["POST"])
+def grant_four_elements_success():
+    common = CommonBiz()
+    result, msg = common.grant_four_elements_success(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
+
+
+@api_v1.route('/grant-global/withdraw-success',methods=["POST"])
+def grant_global_withdraw_success():
+    common = CommonBiz()
+    result, msg = common.grant_global_withdraw_success(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
+
+
+@api_v1.route('/grant/account_test',methods=["POST"])
+def grant_open_account_success():
+    common = CommonBiz()
+    result, msg = common.grant_open_account_success(request)
+    return jsonify(CommonResult.fill_result(result,message=msg))
+
+
+@api_v1.route('/grant-global/clean-bond',methods=["POST"])
+def grant_global_clean_bond():
+    common = CommonBiz()
+    result, msg = common.grant_global_clean_bond(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
+
+
+@api_v1.route('/grant-global/route-first',methods=["POST"])
+def grant_global_route_first():
+    common = CommonBiz()
+    result, msg = common.grant_global_route_first(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))
+

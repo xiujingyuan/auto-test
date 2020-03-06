@@ -11,6 +11,7 @@ from app.models.ErrorCode import ErrorCode
 class CommonResult(object):
     @staticmethod
     def fill_result(data, code=None, message=None):
+        data = data if not isinstance(data, bytes) else data.decode("utf-8")
         if message is None:
             message = "success"
         if code is None:

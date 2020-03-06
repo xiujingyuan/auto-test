@@ -121,7 +121,7 @@ class CapitalPlanModel(object):
         technical_service1=None
         guarantee=None
         guarantee_service=None
-
+        current_app.logger.info("calc_rate is {0}".format(calc_rate))
         trans = calc_rate['data']['calculate_result']
         if 'principal' in trans.keys():
             principal = trans['principal']
