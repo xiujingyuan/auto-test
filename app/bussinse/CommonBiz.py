@@ -5,6 +5,7 @@
 # @author fyi zhang
 # @date 2019/1/19 22:29
 import uuid
+from pprint import pprint
 
 import pymysql
 import requests
@@ -1184,34 +1185,33 @@ class CommonBiz(UnSerializer, Serializer):
         return res_ProtocolSign.json()
 
     def grant_global_withdraw_success(self, request):
+        model = None
         try:
             if isinstance(request, dict):
                 request_dict = request
             else:
                 request_dict = request.json
-            if "item_no" in request_dict.keys():
-                item_no = request_dict['item_no']
-            if "env" in request_dict.keys():
-                env = request_dict['env']
-            if "call_back" in request_dict.keys():
-                call_back = request_dict['call_back']
-
+            item_no = request_dict['item_no']
+            env = request_dict['env']
+            rbiz_url = request_dict['rbiz_url']
+            dsq_url = request_dict['dsq_url']
             body = {
                 "type": "AssetWithdrawSuccess",
                 "key": str(uuid.uuid4()),
+                "from_system": "BIZ",
                 "data": {}}
-            body["data"]["asset"] = WithdrawSuccessGlobalModel.build_asset_info(env, item_no)
-            body["data"]["loan_record"] = WithdrawSuccessGlobalModel.build_loan_record_info(env, item_no)
-            body["data"]["borrower"] = WithdrawSuccessGlobalModel.build_borrower_info(env, item_no)
-            body["data"]["trans"] = WithdrawSuccessGlobalModel.build_trans_info(env, item_no)
-            from pprint import pprint
-            pprint(body)
+            model = WithdrawSuccessGlobalModel(env)
+            body["data"]["asset"] = model.build_asset_info(env, item_no)
+            body["data"]["loan_record"] = model.build_loan_record_info(env, item_no)
+            body["data"]["borrower"] = model.build_borrower_info(env, item_no)
+            body["data"]["trans"] = model.build_trans_info(env, item_no)
             header = {"Content-Type": "application/json"}
 
-            resp = requests.post(call_back, json=body, headers=header, timeout=10)
-            print(resp.json())
-
-            return resp.json(), ''
+            resp1 = requests.post(rbiz_url, json=body, headers=header, timeout=10)
+            resp2 = requests.post(dsq_url, json=body, headers=header, timeout=10)
+            rest = {"rbiz_resp": json.loads(resp1.content),
+                    "dsq_resp": json.loads(resp2.content)}
+            return rest, ''
 
         except Exception as e:
             result = {}
@@ -1219,6 +1219,8 @@ class CommonBiz(UnSerializer, Serializer):
             result["data"] = ErrorCode.ERROR_CODE
             result["msg"] = str(e)
             return result, "异常"
+        finally:
+            model.clear()
 
     def grant_global_clean_bond(self, request):
         try:
