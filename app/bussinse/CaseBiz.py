@@ -130,6 +130,11 @@ class CaseBiz(UnSerializer):
                                 db.session.add(sub_edit_case)
                         else:
                             return "复制用例名称已存在！"
+                    if edit_case.case_exec_group_priority == "main":
+                        edit_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
+                        for sub_edit_case in edit_cases:
+                            sub_edit_case.case_belong_business = data["case_belong_business"]
+                            db.session.add(sub_edit_case)
                     db.session.query(Case).filter(Case.case_id == case_id).update(data)
                 else:
                     current_app.logger.error("not found the case")
