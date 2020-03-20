@@ -224,7 +224,7 @@ class HistoryBiz(object):
     def last_update_history():
         try:
             ret = []
-            new_cases = RunCase.query.order_by(RunCase.run_id.desc()).limit(8)
+            new_cases = RunCase.query.order_by(RunCase.run_id.desc()).limit(20)
             for new_case in new_cases:
                 ret.append(new_case.serialize())
         except Exception as e:
