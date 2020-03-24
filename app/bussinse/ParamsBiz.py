@@ -56,11 +56,10 @@ class ParamsBiz(UnSerializer):
 
     def search_params(self,request):
         input_params = request.json
-        params =[]
+        params = []
         try:
-            page_index =1
-            page_size=10
-            print(type(input_params))
+            page_index = 1
+            page_size = 10
             if 'name' in input_params.keys():
                 value = input_params['name']
                 if value is not None and value!='':
@@ -84,11 +83,11 @@ class ParamsBiz(UnSerializer):
             for p in params:
                 print(p)
             #result_paginate = db.session.query(ParamsModel).filter(*params).paginate(page=page_index, per_page=page_size,error_out=False)
-            result_paginate = ParamsModel.query.filter(*params).paginate(page=page_index, per_page=page_size, error_out=False)
+            result_paginate = ParamsModel.query.filter(*params).order_by(ParamsModel.id.desc()).paginate(page=page_index, per_page=page_size, error_out=False)
             result = result_paginate.items
             total = result_paginate.total
-            params =  ParamsModel.serialize_list(result)
-            data={}
+            params = ParamsModel.serialize_list(result)
+            data = {}
             data['page_index']=page_index
             data['params']=params
             data['page_size']=len(params)

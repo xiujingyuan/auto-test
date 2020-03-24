@@ -259,7 +259,10 @@ class CaseBiz(UnSerializer):
                 else:
                     sort_field='main'
                     params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
-
+                if 'case_actor' in input_params.keys():
+                    case_actor = input_params['case_actor']
+                    if case_actor is not None and case_actor:
+                        params.append(Case.case_in_user == case_actor)
                 if 'page_index' in input_params.keys():
                     page_index = input_params['page_index']
                 if 'page_size' in input_params.keys():
