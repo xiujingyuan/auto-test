@@ -18,13 +18,13 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     SENTRY_DSN = "https://47a43c1e88cb4c4d8d193aac9dac05bc:9c326700cec14d32920e84b2b7ab4492@sentry.kuainiujinke.com/229"
 
-    REDIS_HOST = "10.1.0.20"
+    REDIS_HOST = "172.30.3.149"
     REDIS_PORT = "6379"
-    REDIS_PWD = "weidu"
+    REDIS_PWD = "kuainiujinke"
 
     # celery 配置
-    BROKER_URL = "redis://:weidu@10.1.0.20:6379/6"
-    CELERY_RESULT_BACKEND = "redis://:weidu@10.1.0.20:6379/7"
+    BROKER_URL = "redis://:kuainiujinke@172.30.3.149:6379/6"
+    CELERY_RESULT_BACKEND = "redis://:kuainiujinke@172.30.3.149:6379/7"
 
     # Jenkins run case 配置
     JENKINS_RUN_JOB = "Auto_Test_Api_Run_Case12"
