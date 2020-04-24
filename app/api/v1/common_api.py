@@ -166,3 +166,8 @@ def grant_global_route_first():
     result, msg = common.grant_global_route_first(request)
     return jsonify(CommonResult.fill_result(result, message=msg))
 
+@api_v1.route('/grant-global/asset_delay', methods=["POST"])
+def grant_global_asset_delay():
+    common = CommonBiz()
+    result, msg = common.grant_global_asset_delay(request)
+    return jsonify(CommonResult.fill_result(result, message=msg))

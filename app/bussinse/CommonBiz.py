@@ -1359,3 +1359,122 @@ class CommonBiz(UnSerializer, Serializer):
             result["data"] = ErrorCode.ERROR_CODE
             result["msg"] = str(e)
             return result, "异常"
+
+    def grant_global_asset_delay(self, request):
+        """
+        海外展期回调成功/失败
+        :param request:
+        :return:
+        """
+        with SSHTunnelForwarder(
+            ("47.116.2.104", 22),
+            ssh_username="ssh-proxy",
+            ssh_pkey="./app/resources/dx_ssh_proxy",
+            remote_bind_address=("rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com", 3306),
+            local_bind_address=('127.0.0.1', 35552)) as server:
+            try:
+                server.start()
+                my_pool = PooledDB(pymysql, 5,
+                                host="127.0.0.1",
+                                user="biz_test",
+                                passwd="1Swb3hAN0Hax9p",
+                                db="global_gbiz1",
+                                port=35552)
+                connect = my_pool.connection()
+                cursor = connect.cursor(pymysql.cursors.DictCursor)
+                msg = ""
+                result = {"message": "操作失败"}
+                request_dict = request.json
+                if "trade_no" not in request_dict:
+                    msg = "需要trade_no"
+                else:
+                    trade_no = request_dict['trade_no']
+                    env = request_dict['env'] if "env" in request_dict and isinstance(request_dict["env"], int) else 1
+                    send_msg = request_dict['send_msg'] if "send_msg" in request_dict and \
+                                                           isinstance(request_dict["send_msg"], int) else 0
+                    withhold_status = request_dict['withhold_status'] if \
+                        "withhold_status" in request_dict and isinstance(request_dict["withhold_status"], int) else 0
+
+                    # 定义time_local参数
+                    time_local = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    # 查询展期对应的交易号
+                    get_tran_serial_no = '''select trade_tran_serial_no, trade_tran_amount 
+                    from global_rbiz{0}.trade_tran where trade_tran_trade_no ="{1}" and 
+                    trade_tran_status="open";'''.format(env, trade_no)
+                    cursor.execute(get_tran_serial_no)
+                    get_result = cursor.fetchall()
+                    trade_tran_serial_no, trade_tran_amount = get_result[0]["trade_tran_serial_no"], \
+                                                                                  get_result[0]["trade_tran_amount"]
+
+                    get_ref_no = '''select trade_ref_no
+                                        from global_rbiz{0}.trade where trade_no ="{1}";'''.format(env, trade_no)
+                    cursor.execute(get_ref_no)
+                    trade_ref_no = cursor.fetchall()[0]["trade_ref_no"]
+                    # mock的paysvr回调
+                    req_data = {
+                        "from_system": "paysvr",
+                        "type": "withhold",
+                        "key": "YXC_3qi_route_{0}".format(uuid.uuid4()),
+                        "data": {
+                            "sign": "4828009feeaec7b8655366588990f8d7",
+                            "platform_code": "E20012" if not withhold_status else "E20013",
+                            "platform_message": "交易失败" if not withhold_status else "交易成功",
+                            "channel_name": "cashfree_yomoyo_withdraw",
+                            "channel_code": "400",
+                            "channel_message": "交易失败" if not withhold_status else "交易成功",
+                            "finished_at": time_local,
+                            "channel_key": "ck_{0}".format(uuid.uuid4()),
+                            "amount": trade_tran_amount,
+                            "status": 3 if not withhold_status else 2,
+                            "merchant_key": trade_tran_serial_no,
+                            "trade_no": "trade_no_{0}".format(uuid.uuid4())
+                        }
+                    }
+                    url = "http://repay{0}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai." \
+                                         "alicontainer.com".format(env) + "/paysvr/callback"
+                    req = requests.post(url, json=req_data)
+                    if req.status_code == 200 and req.json()["code"] == 0:
+                        get_callback_task = '''select task_id from global_rbiz{1}.task where task_order_no="{0}" order by task_id desc'''.format(
+                            trade_ref_no,
+                            env)
+                        cursor.execute(get_callback_task)
+                        get_result = cursor.fetchall()
+                        task_id = get_result[0]["task_id"]
+                        exec_task_url = "http://repay{1}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer." \
+                                        "com/task/run?taskId={0}".format(task_id, env)
+                        exec_task = requests.get(exec_task_url)
+                        if exec_task.status_code == 200 and "回调结果处理成功" in exec_task.text:
+                            if send_msg:
+                                get_msg_task = '''select sendmsg_id from global_rbiz{1}.sendmsg where 
+                                sendmsg_order_no = "{0}";'''.format(trade_tran_serial_no, env)
+                                cursor.execute(get_msg_task)
+                                get_result = cursor.fetchall()
+                                # '[ {  "code" : 0,  "message" : [ "withhold-notify_20498600182537851177048993" ]",  "data" : null} ]"'
+                                for msg in get_result:
+                                    sendmsg_id = msg["sendmsg_id"]
+                                    exec_msg_url = "http://repay{1}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer." \
+                                                 "com/msg/run?msgId={0}".format(sendmsg_id, env)
+                                    exec_msg = requests.get(exec_msg_url)
+                                    get_json_msg = exec_msg.text.replace('\\n', '').replace('\\', '').strip(" ")
+                                    if exec_msg.status_code == 200 and '"code" : 0' in get_json_msg:
+                                        msg = "操作成功"
+                                        result["message"] = "消息发送成功，展期扣成功，执行成功" if withhold_status else "消息发送成功，展期代扣失败，执行成功"
+                                    else:
+                                        msg += "消息:{0},发送失败, 错误:{1}".format(sendmsg_id, exec_msg.text)
+                            else:
+                                msg = "操作成功"
+                                result["message"] = "展期扣成功，执行成功" if withhold_status else "展期代扣失败，执行成功"
+                        else:
+                            msg = "执行回调任务失败"
+                            result["message"] = exec_task.text
+                    else:
+                        msg = req.text
+            except Exception as e:
+                current_app.logger.exception(e)
+                result["data"] = ErrorCode.ERROR_CODE
+                result["message"] = str(e)
+                msg = "异常"
+            connect.close()
+            my_pool.close()
+            server.close()
+            return result, msg
