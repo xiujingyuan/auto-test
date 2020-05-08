@@ -418,14 +418,20 @@ class CommonBiz(UnSerializer, Serializer):
 
             # 引入数据库相关方法
             db = executesql.db_connect()
-
             headers = {'content-type': 'application/json'}
+
+            # 检查资产是否已到rbiz环境
+            for i in range(1, 100):
+                asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env, item_no)
+                is_asset = db.select_sql(asset_sql)
+                if is_asset[1][0][0] == 0:
+                    continue
+                break
 
             if expect_repay == 'Y':
                 sql_atr = ''' update {0}.asset_tran set asset_tran_due_at = '{1}' where asset_tran_asset_item_no = '{2}' and asset_tran_period = {3}
                 '''.format(env, expect_finish, item_no, period[0:1])
                 db.select_sql(sql_atr)
-                time.sleep(2)
 
             # 先刷一次罚息
             late_url = "http://kong-api-test.kuainiujinke.com/{0}/asset/refreshLateFee;".format(env)
@@ -576,36 +582,41 @@ class CommonBiz(UnSerializer, Serializer):
             db = executesql.db_connect()
 
             # 检查资产是否已到biz环境
-            asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env, item_no)
-            is_asset = db.select_sql(asset_sql)
-            if is_asset[1][0][0] == 0:
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no))
+            for i in range(1, 100):
+                asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env, item_no)
+                is_asset = db.select_sql(asset_sql)
+                if is_asset[1][0][0] == 0:
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/task/run/?orderNo={1}".format(g_env, item_no))
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no))
+                else:
+                    break
 
             # 检查大单资产是否已完成放款
-            cap_asset_sql = ''' select count(*) from {0}.capital_asset where capital_asset_item_no = '{1}' '''.format(
-                env, item_no)
-            is_cap_asset = db.select_sql(cap_asset_sql)
-            if is_cap_asset[1][0][0] == 0:
-                # 调用放款成功的工具
-                grant_url = "http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive".format(env)
-                grant_sql = ''' select task_request_data from {0}.task where task_order_no = '{1}' and  task_type = 'AssetImport' '''.format(
-                    g_env, item_no)
-                gtant_p1 = db.select_sql(grant_sql)[1][0][0]
-                gtant_p = json.loads(gtant_p1)
-                # dumps: <class 'str'>  loads: <class 'dict'>
-                gtant_p['data']['asset']['overdue_guarantee_amount'] = 0
-                gtant_p['data']['asset']['info'] = ""
-                request_body = {
-                    "request_body": gtant_p,
-                    "call_back": grant_url
-                }
-                result = self.withdrawSuccess(request_body)
-                time.sleep(10)
-
-                # 调用还款计划
-                result = self.grant_capital_plan(gtant_p, g_env)
-                time.sleep(10)
+            for i in range(1, 100):
+                cap_asset_sql = ''' select count(*) from {0}.capital_asset where capital_asset_item_no = '{1}' '''.format(
+                    env, item_no)
+                is_cap_asset = db.select_sql(cap_asset_sql)
+                if is_cap_asset[1][0][0] == 0:
+                    # 调用放款成功的工具
+                    grant_url = "http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive".format(env)
+                    grant_sql = ''' select task_request_data from {0}.task where task_order_no = '{1}' and  task_type = 'AssetImport' '''.format(
+                        g_env, item_no)
+                    gtant_p1 = db.select_sql(grant_sql)[1][0][0]
+                    gtant_p = json.loads(gtant_p1)
+                    # dumps: <class 'str'>  loads: <class 'dict'>
+                    gtant_p['data']['asset']['overdue_guarantee_amount'] = 0
+                    gtant_p['data']['asset']['info'] = ""
+                    request_body = {
+                        "request_body": gtant_p,
+                        "call_back": grant_url
+                    }
+                    self.withdrawSuccess(request_body)
+                    # 调用还款计划
+                    result = self.grant_capital_plan(gtant_p, g_env)
+                else:
+                    break
 
             # 检查小单资产是否已完成放款
             item_no_x_sql = ''' select asset_extend_ref_order_no from {0}.asset_extend where asset_extend_asset_item_no = '{1}' '''.format(
@@ -641,9 +652,20 @@ class CommonBiz(UnSerializer, Serializer):
                         g_env, item_no_x)
                     msg_id = int(db.select_sql(msg_sql)[1][0][0])
 
+            # 检查biz的task以保证资产放款完成并没有task堆积
+            for i in range(1, 100):
+                biz_task_sql = ''' select count(*) from {0}.task where task_request_data like '%{1}%' and task_status = 'open' '''.format(env, item_no)
+                biz_task = db.select_sql(biz_task_sql)
+                if biz_task[1][0][0] != 0:
+                    update_task_sql = ''' update {0}.task set task_next_run_date = now() where task_request_data like '%{1}%' and task_status = 'open' '''.format(
+                        env, item_no)
+                    db.select_sql(update_task_sql)
+                    continue
+                else:
+                    break
+
             # 至此大小单放款均成功，开始还款
             if need_repay == 'Y':
-                time.sleep(60)
                 result = self.repayWithholdSuccess(request_params)
 
             return result
@@ -651,6 +673,7 @@ class CommonBiz(UnSerializer, Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
+
 
     def grant_auto_route_success(self, request):
         try:
