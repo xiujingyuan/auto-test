@@ -58,7 +58,7 @@ class FourElement(object):
 
 
         year_max = datetime.now().year -25
-        year_min =datetime.now().year-47
+        year_min =datetime.now().year-45
         birth_day_year = str(random.randint(year_min,year_max))+'-01-01 0:00:00'
         birth_day_month = random.randint(0,365)
         value = datetime.strptime(birth_day_year,"%Y-%m-%d %H:%M:%S") + relativedelta(days=+birth_day_month)
