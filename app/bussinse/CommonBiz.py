@@ -438,13 +438,15 @@ class CommonBiz(UnSerializer, Serializer):
             late_request = RepaySuccessModel.get_refresh_late_fee(item_no)
             RepaySuccessModel.http_request_post(late_request, late_url, headers)
             # 然后同步罚息消息到biz
-            msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no = ('{1}') and sendmsg_status ='open' '''.format(
-                env, item_no)
-            msg_ids = db.select_sql(msg_id_sql)[1]
-            if msg_ids:
-                msg_id = msg_ids[0][0]
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id))
+            for msg_id in range(1, 100):
+                msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status !='close' '''.format(
+                    env, item_no)
+                msg_ids = db.select_sql(msg_id_sql)[1]
+                if msg_ids:
+                    msg_id = msg_ids[0][0]
+                    RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id))
+                else:
+                    break
 
             if amount is '':
                 # 查询还款金额，sql执行后返回的数据是个元祖
@@ -465,8 +467,6 @@ class CommonBiz(UnSerializer, Serializer):
             if not result_use[1]:
                 return "还款人信息不存在数据库，请自行检查还款人 card_asset 表信息"
             use = result_use[1][0]
-
-            print(type(amount), amount)
 
             # 检查到日期和放款日之间是否满足15天
             sql_grant_time = ''' select asset_actual_grant_at from {0}.asset where asset_item_no = '{1}' '''.format(env,
@@ -505,10 +505,19 @@ class CommonBiz(UnSerializer, Serializer):
                 callback_request2 = RepaySuccessModel.callback(merchant_key2, finished, qsq_channel)
                 RepaySuccessModel.http_request_plain(callback_request2, callback_url, callback_headers)
                 # 回调成功后，执行task
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
+                for task_id in range(1, 100):
+                    task_id_sql = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                        env, item_no)
+                    task_id_sql2 = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                        env, merchant_key2)
+                    task_ids = db.select_sql(task_id_sql)[1]
+                    task_ids2 = db.select_sql(task_id_sql2)[1]
+                    if task_ids:
+                        RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
+                    if task_ids2:
+                        RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
+                    else:
+                        break
                 # 休息5秒钟后再执行msg
                 time.sleep(5)
                 msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no in ('{1}','{2}','{3}') and sendmsg_status ='open' 
@@ -524,10 +533,21 @@ class CommonBiz(UnSerializer, Serializer):
                         i = i + 1
 
             # 回调成功后，执行task
-            RepaySuccessModel.http_request_get(
-                "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
-            RepaySuccessModel.http_request_get(
-                "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key1))
+            for task_id in range(1, 100):
+                task_id_sql = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                    env, item_no)
+                task_id_sql2 = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                    env, merchant_key2)
+                task_ids = db.select_sql(task_id_sql)[1]
+                task_ids2 = db.select_sql(task_id_sql2)[1]
+                if task_ids:
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
+                if task_ids2:
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key1))
+                else:
+                    break
 
             # 休息5秒钟后再执行msg，不然msg_id会查询不全
             time.sleep(5)
@@ -555,8 +575,6 @@ class CommonBiz(UnSerializer, Serializer):
                 time.sleep(2)
 
             return "还款成功"
-
-
 
         except Exception as e:
             current_app.logger.exception(e)
