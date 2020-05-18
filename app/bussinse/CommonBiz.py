@@ -1429,6 +1429,7 @@ class CommonBiz(UnSerializer, Serializer):
                 if "trade_no" not in request_dict:
                     msg = "需要trade_no"
                 else:
+                    url = request_dict["url"] if "url" in request_dict else ""
                     trade_no = request_dict['trade_no']
                     env = request_dict['env'] if "env" in request_dict and isinstance(request_dict["env"], int) else 1
                     send_msg = request_dict['send_msg'] if "send_msg" in request_dict and \
@@ -1471,8 +1472,9 @@ class CommonBiz(UnSerializer, Serializer):
                             "trade_no": "trade_no_{0}".format(uuid.uuid4())
                         }
                     }
-                    url = "http://repay{0}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai." \
-                                         "alicontainer.com".format(env) + "/paysvr/callback"
+                    url = "http://repay{0}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com".format(env) \
+                        if not url else url
+                    url += "/paysvr/callback"
                     req = requests.post(url, json=req_data)
                     if req.status_code == 200 and req.json()["code"] == 0:
                         get_callback_task = '''select task_id from global_rbiz{1}.task where task_order_no="{0}" order by task_id desc'''.format(
