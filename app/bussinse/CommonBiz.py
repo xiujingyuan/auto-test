@@ -537,7 +537,7 @@ class CommonBiz(UnSerializer, Serializer):
                 task_id_sql = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
                     env, item_no)
                 task_id_sql2 = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
-                    env, merchant_key2)
+                    env, merchant_key1)
                 task_ids = db.select_sql(task_id_sql)[1]
                 task_ids2 = db.select_sql(task_id_sql2)[1]
                 if task_ids:
