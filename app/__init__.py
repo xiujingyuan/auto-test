@@ -33,9 +33,6 @@ def create_app(config_name):
     #csrf.init_app(app)
 
     db.init_app(app)
-    if not app.debug and not app.testing and not app.config['SSL_DISABLE']:
-        from flask_sslify import SSLify
-        sslify = SSLify(app)
 
     from app.api.v1 import api_v1 as api_v1_blueprint
     app.register_blueprint(api_v1_blueprint)
