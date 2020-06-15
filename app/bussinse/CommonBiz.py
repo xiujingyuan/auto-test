@@ -637,38 +637,39 @@ class CommonBiz(UnSerializer, Serializer):
                     break
 
             # 检查小单资产是否已完成放款
+            # 如果没有小单，就不需要检查小单
             item_no_x_sql = ''' select asset_extend_ref_order_no from {0}.asset_extend where asset_extend_asset_item_no = '{1}' '''.format(
                 g_env, item_no)
             item_no_x = db.select_sql(item_no_x_sql)[1][0][0]
-            asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' and asset_status = 'repay' '''.format(
-                env, item_no_x)
-            is_asset = db.select_sql(asset_sql)
-            if is_asset[1][0][0] == 0:
-                # 小单放款
-                asset_sql_x = ''' select count(*) from {0}.task where task_order_no = '{1}' '''.format(g_env, item_no_x)
-                is_asset_x = db.select_sql(asset_sql_x)[1][0][0]
-                if is_asset_x == 0:
-                    return "小单还未进件"
-                # 修改大单的放款时间，使小单能够走流程放款成功
-                grant_at_sql = ''' update {0}.asset set asset_status='repay',asset_actual_grant_at='{1}', asset_effect_at='{1}' where asset_item_no ='{2}'  '''.format(
-                    g_env, asset_actual_grant_at, item_no)
-                db.select_sql(grant_at_sql)
-                # 执行小单task
-                task_id = 1
-                while task_id > 0:
-                    RepaySuccessModel.http_request_get(
-                        "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(g_env, item_no_x))
-                    task_sql = ''' select count(*) from {0}.task where task_order_no = '{1}' and task_status = 'open' '''.format(
-                        g_env, item_no_x)
-                    task_id = int(db.select_sql(task_sql)[1][0][0])
-                # 执行小单sendmsg
-                msg_id = 1
-                while msg_id > 0:
-                    RepaySuccessModel.http_request_get(
-                        "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no_x))
-                    msg_sql = ''' select count(*) from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status = 'open' '''.format(
-                        g_env, item_no_x)
-                    msg_id = int(db.select_sql(msg_sql)[1][0][0])
+            # 如果没有小单，就不需要检查小单
+            if item_no_x:
+                asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' and asset_status = 'repay' '''.format(env, item_no_x)
+                is_asset = db.select_sql(asset_sql)
+                if is_asset[1][0][0] == 0:
+                    # 小单放款
+                    asset_sql_x = ''' select count(*) from {0}.task where task_order_no = '{1}' '''.format(g_env, item_no_x)
+                    is_asset_x = db.select_sql(asset_sql_x)[1][0][0]
+                    if is_asset_x == 0:
+                        return "小单还未进件"
+                    # 修改大单的放款时间，使小单能够走流程放款成功
+                    grant_at_sql = ''' update {0}.asset set asset_status='repay',asset_actual_grant_at='{1}', asset_effect_at='{1}' where asset_item_no ='{2}'  '''.format(
+                        g_env, asset_actual_grant_at, item_no)
+                    db.select_sql(grant_at_sql)
+                    # 执行小单task
+                    task_id = 1
+                    while task_id > 0:
+                        RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(g_env, item_no_x))
+                        task_sql = ''' select count(*) from {0}.task where task_order_no = '{1}' and task_status = 'open' '''.format(
+                            g_env, item_no_x)
+                        task_id = int(db.select_sql(task_sql)[1][0][0])
+                    # 执行小单sendmsg
+                    msg_id = 1
+                    while msg_id > 0:
+                        RepaySuccessModel.http_request_get(
+                            "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no_x))
+                        msg_sql = ''' select count(*) from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status = 'open' '''.format(
+                            g_env, item_no_x)
+                        msg_id = int(db.select_sql(msg_sql)[1][0][0])
 
             # 检查biz的task以保证资产放款完成并没有task堆积
             for i in range(1, 100):
