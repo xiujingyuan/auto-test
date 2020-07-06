@@ -28,8 +28,8 @@ def get_fourelement():
     except:
         bank_name = None
 
-    cs = FourElement(bank_name)
-    result = cs.get()
+    cs = FourElement()
+    result = cs.get(bank_name)
     encry_biz = EncryBiz()
     try:
         request_dict = result["data"]
