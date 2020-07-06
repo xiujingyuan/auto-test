@@ -130,6 +130,11 @@ class CaseBiz(UnSerializer):
                                 db.session.add(sub_edit_case)
                         else:
                             return "复制用例名称已存在！"
+                    if edit_case.case_exec_group_priority == "main":
+                        edit_cases = Case.query.filter(Case.case_exec_group == edit_case.case_exec_group).all()
+                        for sub_edit_case in edit_cases:
+                            sub_edit_case.case_belong_business = data["case_belong_business"]
+                            db.session.add(sub_edit_case)
                     db.session.query(Case).filter(Case.case_id == case_id).update(data)
                 else:
                     current_app.logger.error("not found the case")
@@ -254,7 +259,10 @@ class CaseBiz(UnSerializer):
                 else:
                     sort_field='main'
                     params.append(or_(Case.case_exec_group_priority=="main",Case.case_exec_group_priority=="",Case.case_exec_group_priority == None))
-
+                if 'case_actor' in input_params.keys():
+                    case_actor = input_params['case_actor']
+                    if case_actor is not None and case_actor:
+                        params.append(Case.case_in_user == case_actor)
                 if 'page_index' in input_params.keys():
                     page_index = input_params['page_index']
                 if 'page_size' in input_params.keys():
@@ -541,7 +549,7 @@ class CaseBiz(UnSerializer):
     def get_new_cases():
         try:
             ret = []
-            new_cases = Case.query.filter(Case.case_exec_group_priority == "main").order_by(Case.case_id.desc()).limit(8)
+            new_cases = Case.query.filter(Case.case_exec_group_priority == "main").order_by(Case.case_id.desc()).limit(20)
             for new_case in new_cases:
                 ret.append(new_case.serialize())
         except Exception as e:

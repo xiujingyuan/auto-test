@@ -418,27 +418,35 @@ class CommonBiz(UnSerializer, Serializer):
 
             # 引入数据库相关方法
             db = executesql.db_connect()
-
             headers = {'content-type': 'application/json'}
+
+            # 检查资产是否已到rbiz环境
+            for i in range(1, 100):
+                asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env, item_no)
+                is_asset = db.select_sql(asset_sql)
+                if is_asset[1][0][0] == 0:
+                    continue
+                break
 
             if expect_repay == 'Y':
                 sql_atr = ''' update {0}.asset_tran set asset_tran_due_at = '{1}' where asset_tran_asset_item_no = '{2}' and asset_tran_period = {3}
                 '''.format(env, expect_finish, item_no, period[0:1])
                 db.select_sql(sql_atr)
-                time.sleep(2)
 
             # 先刷一次罚息
             late_url = "http://kong-api-test.kuainiujinke.com/{0}/asset/refreshLateFee;".format(env)
             late_request = RepaySuccessModel.get_refresh_late_fee(item_no)
             RepaySuccessModel.http_request_post(late_request, late_url, headers)
             # 然后同步罚息消息到biz
-            msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no = ('{1}') and sendmsg_status ='open' '''.format(
-                env, item_no)
-            msg_ids = db.select_sql(msg_id_sql)[1]
-            if msg_ids:
-                msg_id = msg_ids[0][0]
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id))
+            for msg_id in range(1, 100):
+                msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status !='close' '''.format(
+                    env, item_no)
+                msg_ids = db.select_sql(msg_id_sql)[1]
+                if msg_ids:
+                    msg_id = msg_ids[0][0]
+                    RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/msg/run?msgId={1}".format(env, msg_id))
+                else:
+                    break
 
             if amount is '':
                 # 查询还款金额，sql执行后返回的数据是个元祖
@@ -459,8 +467,6 @@ class CommonBiz(UnSerializer, Serializer):
             if not result_use[1]:
                 return "还款人信息不存在数据库，请自行检查还款人 card_asset 表信息"
             use = result_use[1][0]
-
-            print(type(amount), amount)
 
             # 检查到日期和放款日之间是否满足15天
             sql_grant_time = ''' select asset_actual_grant_at from {0}.asset where asset_item_no = '{1}' '''.format(env,
@@ -499,10 +505,19 @@ class CommonBiz(UnSerializer, Serializer):
                 callback_request2 = RepaySuccessModel.callback(merchant_key2, finished, qsq_channel)
                 RepaySuccessModel.http_request_plain(callback_request2, callback_url, callback_headers)
                 # 回调成功后，执行task
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
+                for task_id in range(1, 100):
+                    task_id_sql = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                        env, item_no)
+                    task_id_sql2 = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                        env, merchant_key2)
+                    task_ids = db.select_sql(task_id_sql)[1]
+                    task_ids2 = db.select_sql(task_id_sql2)[1]
+                    if task_ids:
+                        RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
+                    if task_ids2:
+                        RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key2))
+                    else:
+                        break
                 # 休息5秒钟后再执行msg
                 time.sleep(5)
                 msg_id_sql = ''' select sendmsg_id from {0}.sendmsg where sendmsg_order_no in ('{1}','{2}','{3}') and sendmsg_status ='open' 
@@ -518,10 +533,21 @@ class CommonBiz(UnSerializer, Serializer):
                         i = i + 1
 
             # 回调成功后，执行task
-            RepaySuccessModel.http_request_get(
-                "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
-            RepaySuccessModel.http_request_get(
-                "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key1))
+            for task_id in range(1, 100):
+                task_id_sql = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                    env, item_no)
+                task_id_sql2 = ''' select task_id from {0}.task where taskg_order_no = '{1}' and task_status !='close' and task_type != "smsSend" '''.format(
+                    env, merchant_key1)
+                task_ids = db.select_sql(task_id_sql)[1]
+                task_ids2 = db.select_sql(task_id_sql2)[1]
+                if task_ids:
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, item_no))
+                if task_ids2:
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(env, merchant_key1))
+                else:
+                    break
 
             # 休息5秒钟后再执行msg，不然msg_id会查询不全
             time.sleep(5)
@@ -550,8 +576,6 @@ class CommonBiz(UnSerializer, Serializer):
 
             return "还款成功"
 
-
-
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
@@ -576,74 +600,91 @@ class CommonBiz(UnSerializer, Serializer):
             db = executesql.db_connect()
 
             # 检查资产是否已到biz环境
-            asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env, item_no)
-            is_asset = db.select_sql(asset_sql)
-            if is_asset[1][0][0] == 0:
-                RepaySuccessModel.http_request_get(
-                    "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no))
+            for i in range(1, 100):
+                asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' '''.format(env, item_no)
+                is_asset = db.select_sql(asset_sql)
+                if is_asset[1][0][0] == 0:
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/task/run/?orderNo={1}".format(g_env, item_no))
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no))
+                else:
+                    break
 
             # 检查大单资产是否已完成放款
-            cap_asset_sql = ''' select count(*) from {0}.capital_asset where capital_asset_item_no = '{1}' '''.format(
-                env, item_no)
-            is_cap_asset = db.select_sql(cap_asset_sql)
-            if is_cap_asset[1][0][0] == 0:
-                # 调用放款成功的工具
-                grant_url = "http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive".format(env)
-                grant_sql = ''' select task_request_data from {0}.task where task_order_no = '{1}' and  task_type = 'AssetImport' '''.format(
-                    g_env, item_no)
-                gtant_p1 = db.select_sql(grant_sql)[1][0][0]
-                gtant_p = json.loads(gtant_p1)
-                # dumps: <class 'str'>  loads: <class 'dict'>
-                gtant_p['data']['asset']['overdue_guarantee_amount'] = 0
-                gtant_p['data']['asset']['info'] = ""
-                request_body = {
-                    "request_body": gtant_p,
-                    "call_back": grant_url
-                }
-                result = self.withdrawSuccess(request_body)
-                time.sleep(10)
-
-                # 调用还款计划
-                result = self.grant_capital_plan(gtant_p, g_env)
-                time.sleep(10)
+            for i in range(1, 100):
+                cap_asset_sql = ''' select count(*) from {0}.capital_asset where capital_asset_item_no = '{1}' '''.format(
+                    env, item_no)
+                is_cap_asset = db.select_sql(cap_asset_sql)
+                if is_cap_asset[1][0][0] == 0:
+                    # 调用放款成功的工具
+                    grant_url = "http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive".format(env)
+                    grant_sql = ''' select task_request_data from {0}.task where task_order_no = '{1}' and  task_type = 'AssetImport' '''.format(
+                        g_env, item_no)
+                    gtant_p1 = db.select_sql(grant_sql)[1][0][0]
+                    gtant_p = json.loads(gtant_p1)
+                    # dumps: <class 'str'>  loads: <class 'dict'>
+                    gtant_p['data']['asset']['overdue_guarantee_amount'] = 0
+                    gtant_p['data']['asset']['info'] = ""
+                    request_body = {
+                        "request_body": gtant_p,
+                        "call_back": grant_url
+                    }
+                    self.withdrawSuccess(request_body)
+                    # 调用还款计划
+                    result = self.grant_capital_plan(gtant_p, g_env)
+                else:
+                    break
 
             # 检查小单资产是否已完成放款
+            # 如果没有小单，就不需要检查小单
             item_no_x_sql = ''' select asset_extend_ref_order_no from {0}.asset_extend where asset_extend_asset_item_no = '{1}' '''.format(
                 g_env, item_no)
             item_no_x = db.select_sql(item_no_x_sql)[1][0][0]
-            asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' and asset_status = 'repay' '''.format(
-                env, item_no_x)
-            is_asset = db.select_sql(asset_sql)
-            if is_asset[1][0][0] == 0:
-                # 小单放款
-                asset_sql_x = ''' select count(*) from {0}.task where task_order_no = '{1}' '''.format(g_env, item_no_x)
-                is_asset_x = db.select_sql(asset_sql_x)[1][0][0]
-                if is_asset_x == 0:
-                    return "小单还未进件"
-                # 修改大单的放款时间，使小单能够走流程放款成功
-                grant_at_sql = ''' update {0}.asset set asset_status='repay',asset_actual_grant_at='{1}', asset_effect_at='{1}' where asset_item_no ='{2}'  '''.format(
-                    g_env, asset_actual_grant_at, item_no)
-                db.select_sql(grant_at_sql)
-                # 执行小单task
-                task_id = 1
-                while task_id > 0:
-                    RepaySuccessModel.http_request_get(
-                        "http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(g_env, item_no_x))
-                    task_sql = ''' select count(*) from {0}.task where task_order_no = '{1}' and task_status = 'open' '''.format(
-                        g_env, item_no_x)
-                    task_id = int(db.select_sql(task_sql)[1][0][0])
-                # 执行小单sendmsg
-                msg_id = 1
-                while msg_id > 0:
-                    RepaySuccessModel.http_request_get(
-                        "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no_x))
-                    msg_sql = ''' select count(*) from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status = 'open' '''.format(
-                        g_env, item_no_x)
-                    msg_id = int(db.select_sql(msg_sql)[1][0][0])
+            # 如果没有小单，就不需要检查小单
+            if item_no_x:
+                asset_sql = ''' select count(*) from {0}.asset where asset_item_no = '{1}' and asset_status = 'repay' '''.format(env, item_no_x)
+                is_asset = db.select_sql(asset_sql)
+                if is_asset[1][0][0] == 0:
+                    # 小单放款
+                    asset_sql_x = ''' select count(*) from {0}.task where task_order_no = '{1}' '''.format(g_env, item_no_x)
+                    is_asset_x = db.select_sql(asset_sql_x)[1][0][0]
+                    if is_asset_x == 0:
+                        return "小单还未进件"
+                    # 修改大单的放款时间，使小单能够走流程放款成功
+                    grant_at_sql = ''' update {0}.asset set asset_status='repay',asset_actual_grant_at='{1}', asset_effect_at='{1}' where asset_item_no ='{2}'  '''.format(
+                        g_env, asset_actual_grant_at, item_no)
+                    db.select_sql(grant_at_sql)
+                    # 执行小单task
+                    task_id = 1
+                    while task_id > 0:
+                        RepaySuccessModel.http_request_get("http://kong-api-test.kuainiujinke.com/{0}/task/run?orderNo={1}".format(g_env, item_no_x))
+                        task_sql = ''' select count(*) from {0}.task where task_order_no = '{1}' and task_status = 'open' '''.format(
+                            g_env, item_no_x)
+                        task_id = int(db.select_sql(task_sql)[1][0][0])
+                    # 执行小单sendmsg
+                    msg_id = 1
+                    while msg_id > 0:
+                        RepaySuccessModel.http_request_get(
+                            "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no_x))
+                        msg_sql = ''' select count(*) from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status = 'open' '''.format(
+                            g_env, item_no_x)
+                        msg_id = int(db.select_sql(msg_sql)[1][0][0])
+
+            # 检查biz的task以保证资产放款完成并没有task堆积
+            for i in range(1, 100):
+                biz_task_sql = ''' select count(*) from {0}.task where task_request_data like '%{1}%' and task_status = 'open' '''.format(env, item_no)
+                biz_task = db.select_sql(biz_task_sql)
+                if biz_task[1][0][0] != 0:
+                    update_task_sql = ''' update {0}.task set task_next_run_date = now() where task_request_data like '%{1}%' and task_status = 'open' '''.format(
+                        env, item_no)
+                    db.select_sql(update_task_sql)
+                    continue
+                else:
+                    break
 
             # 至此大小单放款均成功，开始还款
             if need_repay == 'Y':
-                time.sleep(60)
                 result = self.repayWithholdSuccess(request_params)
 
             return result
@@ -651,6 +692,7 @@ class CommonBiz(UnSerializer, Serializer):
         except Exception as e:
             current_app.logger.exception(e)
             return ErrorCode.ERROR_CODE
+
 
     def grant_auto_route_success(self, request):
         try:
@@ -1359,3 +1401,124 @@ class CommonBiz(UnSerializer, Serializer):
             result["data"] = ErrorCode.ERROR_CODE
             result["msg"] = str(e)
             return result, "异常"
+
+    def grant_global_asset_delay(self, request):
+        """
+        海外展期回调成功/失败
+        :param request:
+        :return:
+        """
+        with SSHTunnelForwarder(
+            ("47.116.2.104", 22),
+            ssh_username="ssh-proxy",
+            ssh_pkey="./app/resources/dx_ssh_proxy",
+            remote_bind_address=("rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com", 3306),
+            local_bind_address=('127.0.0.1', 35552)) as server:
+            try:
+                server.start()
+                my_pool = PooledDB(pymysql, 5,
+                                host="127.0.0.1",
+                                user="biz_test",
+                                passwd="1Swb3hAN0Hax9p",
+                                db="global_gbiz1",
+                                port=35552)
+                connect = my_pool.connection()
+                cursor = connect.cursor(pymysql.cursors.DictCursor)
+                msg = ""
+                result = {"message": "操作失败"}
+                request_dict = request.json
+                if "trade_no" not in request_dict:
+                    msg = "需要trade_no"
+                else:
+                    url = request_dict["url"] if "url" in request_dict else ""
+                    trade_no = request_dict['trade_no']
+                    env = request_dict['env'] if "env" in request_dict and isinstance(request_dict["env"], int) else 1
+                    send_msg = request_dict['send_msg'] if "send_msg" in request_dict and \
+                                                           isinstance(request_dict["send_msg"], int) else 0
+                    withhold_status = request_dict['withhold_status'] if \
+                        "withhold_status" in request_dict and isinstance(request_dict["withhold_status"], int) else 0
+
+                    # 定义time_local参数
+                    time_local = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    # 查询展期对应的交易号
+                    get_tran_serial_no = '''select trade_tran_serial_no, trade_tran_amount 
+                    from global_rbiz{0}.trade_tran where trade_tran_trade_no ="{1}" and 
+                    trade_tran_status="open";'''.format(env, trade_no)
+                    cursor.execute(get_tran_serial_no)
+                    get_result = cursor.fetchall()
+                    trade_tran_serial_no, trade_tran_amount = get_result[0]["trade_tran_serial_no"], \
+                                                                                  get_result[0]["trade_tran_amount"]
+
+                    get_ref_no = '''select trade_ref_no
+                                        from global_rbiz{0}.trade where trade_no ="{1}";'''.format(env, trade_no)
+                    cursor.execute(get_ref_no)
+                    trade_ref_no = cursor.fetchall()[0]["trade_ref_no"]
+                    # mock的paysvr回调
+                    req_data = {
+                        "from_system": "paysvr",
+                        "type": "withhold",
+                        "key": "YXC_3qi_route_{0}".format(uuid.uuid4()),
+                        "data": {
+                            "sign": "4828009feeaec7b8655366588990f8d7",
+                            "platform_code": "E20012" if not withhold_status else "E20013",
+                            "platform_message": "交易失败" if not withhold_status else "交易成功",
+                            "channel_name": "cashfree_yomoyo_withdraw",
+                            "channel_code": "400",
+                            "channel_message": "交易失败" if not withhold_status else "交易成功",
+                            "finished_at": time_local,
+                            "channel_key": "ck_{0}".format(uuid.uuid4()),
+                            "amount": trade_tran_amount,
+                            "status": 3 if not withhold_status else 2,
+                            "merchant_key": trade_tran_serial_no,
+                            "trade_no": "trade_no_{0}".format(uuid.uuid4())
+                        }
+                    }
+                    url = "http://repay{0}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com".format(env) \
+                        if not url else url
+                    url += "/paysvr/callback"
+                    req = requests.post(url, json=req_data)
+                    if req.status_code == 200 and req.json()["code"] == 0:
+                        get_callback_task = '''select task_id from global_rbiz{1}.task where task_order_no="{0}" order by task_id desc'''.format(
+                            trade_ref_no,
+                            env)
+                        cursor.execute(get_callback_task)
+                        get_result = cursor.fetchall()
+                        task_id = get_result[0]["task_id"]
+                        exec_task_url = "http://repay{1}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer." \
+                                        "com/task/run?taskId={0}".format(task_id, env)
+                        exec_task = requests.get(exec_task_url)
+                        if exec_task.status_code == 200 and "回调结果处理成功" in exec_task.text:
+                            if send_msg:
+                                get_msg_task = '''select sendmsg_id from global_rbiz{1}.sendmsg where 
+                                sendmsg_order_no = "{0}";'''.format(trade_tran_serial_no, env)
+                                cursor.execute(get_msg_task)
+                                get_result = cursor.fetchall()
+                                # '[ {  "code" : 0,  "message" : [ "withhold-notify_20498600182537851177048993" ]",  "data" : null} ]"'
+                                for msg in get_result:
+                                    sendmsg_id = msg["sendmsg_id"]
+                                    exec_msg_url = "http://repay{1}.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer." \
+                                                 "com/msg/run?msgId={0}".format(sendmsg_id, env)
+                                    exec_msg = requests.get(exec_msg_url)
+                                    get_json_msg = exec_msg.text.replace('\\n', '').replace('\\', '').strip(" ")
+                                    if exec_msg.status_code == 200 and '"code" : 0' in get_json_msg:
+                                        msg = "操作成功"
+                                        result["message"] = "消息发送成功，展期扣成功，执行成功" if withhold_status else "消息发送成功，展期代扣失败，执行成功"
+                                    else:
+                                        msg += "消息:{0},发送失败, 错误:{1}".format(sendmsg_id, exec_msg.text)
+                            else:
+                                msg = "操作成功"
+                                result["message"] = "展期扣成功，执行成功" if withhold_status else "展期代扣失败，执行成功"
+                        else:
+                            msg = "执行回调任务失败"
+                            result["message"] = exec_task.text
+                    else:
+                        msg = req.text
+            except Exception as e:
+                current_app.logger.exception(e)
+                result["data"] = ErrorCode.ERROR_CODE
+                result["message"] = str(e)
+                msg = "异常"
+            connect.close()
+            my_pool.close()
+            server.close()
+            return result, msg
