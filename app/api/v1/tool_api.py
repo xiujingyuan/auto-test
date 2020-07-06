@@ -20,9 +20,15 @@ from app.bussinse.FourElement import FourElement
 from app.common.tools.CommonResult import CommonResult
 
 
-@api_v1.route('/fourelement', methods=['GET'])
+@api_v1.route('/fourelement', methods=['GET', 'POST'])
 def get_fourelement():
-    cs = FourElement()
+    try:
+        req = request.json
+        bank_name = req["bank"]
+    except:
+        bank_name = None
+
+    cs = FourElement(bank_name)
     result = cs.get()
     encry_biz = EncryBiz()
     try:
