@@ -1,7 +1,8 @@
 # phpstorm project files
 .idea
 .DS_Store
-
+.idea/gaea-api.iml
+.idea/misc.xml
 # ignore directory venv
 venv
 
