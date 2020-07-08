@@ -95,7 +95,7 @@ class FourElement(object):
                     ("工商银行", "621761"),
                     ("招商银行", "622598"),
                     ("建设银行", "552245"),
-                    {"民生银行", "622618"}]
+                    ("民生银行", "622618")]
         bank_code_bin = "0000"
         bank_code_length = 16
         if bank_name is None:
