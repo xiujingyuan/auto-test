@@ -211,8 +211,8 @@ class CommonBiz(UnSerializer, Serializer):
                 select task_request_data from {0}.task where task_order_no='{1}'
             '''.format(env, item_no)
             result = db.session.execute(sql).fetchone()
-            defualt_withdraw = "http://kong-api-test.kuainiujinke.com/{0}/central/withdraw-success-receive;".format(
-                env[1:])
+            defualt_withdraw = "http://biz-api-{0}.k8s-ingress-nginx.kuainiujinke.com/central/withdraw-success-receive;".format(
+                env[-1:])
             if result is None:
                 return "放款成功通知失败，进件数据没有进件到gbiz 的task 表"
             call_back = defualt_withdraw + call_back
