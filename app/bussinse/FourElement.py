@@ -91,14 +91,14 @@ class FourElement(object):
         return self.faker.ssn()
 
     def generate_bank_code(self, bank_name=None):
-        bank_map = [("中国银行", "621343"),
-                    ("工商银行", "623062"),
-                    ("招商银行", "410062"),
-                    ("农业银行", "622848"),
-                    ("建设银行", "622676"),
-                    ("交通银行", "621335")]
+        bank_map = [("中国银行", "621394"),
+                    ("工商银行", "621761"),
+                    ("招商银行", "622581"),
+                    ("农业银行", "519412"),
+                    ("建设银行", "552245"),
+                    ("交通银行", "622250")]
         bank_code_bin = "0000"
-        bank_code_length = 19
+        bank_code_length = 16
         if bank_name is None:
             bank = bank_map[random.randint(0, 5)]
             bank_code_bin = bank[1]
