@@ -93,10 +93,9 @@ class FourElement(object):
     def generate_bank_code(self, bank_name=None):
         bank_map = [("中国银行", "621394"),
                     ("工商银行", "621761"),
-                    ("招商银行", "622581"),
-                    ("农业银行", "519412"),
+                    ("招商银行", "622598"),
                     ("建设银行", "552245"),
-                    ("交通银行", "622250")]
+                    {"民生银行", "622618"}]
         bank_code_bin = "0000"
         bank_code_length = 16
         if bank_name is None:
