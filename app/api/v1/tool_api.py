@@ -24,12 +24,14 @@ from app.common.tools.CommonResult import CommonResult
 def get_fourelement():
     try:
         req = request.json
-        bank_name = req["bank"]
+        bank_name = req["bank"] if "bank" in req.keys() else None
+        bank_code_suffix = req["bank_code_suffix"] if "bank_code_suffix" in req.keys() else None
     except:
         bank_name = None
+        bank_code_suffix = None
 
     cs = FourElement()
-    result = cs.get(bank_name)
+    result = cs.get(bank_name, bank_code_suffix)
     encry_biz = EncryBiz()
     try:
         request_dict = result["data"]

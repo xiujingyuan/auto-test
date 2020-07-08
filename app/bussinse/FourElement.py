@@ -23,9 +23,18 @@ class FourElement(object):
     def __init__(self):
         self.faker = Faker('zh_CN')
 
-    def get(self, bank_name=None):
+    def get(self, bank_name=None, bank_code_suffix=None):
         data = dict()
-        data['bank_code'] = self.generate_bank_code(bank_name)
+        if bank_code_suffix is None:
+            data['bank_code'] = self.generate_bank_code(bank_name)
+        else:
+            for i in range(500):
+                bank_code = self.generate_bank_code(bank_name)
+                if bank_code.endswith(bank_code_suffix):
+                    data['bank_code'] = bank_code
+                    break
+                else:
+                    data['bank_code'] = bank_code
         data['phone_number'] = self.get_phone_number()
         data['user_name'] = self.get_name()
         data['id_number'] = self.generate_idnumber()
