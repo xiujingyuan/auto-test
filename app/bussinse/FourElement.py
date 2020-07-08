@@ -99,7 +99,7 @@ class FourElement(object):
         bank_code_bin = "0000"
         bank_code_length = 16
         if bank_name is None:
-            bank = bank_map[random.randint(0, 5)]
+            bank = bank_map[random.randint(0, 4)]
             bank_code_bin = bank[1]
         else:
             for bank in bank_map:
