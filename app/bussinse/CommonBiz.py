@@ -670,6 +670,11 @@ class CommonBiz(UnSerializer, Serializer):
                         msg_sql = ''' select count(*) from {0}.sendmsg where sendmsg_order_no = '{1}' and sendmsg_status = 'open' '''.format(
                             g_env, item_no_x)
                         msg_id = int(db.select_sql(msg_sql)[1][0][0])
+                    # 打开小单的放款成功通知msg，再执行一次
+                    up_msg_sql = ''' update {0}.sendmsg set sendmsg_status='open' where sendmsg_order_no = '{1}' and sendmsg_type = 'AssetSyncNotify' '''.format(g_env, item_no_x)
+                    db.select_sql(up_msg_sql)
+                    RepaySuccessModel.http_request_get(
+                        "http://kong-api-test.kuainiujinke.com/{0}/msg/run/?orderNo={1}".format(g_env, item_no_x))
 
             # 检查biz的task以保证资产放款完成并没有task堆积
             for i in range(1, 100):
