@@ -13,7 +13,7 @@ import gevent.monkey
 
 gevent.monkey.patch_all()
 
-bind = '127.0.0.1:8166'
+bind = '127.0.0.1:8233'
 
 workers = multiprocessing.cpu_count() * 2 + 1
 
@@ -31,10 +31,10 @@ debug = False
 
 proc_name = 'gaea'
 
-pidfile = '/data1/gaea-api/gunicon/logs/gunicorn.pid'
+pidfile = '/data1/auto-test/gunicon/logs/gunicorn.pid'
 
-errorlog = '/data1/gaea-api/gunicon/logs/gunicorn.log'
+errorlog = '/data1/auto-test/gunicon/logs/gunicorn.log'
 
-logfile = '/data1/gaea-api/gunicon/logs/info.log'
+logfile = '/data1/auto-test/gunicon/logs/info.log'
 
-accesslog = '/data1/gaea-api/gunicon/logs/access.log'
+accesslog = '/data1/auto-test/gunicon/logs/access.log'
