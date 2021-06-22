@@ -1,5 +1,38 @@
-from flask import Blueprint
+import traceback
+
+from flask import Blueprint, request
+
+from app.common.log_util import LogUtil
+from app.program_business.china.repay import ChinaRepayNacos
 
 api_nacos = Blueprint('api_nacos', __name__)
 
-from . import nacos_api
+
+class NacosFactory(object):
+
+    @classmethod
+    def get_nacos(cls, country, program, env):
+        if country == 'china' and program == 'repay':
+            return ChinaRepayNacos(env)
+
+
+@api_nacos.route('/')
+def hello_world():
+    return 'hello nacos api'
+
+
+@api_nacos.route('/update_config', methods=['POST'])
+def update_nacos_config():
+    ret = {
+        "code": 0,
+        "msg": "更新成功"
+    }
+    req = request.json
+    country = req.get('country', 'china')
+    env = req.get("env", 1)
+    program = req.get('program', 'repay')
+    config_name = req.get('config_name')
+    mock = req.get('mock', 'mock')
+    nacos = NacosFactory.get_nacos(country, program, env)
+    nacos.update_config(config_name, mock)
+    return ret

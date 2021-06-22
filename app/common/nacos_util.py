@@ -1,0 +1,143 @@
+import json
+from jsonpath_ng import parse
+
+from app.common.http_util import Http
+from app.common.log_util import LogUtil
+
+NACOS_DOMAIN_DICT = {
+    "china": "nacos.k8s-ingress-nginx.kuainiujinke.com",
+    "tha": "biz-nacos-tha.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
+    "phl": "nacos-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
+    "mexico": "nacos-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com"
+}
+
+
+class Nacos(object):
+
+    login_url = "http://{0}/nacos/v1/auth/login"
+    get_config_id_url = "http://{0}/nacos/v1/cs/configs?search=accurate&dataId={1}&group=&appName=&config_tags=" \
+              "&pageNo=1&pageSize=10&tenant={2}&namespaceId={3}"
+    update_config_url = "http://{0}/nacos/v1/cs/configs"
+    get_configs_url = "http://{0}/nacos/v1/cs/configs?search=accurate&dataId={1}&group=&appName=&config_tags=" \
+              "&pageNo=1&pageSize=10&tenant={2}&namespaceId={2}"
+    get_config_url = "http://{0}/nacos/v1/cs/configs"
+
+    def __init__(self, country, tenant, username="nacos", password="nacos"):
+        self.username = username
+        self.password = password
+
+        self.domain = NACOS_DOMAIN_DICT[country]
+        self.cookies = None
+        self.authorization = None
+        self.tenant = tenant
+        self.old_value = {}
+
+        self.login()
+
+    def login(self):
+        url = self.login_url.format(self.domain)
+        req_body = {
+            "username": self.username,
+            "password": self.password,
+            "namespaceId": ""
+        }
+        resp = Http.parse_resp_body('post', url, data=req_body,
+                                    headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"})
+        response_headers = resp["headers"]
+        self.authorization = response_headers["Authorization"]
+        self.cookies = resp["cookies"]
+
+    def get_configs_id(self, config_name):
+        url = self.get_config_id_url.format(self.domain, config_name, self.tenant, self.tenant)
+        resp = Http.parse_resp_body('get', url, headers={"Authorization": self.authorization},
+                                    cookies=self.cookies)
+        configs_id = resp['content']["pageItems"][0]["id"]
+        return configs_id
+
+    def update_config(self, config_name, mock):
+        return getattr(self, 'update_{0}_by_{1}'.format(config_name, mock))()
+
+    def update_configs(self, config_name, content, group="KV", types="json"):
+        configs_id = self.get_configs_id(config_name)
+        url = self.update_config_url.format(self.domain)
+        # if types == "json":
+        #     content = json.dumps(content, ensure_ascii=False)
+        req_body = {
+            "dataId": config_name,
+            "group": group,
+            "content": content,
+            "appName": None,
+            "desc": None,
+            "config_tags": None,
+            "tenant": self.tenant,
+            "createTime": "1581592882000",
+            "modifyTime": "1581592882000",
+            "createUser": None,
+            "createIp": "118.242.27.98",
+            "use": None,
+            "effect": None,
+            "schema": None,
+            "configTags": None,
+            "md5": "be65d4de7d98e9877adbfd2416069e05",
+            "id": configs_id,
+            "type": types,
+        }
+        Http.http_post(url, req_body,
+                       headers={"content-type": "application/x-www-form-urlencoded",
+                                "Authorization": self.authorization},
+                       cookies=self.cookies)
+
+    def get_configs(self, data_id):
+        url = self.get_configs_url.format(self.domain, data_id)
+        resp = Http.parse_resp_body(method='get', url=url, headers={"Authorization": self.authorization},
+                                    cookies=self.cookies)
+        configs_content = resp["content"]["pageItems"][0]["content"]
+        return configs_content
+
+    def get_config(self, group, config_name):
+        url = self.get_config_url.format(self.domain)
+        headers = {"Authorization": self.authorization}
+        params = {
+            "dataId": config_name,
+            "group": group,
+            "namespaceId": self.tenant,
+            "tenant": self.tenant,
+            "show": "all"
+        }
+        resp = Http.parse_resp_body('get', url, params=params, headers=headers, cookies=self.cookies)
+        return resp["content"]
+
+    def incremental_update_config(self, config_name, group, **kwargs):
+        config = self.get_config(group, config_name)
+        if config['type'] == "json":
+            content = json.loads(config['content'])
+            for key, value in kwargs.items():
+                content[key] = value
+        else:
+            # TODO:其他类型增量更新config
+            content = config['content']
+        self.update_configs(config_name, content, group)
+
+    def update_config_by_json_path(self, config_name, json_path_dict, group='KV'):
+        config = self.get_config(group, config_name)
+        if not config['type'] == "json":
+            raise TypeError("need type = json, but {0} type found".format(config['type']))
+        if not isinstance(json_path_dict, dict):
+            raise TypeError("need dict, but {0} type found".format(type(json_path_dict)))
+        content = json.loads(config['content'])
+        for json_path, new_value in json_path_dict.items():
+            json_path_expr = parse(json_path)
+            a = json_path_expr.find(content)
+            if not a:
+                LogUtil.log_error('not fount the json path: {0} in {1}'.format(json_path, config_name))
+            else:
+                if config_name in self.old_value:
+                    self.old_value[config_name].update({json_path: a[0].value})
+                else:
+                    self.old_value[config_name] = {json_path: a[0].value}
+                json_path_expr.update(content, new_value)
+        content = json.dumps(content)
+        LogUtil.log_info(content)
+        LogUtil.log_info(self.old_value)
+        self.update_configs(config_name, content, group)
+

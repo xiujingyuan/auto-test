@@ -18,7 +18,7 @@ def create_app():
     app = Flask(__name__)
     db.init_app(app, )
 
-    from app.api.nacos.nacos_api import api_nacos as api_nacos_blueprint
+    from app.api.nacos import api_nacos as api_nacos_blueprint
     app.register_blueprint(api_nacos_blueprint, url_prefix='/api/nacos/')
 
     return app
