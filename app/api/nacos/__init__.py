@@ -1,8 +1,7 @@
 import traceback
 
 from flask import Blueprint, request
-
-from app.common.log_util import LogUtil
+from flask import current_app
 from app.program_business.china.repay import ChinaRepayNacos
 
 api_nacos = Blueprint('api_nacos', __name__)
@@ -18,6 +17,7 @@ class NacosFactory(object):
 
 @api_nacos.route('/')
 def hello_world():
+    current_app.logger.info('hello nacos api!')
     return 'hello nacos api'
 
 

@@ -8,9 +8,6 @@ class ChinaRepayNacos(Nacos):
     def update_repay_paysvr_config_by_value(self, value):
         super(ChinaRepayNacos, self).update_configs('repay_paysvr_config', value)
 
-    def __update_pay_svr_config_by_json_path(self, json_path):
-        super(ChinaRepayNacos, self).update_config_by_json_path('repay_paysvr_config', json_path)
-
     def update_repay_paysvr_config_by_gate(self):
         payment_gate_url = 'http://kong-api-test.kuainiujinke.com/payment-staging-tq'
         new_value = {
@@ -19,7 +16,7 @@ class ChinaRepayNacos(Nacos):
                         "$.sign_company_config.sign_subject_domain_mapping[0].payment_domain": payment_gate_url,
                         "$.sign_company_config.sign_subject_domain_mapping[1].payment_domain": payment_gate_url
                     }
-        self.__update_pay_svr_config_by_json_path(new_value)
+        self.update_config_by_json_path('repay_paysvr_config', new_value)
 
     def update_repay_paysvr_config_by_mock(self):
         payment_mock_url = 'http://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/5de5d515d1784d36471d6041' \
@@ -31,4 +28,4 @@ class ChinaRepayNacos(Nacos):
                         "$.sign_company_config.sign_subject_domain_mapping[1].payment_domain": payment_mock_url
                      }
 
-        self.__update_pay_svr_config_by_json_path(new_value)
+        self.update_config_by_json_path('repay_paysvr_config', new_value)
