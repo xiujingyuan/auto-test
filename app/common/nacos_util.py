@@ -3,6 +3,7 @@ from jsonpath_ng import parse
 
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
+from app.model.NocosConfigDb import NacosConfig
 
 NACOS_DOMAIN_DICT = {
     "china": "nacos.k8s-ingress-nginx.kuainiujinke.com",
@@ -54,8 +55,15 @@ class Nacos(object):
         configs_id = resp['content']["pageItems"][0]["id"]
         return configs_id
 
-    def update_config(self, config_name, mock):
-        return getattr(self, 'update_{0}_by_{1}'.format(config_name, mock))()
+    def update_nacos_config(self, nacos_config_key):
+        """
+        根据传递的nacos_config的key来查询需要ginger的nacos的配置名和期望的值，实现页面可以随意配置
+        :param nacos_config_key: 在数据库nacos_config里的配置的key，比如update_repay_paysvr_by_mock,
+        update_repay_paysvr_by_gate
+        :return: 无
+        """
+        get_config = NacosConfig.query.filter(NacosConfig.nacos_config_key == nacos_config_key).first()
+        self.update_config_by_json_path(get_config.nacos_config_name, get_config.nacos_config_value)
 
     def update_configs(self, config_name, content, group="KV", types="json"):
         configs_id = self.get_configs_id(config_name)

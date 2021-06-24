@@ -31,8 +31,7 @@ def update_nacos_config():
     country = req.get('country', 'china')
     env = req.get("env", 1)
     program = req.get('program', 'repay')
-    config_name = req.get('config_name')
-    mock = req.get('mock', 'mock')
+    config_key = req.get('config_key')
     nacos = NacosFactory.get_nacos(country, program, env)
-    nacos.update_config(config_name, mock)
+    nacos.update_nacos_config(config_key)
     return ret
