@@ -19,7 +19,7 @@ class Nacos(object):
     get_config_id_url = "http://{0}/nacos/v1/cs/configs?search=accurate&dataId={1}&group=&appName=&config_tags=" \
               "&pageNo=1&pageSize=10&tenant={2}&namespaceId={3}"
     update_config_url = "http://{0}/nacos/v1/cs/configs"
-    get_configs_url = "http://{0}/nacos/v1/cs/configs?search=accurate&dataId={1}&group=&appName=&config_tags=" \
+    get_config_content_url = "http://{0}/nacos/v1/cs/configs?search=accurate&dataId={1}&group=&appName=&config_tags=" \
               "&pageNo=1&pageSize=10&tenant={2}&namespaceId={2}"
     get_config_url = "http://{0}/nacos/v1/cs/configs"
 
@@ -48,12 +48,12 @@ class Nacos(object):
         self.authorization = response_headers["Authorization"]
         self.cookies = resp["cookies"]
 
-    def get_configs_id(self, config_name):
+    def get_config_id(self, config_name):
         url = self.get_config_id_url.format(self.domain, config_name, self.tenant, self.tenant)
         resp = Http.parse_resp_body('get', url, headers={"Authorization": self.authorization},
                                     cookies=self.cookies)
-        configs_id = resp['content']["pageItems"][0]["id"]
-        return configs_id
+        config_id = resp['content']["pageItems"][0]["id"]
+        return config_id
 
     def update_nacos_config(self, nacos_config_key):
         """
@@ -63,13 +63,12 @@ class Nacos(object):
         :return: 无
         """
         get_config = NacosConfig.query.filter(NacosConfig.nacos_config_key == nacos_config_key).first()
-        self.update_config_by_json_path(get_config.nacos_config_name, get_config.nacos_config_value)
+        nacos_config_value = json.loads(get_config.nacos_config_value)
+        self.update_config_by_json_path(get_config.nacos_config_name, nacos_config_value)
 
-    def update_configs(self, config_name, content, group="KV", types="json"):
+    def update_config(self, config_name, content, group="KV", types="json"):
         configs_id = self.get_configs_id(config_name)
         url = self.update_config_url.format(self.domain)
-        # if types == "json":
-        #     content = json.dumps(content, ensure_ascii=False)
         req_body = {
             "dataId": config_name,
             "group": group,
@@ -95,14 +94,17 @@ class Nacos(object):
                                 "Authorization": self.authorization},
                        cookies=self.cookies)
 
-    def get_configs(self, data_id):
-        url = self.get_configs_url.format(self.domain, data_id)
-        resp = Http.parse_resp_body(method='get', url=url, headers={"Authorization": self.authorization},
-                                    cookies=self.cookies)
-        configs_content = resp["content"]["pageItems"][0]["content"]
-        return configs_content
+    def get_config_content(self, config_name, group='KV'):
+        """
+        获取给定配置文件的id
+        :param config_name:配置文件的id
+        :param group:配置文件类型，KV，SYSTEM
+        :return:返回配置文件的内容
+        """
+        config_ret = self.get_config(config_name, group)
+        return json.loads(config_ret['content'])
 
-    def get_config(self, group, config_name):
+    def get_config(self,  config_name, group='KV'):
         url = self.get_config_url.format(self.domain)
         headers = {"Authorization": self.authorization}
         params = {
@@ -116,7 +118,7 @@ class Nacos(object):
         return resp["content"]
 
     def incremental_update_config(self, config_name, group, **kwargs):
-        config = self.get_config(group, config_name)
+        config = self.get_config(config_name, group)
         if config['type'] == "json":
             content = json.loads(config['content'])
             for key, value in kwargs.items():
@@ -124,7 +126,7 @@ class Nacos(object):
         else:
             # TODO:其他类型增量更新config
             content = config['content']
-        self.update_configs(config_name, content, group)
+        self.update_config(config_name, content, group)
 
     def update_config_by_json_path(self, config_name, json_path_dict, group='KV'):
         config = self.get_config(group, config_name)

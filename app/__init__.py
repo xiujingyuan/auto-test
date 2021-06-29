@@ -27,4 +27,7 @@ def create_app():
     from app.api.nacos import api_nacos as api_nacos_blueprint
     app.register_blueprint(api_nacos_blueprint, url_prefix='/api/nacos/')
 
+    from app.api.xxljob import api_xxljob as api_xxljob_blueprint
+    app.register_blueprint(api_xxljob_blueprint, url_prefix='/api/xxljob/')
+
     return app
