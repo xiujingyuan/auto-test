@@ -16,7 +16,7 @@ supervisor
 *.pyc
 
 # 日志文件
-*.log
+*.log.*
 
  app/common/logs/
 
