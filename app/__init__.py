@@ -30,4 +30,7 @@ def create_app():
     from app.api.xxljob import api_xxljob as api_xxljob_blueprint
     app.register_blueprint(api_xxljob_blueprint, url_prefix='/api/xxljob/')
 
+    from app.api.easymock import api_easy_mock as api_easy_mock_blueprint
+    app.register_blueprint(api_easy_mock_blueprint, url_prefix='/api/easy_mock/')
+
     return app

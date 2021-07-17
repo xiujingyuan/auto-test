@@ -1,0 +1,40 @@
+from flask import Blueprint, request, jsonify
+from flask import current_app
+from app.program_business.china.repay import RepayEasyMock
+
+api_easy_mock = Blueprint('api_easy_mock', __name__)
+
+
+class EasyMockFactory(object):
+    @classmethod
+    def get_easy_mock(cls, country, program, check_req, return_req):
+        if country == 'china' and program == 'repay':
+            return RepayEasyMock(check_req, return_req)
+
+
+@api_easy_mock.route('/')
+def hello_world():
+    current_app.logger.info('hello easy mock api!')
+    return 'hello easy mock api'
+
+
+@api_easy_mock.route('/change', methods=['POST'])
+def easy_mock_change():
+    get_ret = {
+        "code": 0,
+        "msg": "更新成功"
+    }
+    req = request.json
+    country = req.get('country', 'china')
+    check_req = req.get("check_req", False)
+    return_req = req.get("return_req", False)
+    program = req.get('program', 'repay')
+    params = req.get('params', None)
+    url = req.get('url', None)
+    if url is None or params is None:
+        get_ret['code'] = 1
+        get_ret['msg'] = 'params或url没有传递'
+    else:
+        easy_mock = EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
+        easy_mock.update(url, params)
+    return jsonify(get_ret)

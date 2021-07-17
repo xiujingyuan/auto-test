@@ -1,3 +1,4 @@
+from app.common.easy_mock_util import EasyMock
 from app.common.nacos_util import Nacos
 from app.common.xxljob_util import XxlJob
 
@@ -14,3 +15,8 @@ class ChinaRepayNacos(Nacos):
 class ChinaRepayXxlJob(XxlJob):
     def __init__(self, env):
         super(ChinaRepayXxlJob, self).__init__('china', 'repay', env)
+
+
+class RepayEasyMock(EasyMock):
+    def __init__(self, check_req, return_req):
+        super(RepayEasyMock, self).__init__('rbiz_auto_test', check_req, return_req)
