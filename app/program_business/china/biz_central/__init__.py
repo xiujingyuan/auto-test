@@ -55,6 +55,11 @@ class ChinaBizDb(DataBase):
               "WHERE withhold_result_asset_item_no IN ('{0}')".format(item_no)
         self.do_sql(sql)
 
+    def reset_central_task(self, task_id):
+        sql = "update central_task set task_next_run_at = now(), task_status = 'open'," \
+              " task_version =0, task_retrytimes =0 where task_id = {0}".format(task_id)
+        self.do_sql(sql)
+
 
 class ChinaBizCentralAuto(BaseAuto):
     def __init__(self, env, run_env, check_req=False, return_req=False):
