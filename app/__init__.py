@@ -33,4 +33,7 @@ def create_app():
     from app.api.easymock import api_easy_mock as api_easy_mock_blueprint
     app.register_blueprint(api_easy_mock_blueprint, url_prefix='/api/easy_mock/')
 
+    from app.api.database import api_data_base as api_data_base_blueprint
+    app.register_blueprint(api_data_base_blueprint, url_prefix='/api/data_base/')
+
     return app

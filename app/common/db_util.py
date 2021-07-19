@@ -5,7 +5,7 @@ import json
 from dbutils.pooled_db import PooledDB
 from sshtunnel import SSHTunnelForwarder
 
-from app.common.log_class import LogUtil
+from app.common.log_util import LogUtil
 from app.common.tools import get_port, trans_data, generate_sql
 
 
@@ -101,8 +101,10 @@ class DataBase(object):
         sql = "insert into %s set %s" % (table_name, generate_sql(kwargs, ","))
         return self.do_sql(sql)
 
-    def get_data(self, table_name, order_by=None, **kwargs):
+    def get_data(self, table_name, query_key=None, order_by=None, **kwargs):
         sql = "select * from %s where %s" % (table_name, generate_sql(kwargs, "and"))
+        if query_key is not None:
+            sql += generate_sql(query_key, 'and')
         if order_by is not None:
             sql += ' order by {0} desc'.format(order_by)
         data_list = self.do_sql(sql)

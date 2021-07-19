@@ -1,19 +1,8 @@
 from flask import Blueprint, request, jsonify
 from flask import current_app
-from app.program_business.china.repay import ChinaRepayXxlJob
-from app.program_business.china.biz_central import ChinaBizCentralXxlJob
+from app.common import XxlJobFactory
 
 api_xxljob = Blueprint('api_xxljob', __name__)
-
-
-class XxlJobFactory(object):
-
-    @classmethod
-    def get_xxljob(cls, country, program, env):
-        if country == 'china' and program == 'repay':
-            return ChinaRepayXxlJob(env)
-        if country == 'china' and program == 'biz-central':
-            return ChinaBizCentralXxlJob(env)
 
 
 @api_xxljob.route('/')

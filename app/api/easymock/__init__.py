@@ -1,15 +1,9 @@
 from flask import Blueprint, request, jsonify
 from flask import current_app
-from app.program_business.china.repay import RepayEasyMock
+
+from app.common import EasyMockFactory
 
 api_easy_mock = Blueprint('api_easy_mock', __name__)
-
-
-class EasyMockFactory(object):
-    @classmethod
-    def get_easy_mock(cls, country, program, check_req, return_req):
-        if country == 'china' and program == 'repay':
-            return RepayEasyMock(check_req, return_req)
 
 
 @api_easy_mock.route('/')

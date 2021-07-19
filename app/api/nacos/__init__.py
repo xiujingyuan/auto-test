@@ -2,17 +2,10 @@ import traceback
 
 from flask import Blueprint, request, jsonify
 from flask import current_app
-from app.program_business.china.repay import ChinaRepayNacos
+
+from app.common import NacosFactory
 
 api_nacos = Blueprint('api_nacos', __name__)
-
-
-class NacosFactory(object):
-
-    @classmethod
-    def get_nacos(cls, country, program, env):
-        if country == 'china' and program == 'repay':
-            return ChinaRepayNacos(env)
 
 
 @api_nacos.route('/')

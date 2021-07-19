@@ -1,0 +1,96 @@
+ * Restarting with stat
+127.0.0.1 - - [19/Jul/2021 09:32:43] "[35m[1mPOST /api/data_base/get_info HTTP/1.1[0m" 500 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+connect to rbiz3 with port 3306
+数据库执行异常，sql：select * from withhold where  order by {'request_no': '10015977'} desc
+数据库执行异常：(1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'order by {'request_no': '10015977'} desc' at line 1")
+关闭数据库链接：rbiz3
+127.0.0.1 - - [19/Jul/2021 09:33:15] "POST /api/data_base/get_info HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+connect to rbiz3 with port 3306
+数据库执行异常，sql：select * from withhold where  order by {'request_no': '10015977'} desc
+数据库执行异常：(1064, "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'order by {'request_no': '10015977'} desc' at line 1")
+关闭数据库链接：rbiz3
+127.0.0.1 - - [19/Jul/2021 09:34:02] "POST /api/data_base/get_info HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/common/db_util.py', reloading
+ * Restarting with stat
+connect to rbiz3 with port 3306
+数据库执行异常，sql：select * from withhold where request_no='10015977' 
+数据库执行异常：(1054, "Unknown column 'request_no' in 'where clause'")
+关闭数据库链接：rbiz3
+127.0.0.1 - - [19/Jul/2021 09:38:09] "POST /api/data_base/get_info HTTP/1.1" 200 -
+connect to rbiz3 with port 3306
+{'db': 'rbiz3', 'sql request': "select * from withhold where withhold_request_no='10015977' "}
+关闭数据库链接：rbiz3
+127.0.0.1 - - [19/Jul/2021 09:38:31] "POST /api/data_base/get_info HTTP/1.1" 200 -
+connect to rbiz1 with port 3306
+{'db': 'rbiz1', 'sql request': "select * from withhold where withhold_request_no='10015977' "}
+关闭数据库链接：rbiz1
+127.0.0.1 - - [19/Jul/2021 09:39:26] "POST /api/data_base/get_info HTTP/1.1" 200 -
+127.0.0.1 - - [19/Jul/2021 10:45:04] "POST /api/xxljob/exec_xxljob HTTP/1.1" 200 -
+127.0.0.1 - - [19/Jul/2021 10:47:12] "POST /api/xxljob/exec_xxljob HTTP/1.1" 200 -
+127.0.0.1 - - [19/Jul/2021 10:58:05] "POST /api/xxljob/exec_xxljob HTTP/1.1" 200 -
+127.0.0.1 - - [19/Jul/2021 11:11:51] "POST /api/xxljob/exec_xxljob HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [19/Jul/2021 14:45:58] "[35m[1mPOST /api/data_base/get_info HTTP/1.1[0m" 500 -
+127.0.0.1 - - [19/Jul/2021 14:46:05] "[35m[1mPOST /api/data_base/get_info HTTP/1.1[0m" 500 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [19/Jul/2021 14:47:16] "[35m[1mPOST /api/data_base/tool/exec HTTP/1.1[0m" 500 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/common/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [19/Jul/2021 14:49:27] "[35m[1mPOST /api/data_base/tool/exec HTTP/1.1[0m" 500 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+connect to rbiz2 with port 3306
+数据库执行异常，sql：update capital_transaction set capital_transaction_repaid_amount = capital_transaction_amount,         capital_transaction_status = 'finished', capital_transaction_operation_type =' advance',         capital_transaction_withhold_result_channel = 'qsq' where         capital_transaction_asset_item_no = '20201626353280856495' and capital_transaction_period <  4
+数据库执行异常：(1054, "Unknown column 'capital_transaction_asset_item_no' in 'where clause'")
+关闭数据库链接：rbiz2
+127.0.0.1 - - [19/Jul/2021 14:51:15] "POST /api/data_base/tool/exec HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+connect to biz2 with port 3306
+{'db': 'biz2', 'sql request': "update capital_transaction set capital_transaction_repaid_amount = capital_transaction_amount,         capital_transaction_status = 'finished', capital_transaction_operation_type =' advance',         capital_transaction_withhold_result_channel = 'qsq' where         capital_transaction_asset_item_no = '20201626353280856495' and capital_transaction_period <  4"}
+关闭数据库链接：biz2
+127.0.0.1 - - [19/Jul/2021 14:53:47] "POST /api/data_base/tool/exec HTTP/1.1" 200 -
