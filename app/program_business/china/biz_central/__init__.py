@@ -60,6 +60,19 @@ class ChinaBizDb(DataBase):
               " task_version =0, task_retrytimes =0 where task_id = {0}".format(task_id)
         self.do_sql(sql)
 
+    def add_re_push_dcs_task(self, item_no, period_start, period_end):
+        sql = "insert into central_task (task_type, task_order_no, task_key, task_memo, task_status, task_version, " \
+              "task_priority, task_request_data, task_response_data, task_retrytimes) values ('RepushToClearing', " \
+              "{0}, '', '', 'open', 0, 1, '{\"item_no\" : \"{0}\",\"period_start\"" \
+              " : {1},\"period_end\" : {2}', '', 0)".format(item_no, period_start, period_end)
+        self.do_sql(sql)
+
+    def get_send_msg_by_type(self, send_msg_type):
+        return self.get_data('central_sendmsg', sendmsg_type=send_msg_type, order_by='sendmsg_id')
+
+    def get_send_msg_by_type(self):
+        return True
+
 
 class ChinaBizCentralAuto(BaseAuto):
     def __init__(self, env, run_env, check_req=False, return_req=False):
