@@ -1,8 +1,0 @@
-2021-06-23 10:52:04,771 INFO hello_world: hello nacos api!
-2021-06-23 10:53:06,258 INFO 84127 123145335615488 /Users/kuainiu/PycharmProjects/auto-test/app/api/nacos/__init__.py 20 hello nacos api!
-2021-06-23 10:54:54,547 INFO /Users/kuainiu/PycharmProjects/auto-test/app/api/nacos/__init__.py hello_world 20 hello nacos api!
-2021-06-23 11:31:27,511 INFO /Users/kuainiu/PycharmProjects/auto-test/app/api/nacos/__init__.py hello_world 20 hello nacos api!
-2021-06-23 11:31:31,694 INFO /Users/kuainiu/PycharmProjects/auto-test/app/api/nacos/__init__.py hello_world 20 hello nacos api!
-2021-06-23 11:31:38,193 INFO /Users/kuainiu/PycharmProjects/auto-test/app/api/nacos/__init__.py hello_world 20 hello nacos api!
-2021-06-23 11:31:42,017 INFO /Users/kuainiu/PycharmProjects/auto-test/app/api/nacos/__init__.py hello_world 20 hello nacos api!
-2021-07-17 11:44:26,814 INFO /Users/kuainiu/PycharmProjects/auto-test/app/api/database/__init__.py hello_world 10 hello data base api!

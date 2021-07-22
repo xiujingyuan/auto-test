@@ -68,18 +68,20 @@ class DataBase(object):
                 DataBase.ssh_runnel.append(server)
         return DataBase.pools[self.server_name].connection()
 
-    def do_sql(self, sql):
+    def do_sql(self, sql, last_id=False):
         try:
             connection = self.connect()
             cursor = connection.cursor(pymysql.cursors.DictCursor)
             cursor.execute(sql)
             connection.commit()
+            if last_id:
+                cursor.execute("select last_insert_id();")
             result = cursor.fetchall()
             log_info = {"db": self.server_name,
                         "sql request": sql
                         }
             self.log.log_info(log_info)
-            return trans_data(result)
+            return result[0]['last_insert_id()'] if last_id else trans_data(result)
         except Exception as e:
             self.log.log_info("数据库执行异常，sql：%s" % sql)
             self.log.log_info("数据库执行异常：%s" % str(e))

@@ -1,9 +1,11 @@
+import json
+
 from app.common.db_util import DataBase
 from app.common.easy_mock_util import EasyMock
+from app.common.http_util import Http
 from app.common.nacos_util import Nacos
 from app.common.xxljob_util import XxlJob
 from app.program_business import BaseAuto
-
 
 class ChinaBizCentralNacos(Nacos):
     def __init__(self, env):
@@ -61,19 +63,81 @@ class ChinaBizDb(DataBase):
         self.do_sql(sql)
 
     def add_re_push_dcs_task(self, item_no, period_start, period_end):
+        req = {
+                "item_no": item_no,
+                "period_start": period_start,
+                "period_end": period_end
+               }
         sql = "insert into central_task (task_type, task_order_no, task_key, task_memo, task_status, task_version, " \
               "task_priority, task_request_data, task_response_data, task_retrytimes) values ('RepushToClearing', " \
-              "{0}, '', '', 'open', 0, 1, '{\"item_no\" : \"{0}\",\"period_start\"" \
-              " : {1},\"period_end\" : {2}', '', 0)".format(item_no, period_start, period_end)
-        self.do_sql(sql)
+              "'{0}', '', '', 'open', 0, 1, '{1}', '', 0)".format(item_no, json.dumps(req))
+        return self.do_sql(sql, last_id=True)
 
     def get_send_msg_by_type(self, send_msg_type):
         return self.get_data('central_sendmsg', sendmsg_type=send_msg_type, order_by='sendmsg_id')
 
-    def get_send_msg_by_type(self):
-        return True
+    def get_item_info(self, item_no):
+        return self.get_data('asset', asset_item_no=item_no)
 
 
 class ChinaBizCentralAuto(BaseAuto):
+    url_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com"
+
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaBizCentralAuto, self).__init__('china', 'biz', env, run_env, check_req, return_req)
+        super(ChinaBizCentralAuto, self).__init__('china', 'biz-central', env, run_env, check_req, return_req)
+        self.url_host = self.url_host.format(env)
+        self.db = ChinaBizDb(env, run_env)
+
+    def exec_central_task_by_task_id(self, task_id):
+        exec_central_task_url = "{0}/job/runTaskById?id={1}".format(self.url_host, task_id)
+        Http.http_get(exec_central_task_url)
+        return True
+
+    @staticmethod
+    def get_item_no(msg):
+        msg_list = msg['sendmsg_order_no'].replace('early_settlement', 'earlysettlement').split("_")
+        if msg_list[0] not in ('normal', 'advance', 'overdue', 'compensate', 'earlysettlement', 'offline', 'buyback',
+                               'chargeback'):
+            item_no = "_".join(msg_list[0:-3]) if len(msg_list) > 4 else msg_list[0]
+            msg_type = msg_list[-3]
+        else:
+            item_no = "_".join(msg_list[1:-2]) if len(msg_list) > 4 else msg_list[1]
+            msg_type = msg_list[0]
+        return item_no, msg_type, msg_list[-2], msg_list[-1]
+
+    def create_push_dcs_task(self):
+        all_msg = self.db.get_send_msg_by_type('CapitalTransactionClearing')
+        old_data = {}
+        max_msg_id = 0
+        for index, msg in enumerate(all_msg):
+            if index == 0:
+                max_msg_id = int(msg['sendmsg_id'])
+            item_no, msg_type, start_period, end_period = self.get_item_no(msg)
+            old_data["_".join((item_no, msg_type.replace('early_settlement', 'earlysettlement'),
+                               start_period, end_period))] = msg['sendmsg_content']
+            task_id = self.db.add_re_push_dcs_task(item_no, start_period, end_period)
+            if task_id is None:
+                raise ValueError('task id is error!')
+            self.exec_central_task_by_task_id(task_id)
+        all_new_msg = self.db.get_send_msg_by_type('CapitalTransactionClearing')
+        for msg in all_new_msg:
+            if int(msg['sendmsg_id']) < max_msg_id:
+                continue
+            item_no, msg_type, start_period, end_period = self.get_item_no(msg)
+            msg_key = msg['sendmsg_order_no'] if msg['sendmsg_order_no'] in old_data \
+                else "_".join((msg_type.replace('early_settlement', 'earlysettlement'), item_no,
+                               start_period,
+                               end_period))
+            if msg_key in old_data:
+                item_info = self.db.get_item_info(item_no)
+                if item_info:
+                    asset_loan_channel = item_info[0]['asset_loan_channel']
+                    print(msg_key, asset_loan_channel,
+                          self.compare_data(123, json.loads(old_data[msg['sendmsg_order_no']]),
+                                            json.loads(msg['sendmsg_content']), [], 0))
+                else:
+                    print('not fount the item {0}'.format(item_no))
+            else:
+                print('not fount the order no {0}'.format(msg['sendmsg_order_no']))
+
+
