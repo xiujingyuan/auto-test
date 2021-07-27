@@ -1,3 +1,4 @@
+from datetime import time
 
 from app.common.db_util import DataBase
 from app.common.easy_mock_util import EasyMock
@@ -43,3 +44,17 @@ class ChinaRepayDb(DataBase):
 class ChinaRepayAuto(BaseAuto):
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaRepayAuto, self).__init__('china', 'rbiz', env, run_env, check_req, return_req)
+
+    def auto_loan(self, loan_channel, count):
+        self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, loan_channel))
+        four_element = self.get_four_element()
+        try:
+            item_no, item_no_noloan = self.asset_import_and_loan_to_success(loan_channel, four_element, count=count)
+            self.log.log_info("大单资产编号：%s" % item_no)
+            self.log.log_info("小单资产编号：%s" % item_no_noloan)
+        except Exception as e:
+            item_no, item_no_noloan = '', ''
+            self.log.log_info("%s, 资产生成失败：%s" % (item_no, e))
+            return 1, "资产生成失败：%s" % e
+        else:
+            return item_no, item_no_noloan

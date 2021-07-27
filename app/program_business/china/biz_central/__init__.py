@@ -1,11 +1,11 @@
 import json
 
 from app.common.db_util import DataBase
-from app.common.easy_mock_util import EasyMock
 from app.common.http_util import Http
 from app.common.nacos_util import Nacos
 from app.common.xxljob_util import XxlJob
 from app.program_business import BaseAuto
+
 
 class ChinaBizCentralNacos(Nacos):
     def __init__(self, env):
@@ -14,11 +14,6 @@ class ChinaBizCentralNacos(Nacos):
 
     def update_repay_paysvr_config_by_value(self, value):
         super(ChinaBizCentralNacos, self).update_configs('repay_paysvr_config', value)
-
-
-class RepayEasyMock(EasyMock):
-    def __init__(self, check_req, return_req):
-        super(RepayEasyMock, self).__init__('rbiz_auto_test', check_req, return_req)
 
 
 class ChinaBizCentralXxlJob(XxlJob):
@@ -86,7 +81,6 @@ class ChinaBizCentralAuto(BaseAuto):
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaBizCentralAuto, self).__init__('china', 'biz-central', env, run_env, check_req, return_req)
         self.url_host = self.url_host.format(env)
-        self.db = ChinaBizDb(env, run_env)
 
     def exec_central_task_by_task_id(self, task_id):
         exec_central_task_url = "{0}/job/runTaskById?id={1}".format(self.url_host, task_id)

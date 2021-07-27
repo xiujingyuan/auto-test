@@ -103,12 +103,19 @@ class DataBase(object):
         sql = "insert into %s set %s" % (table_name, generate_sql(kwargs, ","))
         return self.do_sql(sql)
 
-    def get_data(self, table_name, query_key=None, order_by=None, **kwargs):
+    def update_data(self, table_name, where_key, where_value, **kwargs):
+        sql = "update %s set %s" % (table_name, generate_sql(kwargs, ","))
+        sql += "where {0}={1}".format(where_key, where_value)
+        return self.do_sql(sql)
+
+    def get_data(self, table_name, query_key=None, order_by=None, limit=None, **kwargs):
         sql = "select * from %s where %s" % (table_name, generate_sql(kwargs, "and"))
         if query_key is not None:
             sql += generate_sql(query_key, 'and')
         if order_by is not None:
             sql += ' order by {0} desc'.format(order_by)
+        if limit is not None:
+            sql += ' limit {0}'.format(limit)
         data_list = self.do_sql(sql)
         return data_list
 
