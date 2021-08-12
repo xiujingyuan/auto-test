@@ -1,9 +1,7 @@
 import unittest
 import re
 import operator
-
-from jsonpath_ng import jsonpath
-
+import jsonpath
 from app.common.tools import get_json_path
 
 

@@ -94,6 +94,8 @@ def generate_sql(sql_param, split):
             if isinstance(value, tuple):
                 sql += " {0}={1} and ".format(key, value[0]) if \
                     len(value) == 1 else " {0} in {1} and ".format(key, value)
+            elif 'DATE_' in value:
+                sql += str(key) + "=" + str(value) + " " + str(split) + " "
             else:
                 sql += str(key) + "='" + str(value) + "' " + str(split) + " "
     return sql[:(-len(split) - 1)]

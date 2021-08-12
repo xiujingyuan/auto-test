@@ -35,6 +35,8 @@ class DbFactory(object):
             return ChinaRepayDb(env, run_env)
         elif country == 'china' and program == 'biz-central':
             return ChinaBizDb(env, run_env)
+        elif country == 'china' and program == 'grant':
+            return ChinaBizDb(env, run_env)
 
 
 class XxlJobFactory(object):

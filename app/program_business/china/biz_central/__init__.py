@@ -76,11 +76,15 @@ class ChinaBizDb(DataBase):
 
 
 class ChinaBizCentralAuto(BaseAuto):
-    url_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com"
 
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaBizCentralAuto, self).__init__('china', 'biz-central', env, run_env, check_req, return_req)
-        self.url_host = self.url_host.format(env)
+        self.host_url = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.asset_import_url = self.host_url + "/asset/import"
+
+    def asset_import(self, req_data):
+        ret = Http.http_post(self.asset_import_url, req_data)
+        return ret
 
     def exec_central_task_by_task_id(self, task_id):
         exec_central_task_url = "{0}/job/runTaskById?id={1}".format(self.url_host, task_id)

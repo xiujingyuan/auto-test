@@ -104,7 +104,7 @@ class DataBase(object):
         return self.do_sql(sql)
 
     def update_data(self, table_name, where_key, where_value, **kwargs):
-        sql = "update %s set %s" % (table_name, generate_sql(kwargs, ","))
+        sql = "update {0} set {1}".format(table_name, generate_sql(kwargs, ","))
         sql += "where {0}={1}".format(where_key, where_value)
         return self.do_sql(sql)
 

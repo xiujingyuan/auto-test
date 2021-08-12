@@ -2,7 +2,7 @@
 import json
 import time
 from datetime import datetime
-from random import random
+import random
 
 from dateutil.relativedelta import relativedelta
 from faker import Faker
@@ -33,29 +33,39 @@ class BaseAuto(object):
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
         self.db = common.DbFactory.get_db(country, program, env, run_env)
         self.log = LogUtil()
-        self.host = ''
-        self.run_task_id_url = self.host + '/task/run?taskId={0}'
-        self.run_task_order_url = self.host + '/task/run?orderNo={0}'
 
-    def run_task(self, order_no, task_type, excepts={'code': 0}):
-        self.update_task_next_run_at_forward(order_no)
-        task_id = self.db.get_task_id_by_task_type(order_no, task_type)
-        ret = Http.http_get(self.run_task_id_url.format(task_id), self.header)
+    def run_task_by_order_no(self, order_no, task_type, excepts={'code': 0}):
+        task_id = self.get_task_id_by_task_type(order_no, task_type)
+        self.update_task_next_run_at_forward_by_task_id(task_id)
+        ret = Http.http_get(self.run_task_id_url.format(task_id))
         if excepts:
-            Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过，order_no:%s, task_type:%s" % (order_no,
-                                                                                                   task_type))
+            Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过,order_no:{0},task_type:{1}return:{2}"
+                                                      "".format(order_no, task_type, ret))
+
+    def run_task_by_id(self, task_id, excepts={'code': 0}):
+        self.update_task_next_run_at_forward_by_task_id(task_id)
+        ret = Http.http_get(self.run_task_id_url.format(task_id))
+        if excepts:
+            Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过，task_id:{0}, return:{1}".format(task_id,
+                                                                                                     ret))
 
     def get_task_info_by_task_type(self, order_no, task_type, task_status='open', timeout=60):
         begin = 0
         while True:
-            task_list = self.get_data('task', task_type=task_type, task_order_no=order_no, task_status=task_status,
-                                      order_by='task_id')
+            task_list = self.db.get_data('task', task_type=task_type, task_order_no=order_no, task_status=task_status,
+                                         order_by='task_id')
             if task_list:
                 return task_list
             if begin >= timeout * 100:
                 return []
             begin += 1
             time.sleep(0.01)
+
+    def get_sync_task_id_by_task_type(self, req_key, task_type):
+        sync_info = self.db.get_data('synctask', synctask_key=req_key, synctask_type=task_type)
+        if not sync_info:
+            raise ValueError('not found the sync_info')
+        return sync_info[0]
 
     def get_task_id_by_task_type(self, task_type, task_order_no, task_status='open', timeout=60):
         task_info = self.get_task_info_by_task_type(task_type, task_order_no, task_status, timeout)
@@ -64,25 +74,19 @@ class BaseAuto(object):
                                                                                                 task_order_no))
         return task_info[0]['task_id']
 
-    def run_task_by_order_no(self, order_no):
-        self.update_task_next_run_at_forward(order_no)
-        Http.http_get(self.run_task_id_url.format(order_no), self.header)
-
-    def update_task_next_run_at_forward(self, order_no):
-        self.db.update_data('task', order_no, 'task_next_run_at',
-                            {'task_next_run_at': 'DATE_SUB(now(), interval 20 minute)'})
+    def update_task_next_run_at_forward_by_task_id(self, task_id):
+        self.db.update_data('task', 'task_id', task_id, task_next_run_at='DATE_SUB(now(), interval 20 minute)')
 
     def run_task_by_order_no_count(self, order_no, count=2):
-        self.update_task_next_run_at_forward(order_no)
+        self.update_task_next_run_at_forward_by_order_no(order_no)
         for _ in range(count):
-            Http.http_get(self.run_task_order_url.format(order_no), self.header)
+            Http.http_get(self.run_task_order_url.format(order_no))
 
-    def run_task_for_count(self, order_no, task_type, wait_time=0.5, excepts={'code': 0}, count=1):
-        self.update_task_next_run_at_forward(order_no)
-        time.sleep(wait_time)
-        task_id = self.get_task_id_by_task_type(order_no, task_type)
+    def run_task_for_count(self, task_type, order_no,  excepts={'code': 0}, count=1):
+        task_id = self.get_task_id_by_task_type(task_type, order_no)
+        self.update_task_next_run_at_forward_by_task_id(task_id)
         for _ in range(count):
-            ret = Http.http_get(self.run_task_id_url.format(task_id), self.header)
+            ret = Http.http_get(self.run_task_id_url.format(task_id))
             if excepts:
                 Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过，order_no:%s, task_type:%s" % (order_no,
                                                                                                        task_type))
@@ -139,7 +143,7 @@ class BaseAuto(object):
                     "招商银行": "622598",
                     "建设银行": "552245",
                     "民生银行": "622618"}
-        bank_code_bin = bank_map[bank_name]
+        bank_code_bin = bank_map[bank_name] if bank_name in bank_map else "621394"
         # 生成需要的银行卡并返回
         bank_code = None
         for _ in range(500):
@@ -180,8 +184,7 @@ class BaseAuto(object):
         headers = {'content-type': 'application/json'}
         new_data = [data]
         req = Http.http_post(ENCRYPT_URL, json.dumps(new_data), headers=headers)
-        result = req.json()
-        return result['data'][0]['hash'] if result['code'] == 0 else result
+        return req['data'][0]['hash'] if req['code'] == 0 else req
 
     @classmethod
     def get_four_element(cls, bank_name=None, bank_code_suffix=None, min_age=25, max_age=45, gender="F"):
@@ -190,6 +193,10 @@ class BaseAuto(object):
         phone_number = fake.phone_number()
         user_name = fake.name()
         bank_code = cls.get_bank_code(bank_name, bank_code_suffix)
+        bank_code_encrypt = cls.encrypt_data("card_number", bank_code)
+        id_number_encrypt = cls.encrypt_data("idnum", id_number)
+        user_name_encrypt = cls.encrypt_data("name", user_name)
+        phone_number_encrypt = cls.encrypt_data("mobile", phone_number)
         response = {
             "code": 0,
             "message": "success",
@@ -198,10 +205,16 @@ class BaseAuto(object):
                 "phone_number": phone_number,
                 "user_name": user_name,
                 "id_number": id_number,
-                "bank_code_encrypt": cls.encrypt_data("card_number", bank_code),
-                "id_number_encrypt": cls.encrypt_data("idnum", id_number),
-                "phone_number_encrypt": cls.encrypt_data("mobile", phone_number),
-                "user_name_encrypt": cls.encrypt_data("name", user_name)
+
+                "bank_code_encrypt": bank_code_encrypt,
+                "id_number_encrypt": id_number_encrypt,
+                "user_name_encrypt": user_name_encrypt,
+                "phone_number_encrypt": phone_number_encrypt,
+
+                "card_acc_num_encrypt": bank_code_encrypt,
+                "card_acc_id_num_encrypt": id_number_encrypt,
+                "card_acc_tel_encrypt": phone_number_encrypt,
+                "card_acc_name_encrypt": user_name_encrypt
             }
         }
         return response

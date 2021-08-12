@@ -8,6 +8,7 @@ from app.common.nacos_util import Nacos
 from app.common.xxljob_util import XxlJob
 from app.program_business import BaseAuto
 from app.common.http_util import Http
+from app.program_business.china.biz_central import ChinaBizCentralAuto
 
 GRANT_ASSET_IMPORT_URL = ""
 
@@ -49,14 +50,17 @@ class ChinaGrantDb(DataBase):
                 break
         return json.loads(asset_import_info[0]['synctask_request_data'])
 
+    def get_msg_return_req(self, order_no, msg_type, wait_time=0.5, excepts=None):
+        msg = self.get_msg_info_by_task_type(order_no, msg_type)
+        self.update_data("sendmsg", 'sendmsg_order_no', order_no,
+                         {"sendmsg_next_run_at": "DATE_SUB(now(), interval 20 minute)"})
+        return msg['sendmsg_content']
+
     def insert_router_load_record(self, **kwargs):
-        sql_keys = ""
-        sql_values = ""
-        for key, value in kwargs.items():
-            sql_keys += "`" + key + "`, "
-            sql_values += "'" + str(value) + "', "
-        sql = "INSERT INTO `router_load_record` (%s) VALUES (%s);" % (sql_keys[:-2], sql_values[:-2])
-        self.db.do_sql(sql)
+        self.insert_data('router_load_record', **kwargs)
+
+    def get_msg_info_by_task_type(self, order_no, msg_type):
+        return self.get_data("sendmsg", sendmsg_order_no=order_no, sendmsg_type=msg_type)
 
     def get_asset_import_data_by_item_no(self, item_no):
         task_info = self.get_task_by_item_no_and_task_type(item_no, 'AssetImport')
@@ -88,9 +92,12 @@ class ChinaGrantDb(DataBase):
 
 class ChinaGrantAuto(BaseAuto):
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaGrantAuto, self).__init__('china', 'gbiz', env, run_env, check_req, return_req)
-        self.grant_host_url = ""
-        self.asset_import_url = self.grant_host_url + GRANT_ASSET_IMPORT_URL
+        super(ChinaGrantAuto, self).__init__('china', 'grant', env, run_env, check_req, return_req)
+        self.host_url = "https://kong-api-test.kuainiujinke.com/gbiz{0}".format(env)
+        self.biz_central = ChinaBizCentralAuto(env, run_env, check_req, return_req)
+        self.asset_import_url = self.host_url + GRANT_ASSET_IMPORT_URL
+        self.run_task_id_url = self.host_url + '/task/run?taskId={0}'
+        self.run_task_order_url = self.host_url + '/task/run?orderNo={0}'
 
     @staticmethod
     def create_item_no():
@@ -168,7 +175,7 @@ class ChinaGrantAuto(BaseAuto):
         item_no = item_no if item_no else self.create_item_no()
         from_system, ref_order_no, source_type = self.get_from_system_and_ref(item_no, from_system_name, source_type)
         asset_info = self.db.get_asset_import_info()
-        asset_info['key'] = item_no + channel
+        asset_info['key'] = "_".join((item_no, channel))
         asset_info['from_system'] = from_system
         asset_info['data']['route_uuid'] = route_uuid if route_uuid else None
         asset_info['data']['borrower_extend']['address_district_code'] = borrower_extend_district if \
@@ -191,3 +198,9 @@ class ChinaGrantAuto(BaseAuto):
             raise ValueError('资产导入失败', resp.text)
 
         return item_no, asset_info
+
+    def loan_success(self, item_no):
+        self.db.run_task_by_order_no(item_no, "AssetImport")
+        req = self.db.get_msg_return_req(item_no, "AssetImportSync")
+        req_data = json.loads(req)['body']
+        self.biz_central.asset_import(req_data)
