@@ -95,6 +95,9 @@ class BaseAuto(object):
     def cal_days(str1, str2):
         date1 = datetime.datetime.strptime(str1[0:10], "%Y-%m-%d") if isinstance(str1, str) else str1
         date2 = datetime.datetime.strptime(str2[0:10], "%Y-%m-%d") if isinstance(str2, str) else str2
+        date1 = date1.date() if isinstance(date1, datetime.datetime) else date1
+        date2 = date2.date() if isinstance(date2, datetime.datetime) else date2
+        print(date2, type(date2), isinstance(date2, datetime.datetime), date1, type(date1), isinstance(date1, datetime.datetime))
         num = (date2 - date1).days
         return num
 
@@ -143,36 +146,52 @@ class BaseAuto(object):
             hold_months = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
         return int(math.modf(hold_months + decimal_month)[-1])
 
-    def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, real_now,
+    def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                             advance_month):
+        real_now = self.get_date(months=advance_month, days=advance_day).date()
+        cal_advance_month = self.cal_months(asset_list[0].asset_actual_grant_at, real_now)
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
 
         capital_asset.capital_asset_granted_at = real_now
 
         for asset_tran in asset_tran_list:
-            asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, months=advance_month,
+            asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, months=cal_advance_month,
                                               day=real_now.day)
             if asset_tran.asset_tran_finish_at.year != 1000:
                 cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=advance_month,
+                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
                                                                 days=cal_advance_day)
             asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
             expect_finished_at = self.get_date(date=capital_tran.capital_transaction_expect_finished_at,
-                                               months=advance_month,
+                                               months=cal_advance_month,
                                                day=real_now.day)
             if capital_tran.capital_transaction_user_repay_at.year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_user_repay_at)
                 capital_tran.capital_transaction_user_repay_at = self.get_date(date=expect_finished_at,
-                                                                               months=advance_month,
+                                                                               months=cal_advance_month,
                                                                                days=cal_advance_day)
+            actual_operate_at = 'capital_transaction_actual_operate_at' if \
+                hasattr(capital_tran, 'capital_transaction_actual_operate_at') \
+                else 'capital_transaction_actual_finished_at'
+            if getattr(capital_tran, actual_operate_at).year != 1000:
+                cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
+                                                getattr(capital_tran, actual_operate_at))
+                setattr(capital_tran, actual_operate_at, self.get_date(date=expect_finished_at,
+                                                                       months=cal_advance_month,
+                                                                       days=cal_advance_day))
+            if hasattr(capital_tran, 'capital_transaction_expect_operate_at'):
+                cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
+                                                capital_tran.capital_transaction_expect_operate_at)
+                capital_tran.capital_transaction_expect_operate_at = self.get_date(date=expect_finished_at,
+                                                                                   months=cal_advance_month,
+                                                                                   days=cal_advance_day)
             capital_tran.capital_transaction_expect_finished_at = expect_finished_at
-
         self.db_session.add_all(asset_list)
-        self.db_session.add_all(capital_asset)
+        self.db_session.add_all([capital_asset])
         self.db_session.add_all(capital_tran_list)
         self.db_session.add_all(asset_tran_list)
         self.db_session.commit()
@@ -214,7 +233,8 @@ class BaseAuto(object):
     @staticmethod
     def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):
         date = date if date is not None else datetime.datetime.now(timezone)
-        return (date + relativedelta(**kwargs)).strftime(fmt) if is_str else date + relativedelta(**kwargs)
+        new_data = date + relativedelta(**kwargs)
+        return new_data.strftime(fmt) if is_str else new_data
 
     def compare_data(self, set_key, src_data, dst_data, noise_data, num):
         if isinstance(src_data, dict) and isinstance(dst_data, dict):

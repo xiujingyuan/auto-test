@@ -103,6 +103,34 @@ class AssetTran(db.Model):
 
 
 
+class CapitalAsset(db.Model):
+    __tablename__ = 'capital_asset'
+    __table_args__ = (
+        db.Index('idx_capital_asset_item_no_channel', 'capital_asset_item_no', 'capital_asset_channel'),
+        db.Index('idx_capital_asset_item_no_type', 'capital_asset_item_no', 'capital_asset_type')
+    )
+
+    capital_asset_id = db.Column(db.Integer, primary_key=True)
+    capital_asset_type = db.Column(db.Enum('package', 'asset'), nullable=False, server_default=db.FetchedValue(), info='资产类型')
+    capital_asset_item_no = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue(), info='资产编号')
+    capital_asset_holding_days = db.Column(db.Integer, server_default=db.FetchedValue(), info='资产持有天数')
+    capital_asset_channel = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue(), info='资金方')
+    capital_asset_status = db.Column(db.Enum('sign', 'sale', 'repay', 'payoff'), nullable=False, server_default=db.FetchedValue(), info='状态：sign:签约中，sale，销售中 repay，还款中  payoff，已结清(正常结清)')
+    capital_asset_push_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='资产推送到资金方的时间')
+    capital_asset_confirm_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='资金方确认资产时间')
+    capital_asset_granted_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='资金方放款（卖出）时间')
+    capital_asset_origin_amount = db.Column(db.BigInteger, nullable=False, server_default=db.FetchedValue(), info='申请金额')
+    capital_asset_confirm_amount = db.Column(db.BigInteger, nullable=False, server_default=db.FetchedValue(), info='确认金额')
+    capital_asset_granted_amount = db.Column(db.BigInteger, nullable=False, server_default=db.FetchedValue(), info='放款金额')
+    capital_asset_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='创建时间')
+    capital_asset_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='更新时间')
+    capital_asset_period_count = db.Column(db.Integer, server_default=db.FetchedValue(), info='总期数')
+    capital_asset_period_type = db.Column(db.Enum('day', 'month'), nullable=False, server_default=db.FetchedValue(), info='该期周期单位')
+    capital_asset_period_term = db.Column(db.SmallInteger, nullable=False, server_default=db.FetchedValue(), info='该期周期长度')
+    capital_asset_version = db.Column(db.BigInteger, server_default=db.FetchedValue())
+
+
+
 class CapitalNotify(db.Model):
     __tablename__ = 'capital_notify'
 
@@ -152,8 +180,8 @@ class CapitalSettlementDetail(db.Model):
 class CapitalTransaction(db.Model):
     __tablename__ = 'capital_transaction'
     __table_args__ = (
-        db.Index('idx_capital_transaction_item_no_period', 'capital_transaction_asset_item_no', 'capital_transaction_period'),
-        db.Index('idx_capital_tran_channel_type_finish_at', 'capital_transaction_channel', 'capital_transaction_type', 'capital_transaction_expect_finished_at')
+        db.Index('idx_capital_tran_channel_type_finish_at', 'capital_transaction_channel', 'capital_transaction_type', 'capital_transaction_expect_finished_at'),
+        db.Index('idx_capital_transaction_item_no_period', 'capital_transaction_asset_item_no', 'capital_transaction_period')
     )
 
     capital_transaction_id = db.Column(db.Integer, primary_key=True)
@@ -183,6 +211,7 @@ class CapitalTransaction(db.Model):
     capital_transaction_process_status = db.Column(db.String(32), server_default=db.FetchedValue(), info='状态：ready,process,fail,success')
     capital_transaction_origin_amount = db.Column(db.BigInteger, nullable=False, server_default=db.FetchedValue(), info='原始金额')
     capital_transaction_asset_item_no = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue())
+
 
 
 class CentralSendMsg(db.Model):

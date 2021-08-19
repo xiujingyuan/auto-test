@@ -388,7 +388,6 @@ class BuybackTran(db.Model):
     buyback_tran_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
 
 
-
 class CapitalAsset(db.Model):
     __tablename__ = 'capital_asset'
 

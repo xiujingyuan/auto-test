@@ -3,7 +3,8 @@ from app.program_business import BaseAuto
 from app.common.http_util import Http
 import json
 
-from app.program_business.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran
+from app.program_business.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
+    CapitalAsset, CapitalTransaction
 
 
 class ChinaBizCentralAuto(BaseAuto):
@@ -19,21 +20,17 @@ class ChinaBizCentralAuto(BaseAuto):
         ret = Http.http_post(self.asset_import_url, req_data)
         return ret
 
-    def change_capital_transaction(self, item_no, item_no_x, item_no_rights, real_now, advance_month):
+    def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
         asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
-        for asset in asset_list:
-            asset.asset_actual_grant_at = real_now
+        capital_asset = self.db_session.query(CapitalAsset).filter(
+            CapitalAsset.capital_asset_item_no == item_no).first()
         asset_tran_list = self.db_session.query(AssetTran).filter(
-            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
-        for asset_tran in asset_tran_list:
-            asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, months=advance_month,
-                                              day=real_now.day)
-            if asset_tran.asset_tran_finish_at.year != 1000:
-                cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=advance_month,
-                                                                days=cal_advance_day)
-            asset_tran.asset_tran_due_at = asset_tran_due_at
+            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
+        capital_tran_list = self.db_session.query(CapitalTransaction).filter(
+            CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
+        self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
+                                 advance_month)
 
     def update_central_task_next_run_at_forward_by_task_id(self, task_id):
         central_task = self.db_session.query(CentralTask).filter(CentralTask.task_id == task_id).first()

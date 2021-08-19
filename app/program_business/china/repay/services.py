@@ -11,10 +11,11 @@ from sqlalchemy import desc
 from app.common.http_util import Http
 from app.common.tools import get_date
 from app.program_business import BaseAuto
+from app.program_business.china.biz_central.services import ChinaBizCentralAuto
 from app.program_business.china.grant.services import ChinaGrantAuto
 from app.program_business.china.repay import query_withhold
 from app.program_business.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
-    SendMsg, Withhold
+    SendMsg, Withhold, CapitalAsset, CapitalTransaction
 
 
 class ChinaRepayAuto(BaseAuto):
@@ -22,6 +23,7 @@ class ChinaRepayAuto(BaseAuto):
         super(ChinaRepayAuto, self).__init__('china', 'repay', env, run_env, check_req, return_req)
         self.host_url = "https://kong-api-test.kuainiujinke.com/rbiz{0}".format(env)
         self.grant = ChinaGrantAuto(env, run_env, check_req, return_req)
+        self.biz_central = ChinaBizCentralAuto(env, run_env, check_req, return_req)
         self.decrease_url = self.host_url + "/asset/bill/decrease"
         self.active_repay_url = self.host_url + "/paydayloan/repay/combo-active-encrypt"
         self.fox_repay_url = self.host_url + "/fox/manual-withhold-encrypt"
@@ -67,24 +69,15 @@ class ChinaRepayAuto(BaseAuto):
     def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
         asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
-        real_now = self.get_date(months=advance_month, days=advance_day).date()
-        for index, asset in enumerate(asset_list):
-            if index == 0:
-                cal_advance_month = self.cal_months(asset.asset_actual_grant_at, real_now)
-            asset.asset_actual_grant_at = real_now
         asset_tran_list = self.db_session.query(AssetTran).filter(
             AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
-        for asset_tran in asset_tran_list:
-            asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, months=cal_advance_month,
-                                              day=real_now.day)
-            if asset_tran.asset_tran_finish_at.year != 1000:
-                cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
-                                                                days=cal_advance_day)
-            asset_tran.asset_tran_due_at = asset_tran_due_at
-        self.db_session.add_all(asset_tran_list)
-        self.db_session.add_all(asset_list)
-        self.db_session.commit()
+        capital_asset = self.db_session.query(CapitalAsset).filter(
+            CapitalAsset.capital_asset_item_no == item_no).first()
+        capital_tran_list = self.db_session.query(CapitalTransaction).filter(
+            CapitalTransaction.capital_transaction_item_no == item_no).all()
+        self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
+                                 advance_month)
+        self.biz_central.change_asset(item_no, item_no_x, item_no_rights, advance_day, advance_month)
 
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
         asset_tran_list = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no,
