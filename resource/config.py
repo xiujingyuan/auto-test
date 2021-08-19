@@ -13,7 +13,11 @@ class AutoTestConfig:
     DEBUG = True
     DOMAIN = "http://127.0.0.1:5102"
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/auto-test?charset=utf8'
-
+    SQLALCHEMY_DICT = {
+        'china': {"repay": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/rbiz{0}",
+                  "grant": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/gbiz{0}",
+                  "biz-central": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz{0}"}
+    }
     # SQLALCHEMY设置配置
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False

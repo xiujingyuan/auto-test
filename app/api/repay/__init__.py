@@ -3,7 +3,7 @@ import traceback
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
-from app.program_business.china.repay import ChinaRepayAuto
+from app.program_business.china.repay.services import ChinaRepayAuto
 
 api_repay = Blueprint('api_repay', __name__)
 
@@ -32,10 +32,6 @@ def repay_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    try:
-        repay = RepayFactory.get_repay(country, env, environment)
-        ret['data'] = getattr(repay, tool)(**req)
-    except Exception as e:
-        ret['code'] = 1
-        ret['message'] = traceback.format_exc()
+    repay = RepayFactory.get_repay(country, env, environment)
+    ret['data'] = getattr(repay, tool)(**req)
     return jsonify(ret)

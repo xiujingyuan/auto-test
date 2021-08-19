@@ -1,16 +1,23 @@
 # 业务逻辑
 import json
 import time
-from datetime import datetime
+import datetime
 import random
-
+import calendar as c
+import math
 from dateutil.relativedelta import relativedelta
 from faker import Faker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, sessionmaker
 
 import app.common as common
+from app.common.db_util import DataBase
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.assert_util import Assert
+from app.common.tools import CheckExist, get_date
+from app.program_business.china.repay.Model import Task
+from resource.config import AutoTestConfig
 
 ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
 ENCRYPT_DICT = {
@@ -23,6 +30,51 @@ ENCRYPT_DICT = {
         }
 
 
+class DataBaseAuto(DataBase):
+    def __init__(self,  system, num, country, run_env):
+        super(DataBaseAuto, self).__init__(system, num, country, run_env)
+
+    @CheckExist(check=False)
+    def get_task_info(self, task_type='', order_no='', status='', **kwargs):
+        return self.get_data('task', order_by='task_id', **kwargs)
+
+    @CheckExist()
+    def get_synctask_info(self, synctask_key='', synctask_type='', **kwargs):
+        return self.get_data('synctask', order_by='synctask_id', **kwargs)
+
+    @CheckExist()
+    def get_sendmsg_info(self, order_no='', sendmsg_type='', **kwargs):
+        return self.get_data('sendmsg', **kwargs)
+
+    def get_task_info_with_timeout(self, order_no, task_type, status='open', timeout=60):
+        begin = 0
+        while True:
+            task_list = self.get_task_info(task_type=task_type, order_no=order_no, status=status)
+            if task_list or begin >= timeout * 100:
+                break
+            begin += 1
+            time.sleep(0.01)
+        return task_list
+
+    def get_sync_task_id(self, req_key, task_type):
+        sync_info = self.get_synctask_info(synctask_key=req_key, synctask_type=task_type)
+        return sync_info[0]
+
+    def get_task_id_with_timeout(self, task_type, task_order_no, task_status='open', timeout=60):
+        task_info = self.get_task_info_with_timeout(task_order_no, task_type, status=task_status, timeout=timeout)
+        return task_info[0]['task_id']
+
+    def update_task_next_run_at_forward_by_task_id(self, task_id):
+        self.update_data('task', 'task_id', task_id, task_next_run_at='DATE_SUB(now(), interval 20 minute)')
+
+
+class MyScopedSession(scoped_session):
+
+    def execute(self, *args, **kwargs):
+        ret = super(MyScopedSession, self).execute(*args, **kwargs)
+        return [dict(zip(result.keys(), result)) for result in ret]
+
+
 class BaseAuto(object):
 
     def __init__(self, country, program, env, run_env, check_req, return_req):
@@ -31,16 +83,111 @@ class BaseAuto(object):
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
-        self.db = common.DbFactory.get_db(country, program, env, run_env)
+        self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=True)
+        self.db_session = MyScopedSession(sessionmaker())
+        self.db_session.configure(bind=self.engine)
         self.log = LogUtil()
 
-    def run_task_by_order_no(self, order_no, task_type, excepts={'code': 0}):
-        task_id = self.get_task_id_by_task_type(order_no, task_type)
-        self.update_task_next_run_at_forward_by_task_id(task_id)
-        ret = Http.http_get(self.run_task_id_url.format(task_id))
-        if excepts:
-            Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过,order_no:{0},task_type:{1}return:{2}"
-                                                      "".format(order_no, task_type, ret))
+    def __del__(self):
+        self.db_session.close()
+
+    @staticmethod
+    def cal_days(str1, str2):
+        date1 = datetime.datetime.strptime(str1[0:10], "%Y-%m-%d") if isinstance(str1, str) else str1
+        date2 = datetime.datetime.strptime(str2[0:10], "%Y-%m-%d") if isinstance(str2, str) else str2
+        num = (date2 - date1).days
+        return num
+
+    @staticmethod
+    def cal_months(start_date, end_date):
+        # 计算两个日期相隔月差
+        try:
+            same_month_date = datetime.date(end_date.year, end_date.month, start_date.day)
+        except:
+            same_month_date = datetime.date(end_date.year, end_date.month,
+                                            c.monthrange(end_date.year, end_date.month)[1]
+                                            )
+        hold_months = 0
+        decimal_month = 0.0
+        if same_month_date > end_date:
+            if end_date.month > 1:
+                try:
+                    pre_manth_date = datetime.date(end_date.year, end_date.month - 1, start_date.day)
+                except:
+                    pre_manth_date = datetime.date(end_date.year, end_date.month - 1, c.monthrange(end_date.year,
+                                                                                               end_date.month - 1)[1])
+            else:
+                try:
+                    pre_manth_date = datetime.date(end_date.year - 1, 12, start_date.day)
+                except:
+                    pre_manth_date = datetime.date(end_date.year - 1, 12, c.monthrange(end_date.year - 1, 1)[1])
+            curr_month_days = (same_month_date - pre_manth_date).days
+            hold_months = (pre_manth_date.year - start_date.year) * 12 + pre_manth_date.month - start_date.month
+            decimal_month = (end_date - pre_manth_date).days / curr_month_days
+        elif same_month_date < end_date:
+            if end_date.month < 12:
+                try:
+                    next_month_date = datetime.date(end_date.year, end_date.month + 1, start_date.day)
+                except:
+                    next_month_date = datetime.date(end_date.year, end_date.month + 1, c.monthrange(end_date.year,
+                                                                                                end_date.month + 1)[1])
+            else:
+                try:
+                    next_month_date = datetime.date(end_date.year + 1, 1, start_date.day)
+                except:
+                    next_month_date = datetime.date(end_date.year + 1, 1, c.monthrange(end_date.year + 1, 1)[1])
+            curr_month_days = (next_month_date - same_month_date).days
+            hold_months = (same_month_date.year - start_date.year) * 12 + same_month_date.month - start_date.month
+            decimal_month = (end_date - same_month_date).days / curr_month_days
+        else:
+            hold_months = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
+        return int(math.modf(hold_months + decimal_month)[-1])
+
+    def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, real_now,
+                            advance_month):
+        for asset in asset_list:
+            asset.asset_actual_grant_at = real_now
+
+        capital_asset.capital_asset_granted_at = real_now
+
+        for asset_tran in asset_tran_list:
+            asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, months=advance_month,
+                                              day=real_now.day)
+            if asset_tran.asset_tran_finish_at.year != 1000:
+                cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=advance_month,
+                                                                days=cal_advance_day)
+            asset_tran.asset_tran_due_at = asset_tran_due_at
+
+        for capital_tran in capital_tran_list:
+            expect_finished_at = self.get_date(date=capital_tran.capital_transaction_expect_finished_at,
+                                               months=advance_month,
+                                               day=real_now.day)
+            if capital_tran.capital_transaction_user_repay_at.year != 1000:
+                cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
+                                                capital_tran.capital_transaction_user_repay_at)
+                capital_tran.capital_transaction_user_repay_at = self.get_date(date=expect_finished_at,
+                                                                               months=advance_month,
+                                                                               days=cal_advance_day)
+            capital_tran.capital_transaction_expect_finished_at = expect_finished_at
+
+        self.db_session.add_all(asset_list)
+        self.db_session.add_all(capital_asset)
+        self.db_session.add_all(capital_tran_list)
+        self.db_session.add_all(asset_tran_list)
+        self.db_session.commit()
+
+    def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
+        task_id = self.db.get_task_info(order_no, task_type, status=status)[0]['task_id']
+        self.run_task_by_id(task_id, excepts=excepts)
+
+    def update_task_next_run_at_forward_by_task_id(self, task_id):
+        task = self.db_session.query(Task).filter(Task.task_id == task_id).first()
+        if not task:
+            raise ValueError("not fund the task info with task'id {0}".format(task))
+        task.task_next_run_at = get_date(minutes=1)
+        self.db_session.add(task)
+        self.db_session.commit()
 
     def run_task_by_id(self, task_id, excepts={'code': 0}):
         self.update_task_next_run_at_forward_by_task_id(task_id)
@@ -49,51 +196,25 @@ class BaseAuto(object):
             Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过，task_id:{0}, return:{1}".format(task_id,
                                                                                                      ret))
 
-    def get_task_info_by_task_type(self, order_no, task_type, task_status='open', timeout=60):
-        begin = 0
-        while True:
-            task_list = self.db.get_data('task', task_type=task_type, task_order_no=order_no, task_status=task_status,
-                                         order_by='task_id')
-            if task_list:
-                return task_list
-            if begin >= timeout * 100:
-                return []
-            begin += 1
-            time.sleep(0.01)
+    def run_msg_by_id(self, msg_id, excepts={"code": 0}):
+        ret = Http.http_get(self.run_msg_id_url.format(msg_id))
+        if excepts:
+            Assert.assert_match_json(excepts, ret[0], "msg运行结果校验不通过，msg_id:{0}, return:{1}".format(msg_id, ret))
 
-    def get_sync_task_id_by_task_type(self, req_key, task_type):
-        sync_info = self.db.get_data('synctask', synctask_key=req_key, synctask_type=task_type)
-        if not sync_info:
-            raise ValueError('not found the sync_info')
-        return sync_info[0]
-
-    def get_task_id_by_task_type(self, task_type, task_order_no, task_status='open', timeout=60):
-        task_info = self.get_task_info_by_task_type(task_type, task_order_no, task_status, timeout)
-        if not task_info:
-            raise ValueError("not found task info with task type:{0},task order no :{1}".format(task_type,
-                                                                                                task_order_no))
-        return task_info[0]['task_id']
-
-    def update_task_next_run_at_forward_by_task_id(self, task_id):
-        self.db.update_data('task', 'task_id', task_id, task_next_run_at='DATE_SUB(now(), interval 20 minute)')
-
-    def run_task_by_order_no_count(self, order_no, count=2):
-        self.update_task_next_run_at_forward_by_order_no(order_no)
-        for _ in range(count):
-            Http.http_get(self.run_task_order_url.format(order_no))
+    def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
+        msg_id = self.db.get_sendmsg_info(order_no, sendmsg_type)[0]['sendmsg_id']
+        self.run_msg_by_id(msg_id, excepts=excepts)
 
     def run_task_for_count(self, task_type, order_no,  excepts={'code': 0}, count=1):
         task_id = self.get_task_id_by_task_type(task_type, order_no)
-        self.update_task_next_run_at_forward_by_task_id(task_id)
+        self.db.update_task_next_run_at_forward_by_task_id(task_id)
         for _ in range(count):
-            ret = Http.http_get(self.run_task_id_url.format(task_id))
-            if excepts:
-                Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过，order_no:%s, task_type:%s" % (order_no,
-                                                                                                       task_type))
+            self.run_task_by_id(task_id, excepts=excepts)
 
     @staticmethod
-    def get_date(year=0, month=0, day=0, fmt="%Y-%m-%d %H:%M:%S", timezone=None):
-        return (datetime.now(timezone) + relativedelta(years=year, months=month, days=day)).strftime(fmt)
+    def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):
+        date = date if date is not None else datetime.datetime.now(timezone)
+        return (date + relativedelta(**kwargs)).strftime(fmt) if is_str else date + relativedelta(**kwargs)
 
     def compare_data(self, set_key, src_data, dst_data, noise_data, num):
         if isinstance(src_data, dict) and isinstance(dst_data, dict):
@@ -182,21 +303,16 @@ class BaseAuto(object):
     def encrypt_data(data_type, value):
         data = {"type": ENCRYPT_DICT[data_type], "plain": value} if data_type in ENCRYPT_DICT else None
         headers = {'content-type': 'application/json'}
-        new_data = [data]
-        req = Http.http_post(ENCRYPT_URL, json.dumps(new_data), headers=headers)
+        req = Http.http_post(ENCRYPT_URL, [data], headers=headers)
         return req['data'][0]['hash'] if req['code'] == 0 else req
 
     @classmethod
-    def get_four_element(cls, bank_name=None, bank_code_suffix=None, min_age=25, max_age=45, gender="F"):
+    def get_four_element(cls, bank_name=None, bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
         user_name = fake.name()
         bank_code = cls.get_bank_code(bank_name, bank_code_suffix)
-        bank_code_encrypt = cls.encrypt_data("card_number", bank_code)
-        id_number_encrypt = cls.encrypt_data("idnum", id_number)
-        user_name_encrypt = cls.encrypt_data("name", user_name)
-        phone_number_encrypt = cls.encrypt_data("mobile", phone_number)
         response = {
             "code": 0,
             "message": "success",
@@ -206,15 +322,10 @@ class BaseAuto(object):
                 "user_name": user_name,
                 "id_number": id_number,
 
-                "bank_code_encrypt": bank_code_encrypt,
-                "id_number_encrypt": id_number_encrypt,
-                "user_name_encrypt": user_name_encrypt,
-                "phone_number_encrypt": phone_number_encrypt,
-
-                "card_acc_num_encrypt": bank_code_encrypt,
-                "card_acc_id_num_encrypt": id_number_encrypt,
-                "card_acc_tel_encrypt": phone_number_encrypt,
-                "card_acc_name_encrypt": user_name_encrypt
+                "bank_code_encrypt": cls.encrypt_data("card_number", bank_code),
+                "id_number_encrypt": cls.encrypt_data("idnum", id_number) if id_num is None else id_num,
+                "user_name_encrypt": cls.encrypt_data("name", user_name),
+                "phone_number_encrypt": cls.encrypt_data("mobile", phone_number),
             }
         }
         return response

@@ -8,6 +8,7 @@ import decimal
 from functools import reduce
 
 import requests
+from dateutil.relativedelta import relativedelta
 
 from app.common.log_util import LogUtil
 
@@ -68,8 +69,20 @@ class CheckExist(object):
 
         @wraps(func)
         def wrapped_function(*args, **kwargs):
-            ret = func(*args, **kwargs)
             print('{0} called begin'.format(func.__name__))
+            if func.__name__.startswith("get_") and func.__name__.endswith("_info"):
+                prefix = func.__name__[4:-5]
+                print(prefix)
+                new_kwargs = {}
+                for kwarg, k_value in kwargs.items():
+                    if prefix not in kwarg and k_value:
+                        print(kwarg)
+                        new_kwargs['{0}_{1}'.format(prefix, kwarg)] = k_value
+                if new_kwargs:
+                    kwargs.update(new_kwargs)
+                else:
+                    raise ValueError('all args is null!')
+            ret = func(*args, **kwargs)
 
             def add(x, y):
                 return '{0}, {1}'.format(x, y)
@@ -150,3 +163,7 @@ def parse_resp_body(resp):
         "reason": resp.reason
     }
     return resp
+
+
+def get_date(fmt="%Y-%m-%d %H:%M:%S", timezone=None, **kwargs):
+    return (datetime.now(timezone) + relativedelta(**kwargs)).strftime(fmt)

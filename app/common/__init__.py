@@ -8,8 +8,13 @@
  @site:
  @email:
 """
-from app.program_business.china.biz_central import ChinaBizCentralXxlJob, ChinaBizDb
-from app.program_business.china.repay import RepayEasyMock, ChinaRepayXxlJob, ChinaRepayNacos, ChinaRepayDb
+from app.program_business.china.biz_central.services import ChinaBizCentralAuto
+from app.program_business.china.biz_central.xxljob import ChinaBizCentralXxlJob
+from app.program_business.china.grant.services import ChinaGrantAuto
+from app.program_business.china.repay.easy_mock import RepayEasyMock
+from app.program_business.china.repay.nacos import ChinaRepayNacos
+from app.program_business.china.repay.services import ChinaRepayAuto
+from app.program_business.china.repay.xxljob import ChinaRepayXxlJob
 
 
 class EasyMockFactory(object):
@@ -27,18 +32,6 @@ class NacosFactory(object):
             return ChinaRepayNacos(env)
 
 
-class DbFactory(object):
-
-    @classmethod
-    def get_db(cls, country, program, env, run_env):
-        if country == 'china' and program == 'repay':
-            return ChinaRepayDb(env, run_env)
-        elif country == 'china' and program == 'biz-central':
-            return ChinaBizDb(env, run_env)
-        elif country == 'china' and program == 'grant':
-            return ChinaBizDb(env, run_env)
-
-
 class XxlJobFactory(object):
 
     @classmethod
@@ -47,3 +40,11 @@ class XxlJobFactory(object):
             return ChinaRepayXxlJob(env)
         if country == 'china' and program == 'biz-central':
             return ChinaBizCentralXxlJob(env)
+
+
+class AutoFactory(object):
+
+    @classmethod
+    def get_auto(cls, country, program, env, run_env):
+        if country == 'china' and program == 'repay':
+            return ChinaRepayAuto(env, run_env)
