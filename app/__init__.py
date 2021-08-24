@@ -33,8 +33,8 @@ def create_app():
     from app.api.easymock import api_easy_mock as api_easy_mock_blueprint
     app.register_blueprint(api_easy_mock_blueprint, url_prefix='/api/easy_mock/')
 
-    from app.api.database import api_data_base as api_data_base_blueprint
-    app.register_blueprint(api_data_base_blueprint, url_prefix='/api/data_base/')
+    from app.api.biz_central import api_biz_central as api_biz_central_blueprint
+    app.register_blueprint(api_biz_central_blueprint, url_prefix='/api/biz_central/')
 
     from app.api.repay import api_repay as api_repay_blueprint
     app.register_blueprint(api_repay_blueprint, url_prefix='/api/repay/')

@@ -1,12 +1,93 @@
 # coding: utf-8
 from flask_sqlalchemy import SQLAlchemy
 
+from app.common.db_util import BaseToDict
 
 db = SQLAlchemy()
 
 
+class WithholdHistory(db.Model):
+    __tablename__ = 'withhold_history'
+    __table_args__ = (
+        db.Index('idx_withhold_result_channel_finish_at', 'withhold_result_channel', 'withhold_result_finish_at'),
+    )
 
-class Asset(db.Model):
+    withhold_history_id = db.Column(db.Integer, primary_key=True, info='主键')
+    withhold_result_id = db.Column(db.Integer, nullable=False, index=True, info='代扣主键')
+    withhold_result_asset_id = db.Column(db.Integer, nullable=False, index=True, info='资产ID')
+    withhold_result_asset_item_no = db.Column(db.String(64), nullable=False, index=True, info='资产编号')
+    withhold_result_asset_type = db.Column(db.String(60), nullable=False, info='资产类型')
+    withhold_result_asset_period = db.Column(db.Integer, nullable=False, info='资产期数')
+    withhold_result_amount = db.Column(db.BigInteger, nullable=False, info='实际代扣金额：单位分')
+    withhold_result_user_name = db.Column(db.String(255), info='用户名')
+    withhold_result_user_phone = db.Column(db.String(45), info='用户手机号')
+    withhold_result_user_id_card = db.Column(db.String(45), info='用户身份证号')
+    withhold_result_user_bank_card = db.Column(db.String(45), info='用户银行卡号')
+    withhold_result_type = db.Column(db.Enum('auto', 'manual', 'active'), nullable=False, info='类型: auto-自动代扣，manual-手动代扣，active-自主还款')
+    withhold_result_status = db.Column(db.Enum('success'), nullable=False, info='代扣状态')
+    withhold_result_channel = db.Column(db.String(50), nullable=False, info='代扣渠道')
+    withhold_result_serial_no = db.Column(db.String(255), nullable=False, index=True, info='订单号')
+    withhold_result_create_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='创建时间')
+    withhold_result_channel_key = db.Column(db.String(50), index=True, server_default=db.FetchedValue(), info='交易流水号')
+    withhold_result_channel_fee = db.Column(db.BigInteger, server_default=db.FetchedValue(), info='通道手续费')
+    withhold_result_finish_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='完成时间')
+    withhold_history_sync_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='更新时间')
+    withhold_result_user_name_encrypt = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue(), info='用户名加密')
+    withhold_result_user_phone_encrypt = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue(), info='用户手机号加密')
+    withhold_result_user_id_card_encrypt = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue(), info='用户身份证号加密')
+    withhold_result_user_bank_card_encrypt = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue(), info='用户银行卡号加密')
+
+
+class WithholdResult(db.Model):
+    __tablename__ = 'withhold_result'
+    __table_args__ = (
+        db.Index('withhold_result_create_at_asset_id_index', 'withhold_result_create_at', 'withhold_result_asset_id', 'withhold_result_user_id_card'),
+        db.Index('withhold_result_status_create_INDEX', 'withhold_result_status', 'withhold_result_create_at'),
+        db.Index('idx_withhold_result_channel_owner', 'withhold_result_channel', 'withhold_result_owner'),
+        db.Index('idx_unique_withhold_serial_no_item_no', 'withhold_result_serial_no', 'withhold_result_asset_item_no'),
+        db.Index('idx_withhold_result_finish_at_status', 'withhold_result_finish_at', 'withhold_result_status')
+    )
+
+    withhold_result_id = db.Column(db.Integer, primary_key=True, info='主键')
+    withhold_result_asset_id = db.Column(db.Integer, nullable=False, index=True, info='资产ID')
+    withhold_result_asset_item_no = db.Column(db.String(64), nullable=False, index=True, info='资产编号')
+    withhold_result_asset_type = db.Column(db.String(60), nullable=False, info='资产类型')
+    withhold_result_asset_period = db.Column(db.Integer, nullable=False, info='资产期数')
+    withhold_result_amount = db.Column(db.Numeric(15, 2), nullable=False, server_default=db.FetchedValue(), info='实际代扣金额：单位分')
+    withhold_result_user_name = db.Column(db.String(255), index=True, info='用户名')
+    withhold_result_user_phone = db.Column(db.String(45), info='用户手机号')
+    withhold_result_user_id_card = db.Column(db.String(45), info='用户身份证号')
+    withhold_result_user_bank_card = db.Column(db.String(45), info='用户银行卡号')
+    withhold_result_user_bank_card_code = db.Column(db.String(50), nullable=False, info='用户银行卡别')
+    withhold_result_type = db.Column(db.Enum('auto', 'manual', 'active'), nullable=False, server_default=db.FetchedValue(), info='类型: auto-自动代扣，manual-手动代扣，active-自主还款')
+    withhold_result_status = db.Column(db.Enum('ready', 'success', 'process', 'fail', 'cancel'), nullable=False, server_default=db.FetchedValue(), info='代扣状态')
+    withhold_result_channel = db.Column(db.String(50), nullable=False, server_default=db.FetchedValue(), info='代扣渠道')
+    withhold_result_serial_no = db.Column(db.String(255), nullable=False, info='订单号')
+    withhold_result_comment = db.Column(db.String(255), nullable=False, server_default=db.FetchedValue(), info='备注')
+    withhold_result_custom_code = db.Column(db.String(45), nullable=False, server_default=db.FetchedValue(), info='代扣自定义编码')
+    withhold_result_request_data = db.Column(db.Text, info='请求内容')
+    withhold_result_response_data = db.Column(db.Text, info='返回内容')
+    withhold_result_creator = db.Column(db.String(255), nullable=False, info='创建者')
+    withhold_result_operator = db.Column(db.String(255), nullable=False, server_default=db.FetchedValue(), info='执行者')
+    withhold_result_run_times = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='执行次数')
+    withhold_result_execute_time = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='执行时间')
+    withhold_result_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='创建时间')
+    withhold_result_update_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='更新时间')
+    withhold_result_channel_key = db.Column(db.String(50), index=True, server_default=db.FetchedValue(), info='交易流水号')
+    withhold_result_channel_fee = db.Column(db.BigInteger, server_default=db.FetchedValue(), info='通道手续费')
+    withhold_result_finish_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='完成时间')
+    withhold_result_error_code = db.Column(db.String(32), index=True, server_default=db.FetchedValue(), info='错误代码')
+    withhold_result_rbiz_process = db.Column(db.Integer, server_default=db.FetchedValue(), info='是否在rbiz处理')
+    withhold_result_owner = db.Column(db.String(24), nullable=False, server_default=db.FetchedValue(), info='所有者')
+    withhold_result_user_name_encrypt = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue(), info='用户名加密')
+    withhold_result_user_phone_encrypt = db.Column(db.String(128), nullable=False, index=True, server_default=db.FetchedValue(), info='用户手机号加密')
+    withhold_result_user_id_card_encrypt = db.Column(db.String(128), nullable=False, index=True, server_default=db.FetchedValue(), info='用户身份证号加密')
+    withhold_result_user_bank_card_encrypt = db.Column(db.String(128), nullable=False, index=True, server_default=db.FetchedValue(), info='用户银行卡号加密')
+    withhold_result_channel_message = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue())
+    withhold_result_capital_receive_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='资方接收时间')
+
+
+class Asset(db.Model, BaseToDict):
     __tablename__ = 'asset'
     __table_args__ = (
         db.Index('idx_asset_type_sub_type', 'asset_type', 'asset_sub_type'),
@@ -74,7 +155,7 @@ class Asset(db.Model):
 
 
 
-class AssetTran(db.Model):
+class AssetTran(db.Model, BaseToDict):
     __tablename__ = 'asset_tran'
     __table_args__ = (
         db.Index('unique_item_no_type_period', 'asset_tran_asset_item_no', 'asset_tran_period', 'asset_tran_type'),
@@ -103,7 +184,7 @@ class AssetTran(db.Model):
 
 
 
-class CapitalAsset(db.Model):
+class CapitalAsset(db.Model, BaseToDict):
     __tablename__ = 'capital_asset'
     __table_args__ = (
         db.Index('idx_capital_asset_item_no_channel', 'capital_asset_item_no', 'capital_asset_channel'),
@@ -131,7 +212,7 @@ class CapitalAsset(db.Model):
 
 
 
-class CapitalNotify(db.Model):
+class CapitalNotify(db.Model, BaseToDict):
     __tablename__ = 'capital_notify'
 
     capital_notify_id = db.Column(db.BigInteger, primary_key=True)
@@ -153,7 +234,7 @@ class CapitalNotify(db.Model):
 
 
 
-class CapitalSettlementDetail(db.Model):
+class CapitalSettlementDetail(db.Model, BaseToDict):
     __tablename__ = 'capital_settlement_detail'
     __table_args__ = (
         db.Index('uniq_item_no_channel_period', 'channel', 'asset_item_no', 'period'),
@@ -177,7 +258,7 @@ class CapitalSettlementDetail(db.Model):
 
 
 
-class CapitalTransaction(db.Model):
+class CapitalTransaction(db.Model, BaseToDict):
     __tablename__ = 'capital_transaction'
     __table_args__ = (
         db.Index('idx_capital_tran_channel_type_finish_at', 'capital_transaction_channel', 'capital_transaction_type', 'capital_transaction_expect_finished_at'),
@@ -214,7 +295,7 @@ class CapitalTransaction(db.Model):
 
 
 
-class CentralSendMsg(db.Model):
+class CentralSendMsg(db.Model, BaseToDict):
     __tablename__ = 'central_sendmsg'
     __table_args__ = (
         db.Index('idx_sendmsg_nextRun_status_priority', 'sendmsg_status', 'sendmsg_priority', 'sendmsg_next_run_at'),
@@ -238,7 +319,7 @@ class CentralSendMsg(db.Model):
 
 
 
-class CentralSynctask(db.Model):
+class CentralSynctask(db.Model, BaseToDict):
     __tablename__ = 'central_synctask'
     __table_args__ = (
         db.Index('idx_synctask_key_type_sys', 'synctask_key', 'synctask_type', 'synctask_from_system'),
@@ -260,7 +341,7 @@ class CentralSynctask(db.Model):
 
 
 
-class CentralTask(db.Model):
+class CentralTask(db.Model, BaseToDict):
     __tablename__ = 'central_task'
     __table_args__ = (
         db.Index('Idx_task_status_priority_run', 'task_status', 'task_priority', 'task_next_run_at'),

@@ -23,11 +23,6 @@ class Http(object):
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
             resp = None
-        if int(resp.status_code) not in (200, 201):
-            LogUtil.log_info("请求报错，url:%s 返回的http_code:%s异常，返回body:%s，请检查" % (url,
-                                                                              resp.status_code,
-                                                                              resp.content))
-            raise HTTPError
         log_info = {
                         "url": url,
                         "method": "post",
@@ -35,7 +30,7 @@ class Http(object):
                         "response": json.loads(resp.content)
                     }
         LogUtil.log_info(log_info)
-        return json.loads(resp.content)
+        return json.loads(resp.content) if resp is not None else resp
 
     @classmethod
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
@@ -47,15 +42,12 @@ class Http(object):
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
             resp = None
-        if int(resp.status_code) not in (200, 201):
-            LogUtil.log_info("请求报错，url:%s 返回的http_code:%s异常，请检查" % (url, resp.status_code))
-            raise HTTPError
         log_info = {"url": url,
                     "method": "get",
                     "request": None,
                     "response": json.loads(resp.content)}
         LogUtil.log_info(log_info)
-        return json.loads(resp.content)
+        return json.loads(resp.content) if resp is not None else resp
 
     @classmethod
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))

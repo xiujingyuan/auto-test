@@ -1,11 +1,11 @@
 # coding: utf-8
 from flask_sqlalchemy import SQLAlchemy
-
+from app.common.db_util import BaseToDict
 
 db = SQLAlchemy()
 
 
-class Account(db.Model):
+class Account(db.Model, BaseToDict):
     __tablename__ = 'account'
     __table_args__ = (
         db.Index('idx_individual_no_owner', 'account_user_id_num', 'account_owner'),
@@ -24,7 +24,7 @@ class Account(db.Model):
 
 
 
-class AccountRecharge(db.Model):
+class AccountRecharge(db.Model, BaseToDict):
     __tablename__ = 'account_recharge'
 
     account_recharge_id = db.Column(db.BigInteger, primary_key=True)
@@ -38,7 +38,7 @@ class AccountRecharge(db.Model):
 
 
 
-class AccountRechargeLog(db.Model):
+class AccountRechargeLog(db.Model, BaseToDict):
     __tablename__ = 'account_recharge_log'
 
     account_recharge_log_id = db.Column(db.Integer, primary_key=True, info='自增长ID 主键')
@@ -59,7 +59,7 @@ class AccountRechargeLog(db.Model):
 
 
 
-class AccountRepay(db.Model):
+class AccountRepay(db.Model, BaseToDict):
     __tablename__ = 'account_repay'
     __table_args__ = (
         db.Index('idx_acc_order_type_serial_no_tran_no', 'account_repay_tran_no', 'account_repay_recharge_serial_no', 'account_repay_order_type'),
@@ -78,7 +78,7 @@ class AccountRepay(db.Model):
 
 
 
-class AccountRepayLog(db.Model):
+class AccountRepayLog(db.Model, BaseToDict):
     __tablename__ = 'account_repay_log'
 
     account_repay_log_id = db.Column(db.BigInteger, primary_key=True)
@@ -102,7 +102,7 @@ class AccountRepayLog(db.Model):
 
 
 
-class Arbitration(db.Model):
+class Arbitration(db.Model, BaseToDict):
     __tablename__ = 'arbitration'
 
     arbitration_id = db.Column(db.BigInteger, primary_key=True, info='主键id')
@@ -120,7 +120,7 @@ class Arbitration(db.Model):
 
 
 
-class Asset(db.Model):
+class Asset(db.Model, BaseToDict):
     __tablename__ = 'asset'
 
     asset_id = db.Column(db.Integer, primary_key=True, info='资产行号，单表主键')
@@ -175,7 +175,7 @@ class Asset(db.Model):
 
 
 
-class AssetExtend(db.Model):
+class AssetExtend(db.Model, BaseToDict):
     __tablename__ = 'asset_extend'
 
     asset_extend_id = db.Column(db.Integer, primary_key=True)
@@ -189,7 +189,7 @@ class AssetExtend(db.Model):
 
 
 
-class AssetFoxLog(db.Model):
+class AssetFoxLog(db.Model, BaseToDict):
     __tablename__ = 'asset_fox_log'
 
     asset_fox_log_id = db.Column(db.BigInteger, primary_key=True)
@@ -200,7 +200,7 @@ class AssetFoxLog(db.Model):
 
 
 
-class AssetFoxLogDetail(db.Model):
+class AssetFoxLogDetail(db.Model, BaseToDict):
     __tablename__ = 'asset_fox_log_detail'
 
     asset_fox_log_detail_id = db.Column(db.BigInteger, primary_key=True)
@@ -210,7 +210,7 @@ class AssetFoxLogDetail(db.Model):
 
 
 
-class AssetLateFeeRefreshLog(db.Model):
+class AssetLateFeeRefreshLog(db.Model, BaseToDict):
     __tablename__ = 'asset_late_fee_refresh_log'
 
     asset_late_fee_refresh_log_id = db.Column(db.BigInteger, primary_key=True)
@@ -222,7 +222,7 @@ class AssetLateFeeRefreshLog(db.Model):
 
 
 
-class AssetOperationAuth(db.Model):
+class AssetOperationAuth(db.Model, BaseToDict):
     __tablename__ = 'asset_operation_auth'
     __table_args__ = (
         db.Index('ITEMNO_PERIOD_ACTION', 'asset_operation_auth_asset_item_no', 'asset_operation_auth_period', 'asset_operation_auth_action'),
@@ -238,7 +238,7 @@ class AssetOperationAuth(db.Model):
 
 
 
-class AssetRepayAudit(db.Model):
+class AssetRepayAudit(db.Model, BaseToDict):
     __tablename__ = 'asset_repay_audit'
 
     ara_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -269,7 +269,7 @@ class AssetRepayAudit(db.Model):
 
 
 
-class AssetRepayRecord(db.Model):
+class AssetRepayRecord(db.Model, BaseToDict):
     __tablename__ = 'asset_repay_record'
 
     asset_repay_record_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -298,7 +298,7 @@ class AssetRepayRecord(db.Model):
 
 
 
-class AssetTran(db.Model):
+class AssetTran(db.Model, BaseToDict):
     __tablename__ = 'asset_tran'
     __table_args__ = (
         db.Index('unique_item_no_type_period', 'asset_tran_asset_item_no', 'asset_tran_period', 'asset_tran_type'),
@@ -332,7 +332,7 @@ class AssetTran(db.Model):
     asset_tran_last_sync_time = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='上次更新时间戳')
 
 
-class AssetTranLog(db.Model):
+class AssetTranLog(db.Model, BaseToDict):
     __tablename__ = 'asset_tran_log'
 
     asset_tran_log_id = db.Column(db.BigInteger, primary_key=True)
@@ -351,7 +351,7 @@ class AssetTranLog(db.Model):
 
 
 
-class Buyback(db.Model):
+class Buyback(db.Model, BaseToDict):
     __tablename__ = 'buyback'
 
     buyback_id = db.Column(db.BigInteger, primary_key=True)
@@ -372,7 +372,7 @@ class Buyback(db.Model):
 
 
 
-class BuybackTran(db.Model):
+class BuybackTran(db.Model, BaseToDict):
     __tablename__ = 'buyback_tran'
     __table_args__ = (
         db.Index('idx_buyback_tran_item_no_period_type', 'buyback_tran_asset_item_no', 'buyback_tran_type', 'buyback_tran_period'),
@@ -388,7 +388,7 @@ class BuybackTran(db.Model):
     buyback_tran_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
 
 
-class CapitalAsset(db.Model):
+class CapitalAsset(db.Model, BaseToDict):
     __tablename__ = 'capital_asset'
 
     capital_asset_id = db.Column(db.BigInteger, primary_key=True)
@@ -411,7 +411,7 @@ class CapitalAsset(db.Model):
 
 
 
-class CapitalConfig(db.Model):
+class CapitalConfig(db.Model, BaseToDict):
     __tablename__ = 'capital_config'
 
     capital_config_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -425,7 +425,7 @@ class CapitalConfig(db.Model):
 
 
 
-class CapitalNotify(db.Model):
+class CapitalNotify(db.Model, BaseToDict):
     __tablename__ = 'capital_notify'
 
     capital_notify_id = db.Column(db.BigInteger, primary_key=True)
@@ -447,7 +447,7 @@ class CapitalNotify(db.Model):
 
 
 
-class CapitalReconLog(db.Model):
+class CapitalReconLog(db.Model, BaseToDict):
     __tablename__ = 'capital_recon_log'
 
     capital_recon_log_id = db.Column(db.BigInteger, primary_key=True)
@@ -466,7 +466,7 @@ class CapitalReconLog(db.Model):
 
 
 
-class CapitalRepayTran(db.Model):
+class CapitalRepayTran(db.Model, BaseToDict):
     __tablename__ = 'capital_repay_tran'
     __table_args__ = (
         db.Index('un_capital_repay_tran_itemno_period', 'capital_repay_tran_asset_item_no', 'capital_repay_tran_asset_period'),
@@ -499,7 +499,7 @@ class CapitalRepayTran(db.Model):
 
 
 
-class CapitalRoute(db.Model):
+class CapitalRoute(db.Model, BaseToDict):
     __tablename__ = 'capital_route'
 
     capital_route_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -515,7 +515,7 @@ class CapitalRoute(db.Model):
 
 
 
-class CapitalTransaction(db.Model):
+class CapitalTransaction(db.Model, BaseToDict):
     __tablename__ = 'capital_transaction'
     __table_args__ = (
         db.Index('uniq_capital_transaction_item_no_period_type', 'capital_transaction_item_no', 'capital_transaction_period', 'capital_transaction_type'),
@@ -541,7 +541,7 @@ class CapitalTransaction(db.Model):
 
 
 
-class Card(db.Model):
+class Card(db.Model, BaseToDict):
     __tablename__ = 'card'
 
     card_id = db.Column(db.BigInteger, primary_key=True)
@@ -567,7 +567,7 @@ class Card(db.Model):
 
 
 
-class CardAsset(db.Model):
+class CardAsset(db.Model, BaseToDict):
     __tablename__ = 'card_asset'
     __table_args__ = (
         db.Index('idx_card_asset_asset_item_no', 'card_asset_asset_item_no', 'card_asset_type', 'card_asset_status'),
@@ -584,7 +584,7 @@ class CardAsset(db.Model):
 
 
 
-class CardBind(db.Model):
+class CardBind(db.Model, BaseToDict):
     __tablename__ = 'card_bind'
 
     card_bind_id = db.Column(db.BigInteger, primary_key=True)
@@ -603,7 +603,7 @@ class CardBind(db.Model):
 
 
 
-class ComboOrder(db.Model):
+class ComboOrder(db.Model, BaseToDict):
     __tablename__ = 'combo_order'
 
     combo_order_id = db.Column(db.Integer, primary_key=True, info='单表主键')
@@ -622,7 +622,7 @@ class ComboOrder(db.Model):
 
 
 
-class ComboOrderTran(db.Model):
+class ComboOrderTran(db.Model, BaseToDict):
     __tablename__ = 'combo_order_tran'
     __table_args__ = (
         db.Index('idx_combo_order_tran_order_no', 'combo_order_tran_order_no', 'combo_order_tran_period', 'combo_order_tran_type'),
@@ -644,7 +644,7 @@ class ComboOrderTran(db.Model):
 
 
 
-class Coupon(db.Model):
+class Coupon(db.Model, BaseToDict):
     __tablename__ = 'coupon'
 
     coupon_id = db.Column(db.BigInteger, primary_key=True, info='自增长ID')
@@ -661,7 +661,7 @@ class Coupon(db.Model):
 
 
 
-class DistributedLock(db.Model):
+class DistributedLock(db.Model, BaseToDict):
     __tablename__ = 'distributed_lock'
 
     distributed_lock_id = db.Column(db.BigInteger, primary_key=True, info='主键id自动增长')
@@ -671,7 +671,7 @@ class DistributedLock(db.Model):
 
 
 
-class FeeLog(db.Model):
+class FeeLog(db.Model, BaseToDict):
     __tablename__ = 'fee_log'
 
     fee_log_id = db.Column(db.BigInteger, primary_key=True)
@@ -689,7 +689,7 @@ class FeeLog(db.Model):
 
 
 
-class FixAssetFromSystem(db.Model):
+class FixAssetFromSystem(db.Model, BaseToDict):
     __tablename__ = 'fix_asset_from_system'
 
     fix_id = db.Column(db.BigInteger, primary_key=True)
@@ -700,7 +700,7 @@ class FixAssetFromSystem(db.Model):
 
 
 
-class Individual(db.Model):
+class Individual(db.Model, BaseToDict):
     __tablename__ = 'individual'
     __table_args__ = (
         db.Index('idx_individual_idnum', 'individual_id_num', 'individual_name'),
@@ -753,7 +753,7 @@ class Individual(db.Model):
 
 
 
-class IndividualAsset(db.Model):
+class IndividualAsset(db.Model, BaseToDict):
     __tablename__ = 'individual_asset'
     __table_args__ = (
         db.Index('idx_individual_asset_asset_item_no', 'individual_asset_asset_item_no', 'individual_asset_type'),
@@ -769,7 +769,7 @@ class IndividualAsset(db.Model):
 
 
 
-class NacosConfig(db.Model):
+class NacosConfig(db.Model, BaseToDict):
     __tablename__ = 'nacos_config'
 
     nacos_config_id = db.Column(db.Integer, primary_key=True)
@@ -789,7 +789,7 @@ class NacosConfig(db.Model):
 
 
 
-class Provision(db.Model):
+class Provision(db.Model, BaseToDict):
     __tablename__ = 'provision'
     __table_args__ = (
         db.Index('uniq_idx_provision', 'provision_item_no', 'provision_tran_period', 'provision_tran_type', 'provision_recharge_serial_no'),
@@ -811,7 +811,7 @@ class Provision(db.Model):
 
 
 
-class RefundDetail(db.Model):
+class RefundDetail(db.Model, BaseToDict):
     __tablename__ = 'refund_detail'
 
     refund_detail_id = db.Column(db.BigInteger, primary_key=True)
@@ -827,7 +827,7 @@ class RefundDetail(db.Model):
 
 
 
-class RefundRequest(db.Model):
+class RefundRequest(db.Model, BaseToDict):
     __tablename__ = 'refund_request'
 
     refund_request_id = db.Column(db.BigInteger, primary_key=True, info='退款请求ID，自增长主键')
@@ -854,7 +854,7 @@ class RefundRequest(db.Model):
 
 
 
-class RefundResult(db.Model):
+class RefundResult(db.Model, BaseToDict):
     __tablename__ = 'refund_result'
 
     refund_result_id = db.Column(db.BigInteger, primary_key=True, info='退款自增长ID')
@@ -882,7 +882,7 @@ class RefundResult(db.Model):
 
 
 
-class Seed(db.Model):
+class Seed(db.Model, BaseToDict):
     __tablename__ = 'seed'
 
     seed_type = db.Column(db.String(45), primary_key=True)
@@ -891,7 +891,7 @@ class Seed(db.Model):
 
 
 
-class SendMsg(db.Model):
+class SendMsg(db.Model, BaseToDict):
     __tablename__ = 'sendmsg'
     __table_args__ = (
         db.Index('idx_sendmsg_priority_type', 'sendmsg_priority', 'sendmsg_type'),
@@ -915,7 +915,7 @@ class SendMsg(db.Model):
 
 
 
-class SmsTemplate(db.Model):
+class SmsTemplate(db.Model, BaseToDict):
     __tablename__ = 'sms_template'
     __table_args__ = (
         db.Index('sms_template_idx', 'sms_template_type', 'sms_template_key'),
@@ -933,7 +933,7 @@ class SmsTemplate(db.Model):
 
 
 
-class SplitOrderConfig(db.Model):
+class SplitOrderConfig(db.Model, BaseToDict):
     __tablename__ = 'split_order_config'
 
     split_order_config_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -946,7 +946,7 @@ class SplitOrderConfig(db.Model):
 
 
 
-class SplitOrderRule(db.Model):
+class SplitOrderRule(db.Model, BaseToDict):
     __tablename__ = 'split_order_rule'
 
     split_order_rule_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -965,7 +965,7 @@ class SplitOrderRule(db.Model):
 
 
 
-class SplitOrderRuleCondition(db.Model):
+class SplitOrderRuleCondition(db.Model, BaseToDict):
     __tablename__ = 'split_order_rule_condition'
 
     split_order_rule_condition_id = db.Column(db.Integer, primary_key=True)
@@ -977,7 +977,7 @@ class SplitOrderRuleCondition(db.Model):
 
 
 
-class SplitOrderRuleExpres(db.Model):
+class SplitOrderRuleExpres(db.Model, BaseToDict):
     __tablename__ = 'split_order_rule_express'
 
     split_order_rule_express_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -990,7 +990,7 @@ class SplitOrderRuleExpres(db.Model):
 
 
 
-class Synctask(db.Model):
+class Synctask(db.Model, BaseToDict):
     __tablename__ = 'synctask'
     __table_args__ = (
         db.Index('idx_synctask_create_at_type_status', 'synctask_create_at', 'synctask_type', 'synctask_status'),
@@ -1013,7 +1013,7 @@ class Synctask(db.Model):
 
 
 
-class Task(db.Model):
+class Task(db.Model, BaseToDict):
     __tablename__ = 'task'
     __table_args__ = (
         db.Index('idx_task_status_priority_next_run_at', 'task_status', 'task_priority', 'task_next_run_at'),
@@ -1035,7 +1035,7 @@ class Task(db.Model):
 
 
 
-class TmpDataFix(db.Model):
+class TmpDataFix(db.Model, BaseToDict):
     __tablename__ = 'tmp_data_fix'
 
     tmp_data_fix_id = db.Column(db.BigInteger, primary_key=True, info='主键ID')
@@ -1057,7 +1057,7 @@ class TmpDataFix(db.Model):
 
 
 
-class TmpSylCard(db.Model):
+class TmpSylCard(db.Model, BaseToDict):
     __tablename__ = 'tmp_syl_card'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -1066,7 +1066,7 @@ class TmpSylCard(db.Model):
 
 
 
-class Trade(db.Model):
+class Trade(db.Model, BaseToDict):
     __tablename__ = 'trade'
     __table_args__ = (
         db.Index('idx_unique_trade_ref_no_owner_type', 'trade_ref_no', 'trade_owner', 'trade_type'),
@@ -1092,7 +1092,7 @@ class Trade(db.Model):
 
 
 
-class TradeProduct(db.Model):
+class TradeProduct(db.Model, BaseToDict):
     __tablename__ = 'trade_product'
     __table_args__ = (
         db.Index('idx_trade_product_trade_no', 'trade_product_trade_no', 'trade_product_no'),
@@ -1112,7 +1112,7 @@ class TradeProduct(db.Model):
 
 
 
-class TradeTran(db.Model):
+class TradeTran(db.Model, BaseToDict):
     __tablename__ = 'trade_tran'
     __table_args__ = (
         db.Index('idx_trade_tran_trade_no_type_status', 'trade_tran_trade_no', 'trade_tran_type', 'trade_tran_status'),
@@ -1133,7 +1133,7 @@ class TradeTran(db.Model):
 
 
 
-class TransactionFlowDistribute(db.Model):
+class TransactionFlowDistribute(db.Model, BaseToDict):
     __tablename__ = 'transaction_flow_distribute'
 
     transaction_flow_distribute_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -1144,7 +1144,7 @@ class TransactionFlowDistribute(db.Model):
 
 
 
-class TransactionFlowRecord(db.Model):
+class TransactionFlowRecord(db.Model, BaseToDict):
     __tablename__ = 'transaction_flow_record'
 
     transaction_flow_record_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -1157,7 +1157,7 @@ class TransactionFlowRecord(db.Model):
 
 
 
-class Withdraw(db.Model):
+class Withdraw(db.Model, BaseToDict):
     __tablename__ = 'withdraw'
 
     withdraw_id = db.Column(db.BigInteger, primary_key=True, info='代付ID，自增长主键')
@@ -1184,7 +1184,7 @@ class Withdraw(db.Model):
 
 
 
-class Withhold(db.Model):
+class Withhold(db.Model, BaseToDict):
     __tablename__ = 'withhold'
 
     withhold_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -1220,7 +1220,7 @@ class Withhold(db.Model):
 
 
 
-class WithholdAssetDetailLock(db.Model):
+class WithholdAssetDetailLock(db.Model, BaseToDict):
     __tablename__ = 'withhold_asset_detail_lock'
     __table_args__ = (
         db.Index('uidx_asset_item_no_serial_no', 'withhold_asset_detail_lock_asset_item_no', 'withhold_asset_detail_lock_serial_no'),
@@ -1232,7 +1232,7 @@ class WithholdAssetDetailLock(db.Model):
 
 
 
-class WithholdAutoLog(db.Model):
+class WithholdAutoLog(db.Model, BaseToDict):
     __tablename__ = 'withhold_auto_log'
 
     withhold_auto_log_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -1247,7 +1247,7 @@ class WithholdAutoLog(db.Model):
 
 
 
-class WithholdCard(db.Model):
+class WithholdCard(db.Model, BaseToDict):
     __tablename__ = 'withhold_card'
     __table_args__ = (
         db.Index('idx_withhold_card_individual', 'withhold_card_individual_no', 'withhold_card_priority'),
@@ -1265,7 +1265,7 @@ class WithholdCard(db.Model):
 
 
 
-class WithholdDetail(db.Model):
+class WithholdDetail(db.Model, BaseToDict):
     __tablename__ = 'withhold_detail'
     __table_args__ = (
         db.Index('idx_item_no_period', 'withhold_detail_asset_item_no', 'withhold_detail_period'),
@@ -1291,7 +1291,7 @@ class WithholdDetail(db.Model):
 
 
 
-class WithholdExtend(db.Model):
+class WithholdExtend(db.Model, BaseToDict):
     __tablename__ = 'withhold_extend'
     __table_args__ = (
         db.Index('idx_withhold_extend_asset_item_no_period', 'withhold_extend_asset_item_no', 'withhold_extend_period'),
@@ -1312,7 +1312,7 @@ class WithholdExtend(db.Model):
 
 
 
-class WithholdHi(db.Model):
+class WithholdHi(db.Model, BaseToDict):
     __tablename__ = 'withhold_his'
 
     withhold_his_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -1348,7 +1348,7 @@ class WithholdHi(db.Model):
     withhold_call_back = db.Column(db.String(500), info='回调地址')
 
 
-class WithholdOrder(db.Model):
+class WithholdOrder(db.Model, BaseToDict):
     __tablename__ = 'withhold_order'
     __table_args__ = (
         db.Index('uidx_serial_no_reference_no', 'withhold_order_serial_no', 'withhold_order_reference_no'),
@@ -1370,7 +1370,7 @@ class WithholdOrder(db.Model):
 
 
 
-class WithholdRepeated(db.Model):
+class WithholdRepeated(db.Model, BaseToDict):
     __tablename__ = 'withhold_repeated'
     __table_args__ = (
         db.Index('idx_serial_no_tran_no', 'withhold_repeated_serial_no', 'withhold_repeated_asset_item_no', 'withhold_repeated_asset_tran_no'),
@@ -1391,7 +1391,7 @@ class WithholdRepeated(db.Model):
 
 
 
-class WithholdRequest(db.Model):
+class WithholdRequest(db.Model, BaseToDict):
     __tablename__ = 'withhold_request'
 
     withhold_request_id = db.Column(db.Integer, primary_key=True, info='主键')
@@ -1417,7 +1417,7 @@ class WithholdRequest(db.Model):
 
 
 
-class WithholdResult(db.Model):
+class WithholdResult(db.Model, BaseToDict):
     __tablename__ = 'withhold_result'
     __table_args__ = (
         db.Index('idx_withhold_result_user', 'withhold_result_user_idnum', 'withhold_result_card_num'),

@@ -1,10 +1,10 @@
-from app.common.assert_util import Assert
+
 from app.program_business import BaseAuto
 from app.common.http_util import Http
 import json
 
 from app.program_business.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
-    CapitalAsset, CapitalTransaction
+    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult
 
 
 class ChinaBizCentralAuto(BaseAuto):
@@ -18,7 +18,27 @@ class ChinaBizCentralAuto(BaseAuto):
 
     def asset_import(self, req_data):
         ret = Http.http_post(self.asset_import_url, req_data)
+        if not ret['code'] == 0:
+            raise ValueError("import asset error, {0}".format(ret['message']))
+        central_task_id = ret['data']
+        req = self.run_central_task_by_task_id(central_task_id)
+        if not req['code'] == 0:
+            raise ValueError("run asset import task error ,{0}".format(req['message']))
         return ret
+
+    def sync_withhold_to_history(self, item_no):
+        withhold_results = self.db_session.query(WithholdResult).filter(
+            WithholdResult.withhold_result_asset_item_no == item_no).all()
+        withhold_histories = []
+        for withhold_result in withhold_results:
+            withhold_history = WithholdHistory()
+            for key in withhold_result.__dict__:
+                if not key.startswith('_') and hasattr(withhold_history, key):
+                    setattr(withhold_history, key, getattr(withhold_result, key))
+            withhold_history.withhold_history_sync_at = self.get_date(is_str=True)
+            withhold_histories.append(withhold_history)
+        self.db_session.add_all(withhold_histories)
+        self.db_session.commit()
 
     def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
@@ -42,10 +62,16 @@ class ChinaBizCentralAuto(BaseAuto):
 
     def run_central_task_by_task_id(self, task_id, excepts={'code': 0}):
         self.update_central_task_next_run_at_forward_by_task_id(task_id)
-        resp = Http.http_get(self.central_task_url.format(task_id))
-        if excepts:
-            Assert.assert_match_json(excepts, resp[0], "task运行结果校验不通过，task_id:{0}, return:{1}".format(task_id,
-                                                                                                     resp))
+        ret = Http.http_get(self.central_task_url.format(task_id))
+        if not ret['code'] == 0:
+            raise ValueError('the central task run error, {0}'.format(ret['message']))
+        return ret
+
+    def get_asset_info(self, item_no):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        if not asset:
+            raise ValueError("not found the asset info in biz")
+        return asset
 
     @staticmethod
     def get_item_no(msg):

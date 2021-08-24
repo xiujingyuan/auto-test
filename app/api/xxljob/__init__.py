@@ -15,7 +15,7 @@ def hello_world():
 def exec_xxljob():
     get_ret = {
         "code": 0,
-        "msg": "更新成功"
+        "msg": "执行xxljob成功"
     }
     req = request.json
     country = req.get('country', 'china')

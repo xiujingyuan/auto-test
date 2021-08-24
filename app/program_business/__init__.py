@@ -1,12 +1,15 @@
 # 业务逻辑
-import json
-import time
-import datetime
-import random
 import calendar as c
+import datetime
 import math
+import random
+import time
+
+
 from dateutil.relativedelta import relativedelta
 from faker import Faker
+
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -14,10 +17,11 @@ import app.common as common
 from app.common.db_util import DataBase
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
-from app.common.assert_util import Assert
 from app.common.tools import CheckExist, get_date
 from app.program_business.china.repay.Model import Task
 from resource.config import AutoTestConfig
+
+
 
 ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
 ENCRYPT_DICT = {
@@ -92,12 +96,15 @@ class BaseAuto(object):
         self.db_session.close()
 
     @staticmethod
+    def __create_req_key__(item_no, prefix=''):
+        return "{0}{1}_{2}".format(prefix, item_no, int(time.time()))
+
+    @staticmethod
     def cal_days(str1, str2):
         date1 = datetime.datetime.strptime(str1[0:10], "%Y-%m-%d") if isinstance(str1, str) else str1
         date2 = datetime.datetime.strptime(str2[0:10], "%Y-%m-%d") if isinstance(str2, str) else str2
         date1 = date1.date() if isinstance(date1, datetime.datetime) else date1
         date2 = date2.date() if isinstance(date2, datetime.datetime) else date2
-        print(date2, type(date2), isinstance(date2, datetime.datetime), date1, type(date1), isinstance(date1, datetime.datetime))
         num = (date2 - date1).days
         return num
 
@@ -171,9 +178,13 @@ class BaseAuto(object):
             if capital_tran.capital_transaction_user_repay_at.year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_user_repay_at)
+                user_repay_at = capital_tran.capital_transaction_user_repay_at
                 capital_tran.capital_transaction_user_repay_at = self.get_date(date=expect_finished_at,
                                                                                months=cal_advance_month,
-                                                                               days=cal_advance_day)
+                                                                               days=cal_advance_day,
+                                                                               hour=user_repay_at.hour,
+                                                                               minute=user_repay_at.minute,
+                                                                               second=user_repay_at.second)
             actual_operate_at = 'capital_transaction_actual_operate_at' if \
                 hasattr(capital_tran, 'capital_transaction_actual_operate_at') \
                 else 'capital_transaction_actual_finished_at'
@@ -186,9 +197,9 @@ class BaseAuto(object):
             if hasattr(capital_tran, 'capital_transaction_expect_operate_at'):
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_expect_operate_at)
-                capital_tran.capital_transaction_expect_operate_at = self.get_date(date=expect_finished_at,
-                                                                                   months=cal_advance_month,
-                                                                                   days=cal_advance_day)
+                capital_tran.capital_transaction_expect_operate_at = self.get_date(
+                    date=expect_finished_at, months=cal_advance_month,
+                    days=cal_advance_day)
             capital_tran.capital_transaction_expect_finished_at = expect_finished_at
         self.db_session.add_all(asset_list)
         self.db_session.add_all([capital_asset])
@@ -198,7 +209,7 @@ class BaseAuto(object):
 
     def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
         task_id = self.db.get_task_info(order_no, task_type, status=status)[0]['task_id']
-        self.run_task_by_id(task_id, excepts=excepts)
+        return self.run_task_by_id(task_id, excepts=excepts)
 
     def update_task_next_run_at_forward_by_task_id(self, task_id):
         task = self.db_session.query(Task).filter(Task.task_id == task_id).first()
@@ -208,21 +219,23 @@ class BaseAuto(object):
         self.db_session.add(task)
         self.db_session.commit()
 
-    def run_task_by_id(self, task_id, excepts={'code': 0}):
+    def run_task_by_id(self, task_id):
         self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = Http.http_get(self.run_task_id_url.format(task_id))
-        if excepts:
-            Assert.assert_match_json(excepts, ret[0], "task运行结果校验不通过，task_id:{0}, return:{1}".format(task_id,
-                                                                                                     ret))
+        ret = ret[0] if isinstance(ret, list) else ret
+        if not ret["code"] == 0:
+            raise ValueError("run task error, {0}".format(ret['message']))
+        return ret
 
-    def run_msg_by_id(self, msg_id, excepts={"code": 0}):
+    def run_msg_by_id(self, msg_id):
         ret = Http.http_get(self.run_msg_id_url.format(msg_id))
-        if excepts:
-            Assert.assert_match_json(excepts, ret[0], "msg运行结果校验不通过，msg_id:{0}, return:{1}".format(msg_id, ret))
+        if not ret["code"] == 0:
+            raise ValueError("run msg error, {0}".format(ret['message']))
+        return ret
 
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
         msg_id = self.db.get_sendmsg_info(order_no, sendmsg_type)[0]['sendmsg_id']
-        self.run_msg_by_id(msg_id, excepts=excepts)
+        return self.run_msg_by_id(msg_id, excepts=excepts)
 
     def run_task_for_count(self, task_type, order_no,  excepts={'code': 0}, count=1):
         task_id = self.get_task_id_by_task_type(task_type, order_no)

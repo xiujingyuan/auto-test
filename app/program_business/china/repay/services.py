@@ -30,24 +30,23 @@ class ChinaRepayAuto(BaseAuto):
         self.refresh_url = self.host_url + "/asset/refreshLateFee"
         self.send_msg_url = self.host_url + "/paydayloan/repay/bindSms"
         self.pay_svr_callback_url = self.host_url + "/paysvr/callback"
+        self.reverse_url = self.host_url + "/asset/repayReverse"
         self.run_task_id_url = self.host_url + '/task/run?taskId={0}'
         self.run_msg_id_url = self.host_url + '/msg/run?msgId={0}'
         self.run_task_order_url = self.host_url + '/task/run?orderNo={0}'
 
-    def auto_loan(self, loan_channel, count, four_element):
-        self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, loan_channel))
-        try:
-            item_no, asset_info = self.grant.asset_import(loan_channel, four_element, count=count)
-            self.grant.loan_success(item_no)
-            item_no_loan = ""
-            self.log.log_info("大单资产编号：%s" % item_no)
-            self.log.log_info("小单资产编号：%s" % item_no_loan)
-        except Exception as e:
-            item_no, item_no_loan = '', ''
-            self.log.log_info("%s, 资产生成失败：%s" % (item_no, e))
-            return "放款失败", "资产生成失败：%s" % e
-        else:
-            return item_no, item_no_loan
+    def auto_loan(self, channel, count, amount):
+        self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, channel))
+        #element = self.get_four_element()
+        #item_no, asset_info = self.grant.asset_import(channel, element, count, amount)
+        #self.grant.asset_import_success(item_no)
+        item_no = '20201629448121985772'
+        withdraw_success_data = self.grant.get_withdraw_success_data(item_no)
+        resp = Http.http_post(self.withdraw_url, withdraw_success_data)
+        if not resp['code'] == 0:
+            raise ValueError("withdraw task error, {0}".format(resp['message']))
+
+        return item_no, ''
 
     def send_msg(self, serial_no):
         req_data = {
@@ -271,12 +270,18 @@ class ChinaRepayAuto(BaseAuto):
                 "asset_item_no": item_no
             }
         }
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        if not asset:
+            raise ValueError("not found the asset, check env!")
         resp = Http.http_post(self.refresh_url, request_data)
-        return request_data, self.refresh_url, resp
-
-    @staticmethod
-    def __create_req_key__(item_no, prefix=''):
-        return "{0}{1}_{2}".format(prefix, item_no, int(time.time()))
+        asset_x = self.get_no_loan(item_no)
+        if asset_x:
+            request_x_data = copy.deepcopy(request_data)
+            request_x_data['key'] = self.__create_req_key__(asset_x, prefix='Refresh')
+            request_x_data['data']['asset_item_no'] = asset_x
+            resp_x = Http.http_post(self.refresh_url, request_x_data)
+        return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
+            if asset_x else [resp]
 
     def reverse_item_no(self, item_no, serial_no):
         req_data = {
@@ -292,8 +297,10 @@ class ChinaRepayAuto(BaseAuto):
                 "send_change_mq": True
             }
         }
-        withhold_info = self.db.get_withhold_info_by_serial_no(serial_no)
-        req_data['data']['serial_no'] = withhold_info['withhold_channel_key']
+        withhold_info = self.db_session.query(Withhold).filter(Withhold.withhold_serial_no == serial_no).first()
+        if not withhold_info:
+            raise ValueError('withhold not found !')
+        req_data['data']['serial_no'] = withhold_info.withhold_channel_key
         resp = Http.http_post(self.reverse_url, req_data)
         return req_data, self.refresh_url, resp
 
