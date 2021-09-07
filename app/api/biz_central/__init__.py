@@ -1,6 +1,9 @@
+from copy import deepcopy
+
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
+from app.common import RET
 from app.program_business.china.biz_central.services import ChinaBizCentralAuto
 
 api_biz_central = Blueprint('api_biz_central', __name__)
@@ -21,11 +24,7 @@ def hello_world():
 
 @api_biz_central.route('/biz_central_tools/<string:tool>', methods=["POST"])
 def biz_central_tools(tool):
-    ret = {
-        "code": 0,
-        "message": "执行成功",
-        "data": ""
-    }
+    ret = deepcopy(RET)
     req = request.json
     country = req.pop('country', 'china')
     env = req.pop('env', None)

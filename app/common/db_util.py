@@ -19,18 +19,32 @@ class BaseToDict(object):
     def to_dicts(cls, models):
         return cls.change_dict(models)
 
+    @classmethod
+    def to_spec_dicts(cls, models):
+        return cls.change_dict(models, spec_type=True)
+
     @property
     def to_dict(self):
         return self.change_dict(self)
 
-    def change_dict(self, models=None):
+    @property
+    def to_spec_dict(self):
+        return self.change_dict(self, spec_type=True)
+
+    @staticmethod
+    def get_dict_data(model, spec_type=False):
+        gen = model.model_to_dict(model)
+        dit = dict((g[0].replace(model.__tablename__ + '_', ''), g[1]) for g in gen) if spec_type \
+            else dict((g[0], g[1]) for g in gen)
+        return dit
+
+    def change_dict(self, models=None, spec_type=False):
         models = models if models is not None else self
         if isinstance(models, list):
             if isinstance(models[0], Model):
                 lst = []
                 for model in models:
-                    gen = model.model_to_dict(model)
-                    dit = dict((g[0], g[1]) for g in gen)
+                    dit = model.get_dict_data(model, spec_type)
                     lst.append(dit)
                 return lst
             else:
@@ -38,9 +52,7 @@ class BaseToDict(object):
                 return res
         else:
             if isinstance(models, Model):
-                gen = self.model_to_dict(models)
-                dit = dict((g[0], g[1]) for g in gen)
-                return dit
+                return self.get_dict_data(models, spec_type)
             else:
                 res = dict(zip(models.keys(), models))
                 self.find_datetime(res)

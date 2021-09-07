@@ -8,8 +8,33 @@ import requests
 from app.common.log_util import LogUtil
 
 
+def modify_resp(func):
+    def wrapper(*args, **kwargs):
+        url, req_data, resp = func(*args, **kwargs)
+        print(resp.content)
+        content = json.loads(resp.content)
+        log_info = dict(zip(('url', 'method', 'request', 'response'),
+                            (url, 'post', req_data,  content)))
+        LogUtil.log_info(log_info)
+        if resp.status_code in (200, 201, 400):
+            content = content[0] if isinstance(content, list) else content
+            if 'code' not in content:
+                raise ValueError('request url error {0}'.format(content))
+            elif 'kong-api-test.kuainiujinke.com' in url:
+                return content
+            elif not content['code'] in (0, 200):
+                raise ValueError('request run  error {0}, with url: {1}, req_data: {2}'.format(
+                    content['message'], url, req_data))
+        else:
+            raise ValueError('request error, with status code:{0}'.format(resp.status_code))
+        return content if resp is not None else resp
+    return wrapper
+
+
 class Http(object):
+
     @classmethod
+    @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
     def http_post(cls, url, req_data, headers=None, cookies=None):
         if headers is None:
@@ -22,17 +47,10 @@ class Http(object):
                 resp = requests.post(url=url, data=req_data, headers=headers, cookies=cookies, timeout=150)
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
-            resp = None
-        log_info = {
-                        "url": url,
-                        "method": "post",
-                        "request": req_data,
-                        "response": json.loads(resp.content)
-                    }
-        LogUtil.log_info(log_info)
-        return json.loads(resp.content) if resp is not None else resp
+        return url, req_data, resp
 
     @classmethod
+    @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
     def http_get(cls, url, headers=None, cookies=None):
         if headers is None:
@@ -41,17 +59,13 @@ class Http(object):
             resp = requests.get(url, headers=headers, cookies=cookies, timeout=150)
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
-            resp = None
-        log_info = {"url": url,
-                    "method": "get",
-                    "request": None,
-                    "response": json.loads(resp.content)}
-        LogUtil.log_info(log_info)
-        return json.loads(resp.content) if resp is not None else resp
+        return url, '', resp
 
     @classmethod
+    @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
     def http_put(cls, url, req_data, headers):
+        resp = None
         if headers is None:
             headers = {"Content-Type": "application/json"}
         try:
@@ -61,16 +75,7 @@ class Http(object):
                 resp = requests.put(url=url, data=req_data, headers=headers, timeout=150)
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
-            resp = None
-        if int(resp.status_code) not in (200, 201):
-            LogUtil.log_info("请求报错，url:%s 返回的http_code:%s异常，请检查" % (url, resp.status_code))
-            raise HTTPError
-        log_info = {"url": url,
-                    "method": "put",
-                    "request": req_data,
-                    "response": json.loads(resp.content)}
-        LogUtil.log_info(log_info)
-        return json.loads(resp.content)
+        return url, '', resp
 
     @classmethod
     def parse_resp_body(cls, method, url, data=None, headers=None, cookies=None, params=None):

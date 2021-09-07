@@ -1,6 +1,8 @@
+from copy import deepcopy
+
 from flask import Blueprint, request, jsonify
 from flask import current_app
-from app.common import XxlJobFactory
+from app.common import XxlJobFactory, RET
 
 api_xxljob = Blueprint('api_xxljob', __name__)
 
@@ -13,10 +15,7 @@ def hello_world():
 
 @api_xxljob.route('/exec_xxljob', methods=['POST'])
 def exec_xxljob():
-    get_ret = {
-        "code": 0,
-        "msg": "执行xxljob成功"
-    }
+    get_ret = deepcopy(RET)
     req = request.json
     country = req.get('country', 'china')
     env = req.get("env", 1)

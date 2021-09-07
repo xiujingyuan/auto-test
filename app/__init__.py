@@ -39,4 +39,7 @@ def create_app():
     from app.api.repay import api_repay as api_repay_blueprint
     app.register_blueprint(api_repay_blueprint, url_prefix='/api/repay/')
 
+    from app.api.web import api_web as api_web_blueprint
+    app.register_blueprint(api_web_blueprint, url_prefix='/api/backend/')
+
     return app

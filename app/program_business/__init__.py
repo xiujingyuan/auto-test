@@ -88,12 +88,16 @@ class BaseAuto(object):
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
         self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=True)
+        self.grant_host = "https://kong-api-test.kuainiujinke.com/gbiz{0}".format(env)
+        self.repay_host = "https://kong-api-test.kuainiujinke.com/rbiz{0}".format(env)
+        self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.db_session = MyScopedSession(sessionmaker())
         self.db_session.configure(bind=self.engine)
         self.log = LogUtil()
 
     def __del__(self):
-        self.db_session.close()
+        if hasattr(self, 'db_session'):
+            self.db_session.close()
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
@@ -111,6 +115,8 @@ class BaseAuto(object):
     @staticmethod
     def cal_months(start_date, end_date):
         # 计算两个日期相隔月差
+        start_date = start_date.date() if isinstance(start_date, datetime.datetime) else start_date
+        end_date = end_date.date() if isinstance(end_date, datetime.datetime) else end_date
         try:
             same_month_date = datetime.date(end_date.year, end_date.month, start_date.day)
         except:
@@ -156,28 +162,27 @@ class BaseAuto(object):
     def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                             advance_month):
         real_now = self.get_date(months=advance_month, days=advance_day).date()
-        cal_advance_month = self.cal_months(asset_list[0].asset_actual_grant_at, real_now)
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
 
         capital_asset.capital_asset_granted_at = real_now
 
         for asset_tran in asset_tran_list:
-            asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, months=cal_advance_month,
-                                              day=real_now.day)
+            asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
             if asset_tran.asset_tran_finish_at.year != 1000:
                 cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                 asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
                                                                 days=cal_advance_day)
             asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
-            expect_finished_at = self.get_date(date=capital_tran.capital_transaction_expect_finished_at,
-                                               months=cal_advance_month,
-                                               day=real_now.day)
+            expect_finished_at = self.get_date(date=real_now, months=capital_tran.capital_transaction_period)
             if capital_tran.capital_transaction_user_repay_at.year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_user_repay_at)
+                cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+                                                    capital_tran.capital_transaction_user_repay_at)
                 user_repay_at = capital_tran.capital_transaction_user_repay_at
                 capital_tran.capital_transaction_user_repay_at = self.get_date(date=expect_finished_at,
                                                                                months=cal_advance_month,
@@ -191,12 +196,16 @@ class BaseAuto(object):
             if getattr(capital_tran, actual_operate_at).year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 getattr(capital_tran, actual_operate_at))
+                cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+                                                    getattr(capital_tran, actual_operate_at))
                 setattr(capital_tran, actual_operate_at, self.get_date(date=expect_finished_at,
                                                                        months=cal_advance_month,
                                                                        days=cal_advance_day))
             if hasattr(capital_tran, 'capital_transaction_expect_operate_at'):
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_expect_operate_at)
+                cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+                                                    capital_tran.capital_transaction_expect_operate_at)
                 capital_tran.capital_transaction_expect_operate_at = self.get_date(
                     date=expect_finished_at, months=cal_advance_month,
                     days=cal_advance_day)
@@ -223,13 +232,17 @@ class BaseAuto(object):
         self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = Http.http_get(self.run_task_id_url.format(task_id))
         ret = ret[0] if isinstance(ret, list) else ret
-        if not ret["code"] == 0:
+        if not isinstance(ret, dict):
+            raise ValueError(ret)
+        elif not ret["code"] == 0:
             raise ValueError("run task error, {0}".format(ret['message']))
         return ret
 
     def run_msg_by_id(self, msg_id):
         ret = Http.http_get(self.run_msg_id_url.format(msg_id))
-        if not ret["code"] == 0:
+        if not isinstance(ret, dict):
+            raise ValueError(ret)
+        elif not ret["code"] == 0:
             raise ValueError("run msg error, {0}".format(ret['message']))
         return ret
 

@@ -1,9 +1,10 @@
 import traceback
+from copy import deepcopy
 
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
-from app.common import NacosFactory
+from app.common import NacosFactory, RET
 
 api_nacos = Blueprint('api_nacos', __name__)
 
@@ -16,10 +17,7 @@ def hello_world():
 
 @api_nacos.route('/update_config', methods=['POST'])
 def update_nacos_config():
-    update_ret = {
-        "code": 0,
-        "msg": "更新成功"
-    }
+    update_ret = deepcopy(RET)
     req = request.json
     country = req.get('country', 'china')
     env = req.get("env", 1)
@@ -32,10 +30,7 @@ def update_nacos_config():
 
 @api_nacos.route('/get_config', methods=['POST'])
 def get_nacos_config():
-    get_ret = {
-        "code": 0,
-        "msg": "更新成功"
-    }
+    get_ret = deepcopy(RET)
     req = request.json
     country = req.get('country', 'china')
     env = req.get("env", 1)

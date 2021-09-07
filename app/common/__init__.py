@@ -16,6 +16,12 @@ from app.program_business.china.repay.nacos import ChinaRepayNacos
 from app.program_business.china.repay.services import ChinaRepayAuto
 from app.program_business.china.repay.xxljob import ChinaRepayXxlJob
 
+RET = {
+        "code": 0,
+        "message": "执行成功",
+        "data": []
+    }
+
 
 class EasyMockFactory(object):
     @classmethod

@@ -1,7 +1,9 @@
+from copy import deepcopy
+
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
-from app.common import EasyMockFactory
+from app.common import EasyMockFactory, RET
 
 api_easy_mock = Blueprint('api_easy_mock', __name__)
 
@@ -14,10 +16,7 @@ def hello_world():
 
 @api_easy_mock.route('/change', methods=['POST'])
 def easy_mock_change():
-    get_ret = {
-        "code": 0,
-        "msg": "更新成功"
-    }
+    get_ret = deepcopy(RET)
     req = request.json
     country = req.get('country', 'china')
     check_req = req.get("check_req", False)
@@ -27,7 +26,7 @@ def easy_mock_change():
     url = req.get('url', None)
     if url is None or params is None:
         get_ret['code'] = 1
-        get_ret['msg'] = 'params或url没有传递'
+        get_ret['message'] = 'params或url没有传递'
     else:
         easy_mock = EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         easy_mock.update(url, params)

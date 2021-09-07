@@ -36,17 +36,21 @@ class Nacos(object):
         self.login()
 
     def login(self):
-        url = self.login_url.format(self.domain)
-        req_body = {
-            "username": self.username,
-            "password": self.password,
-            "namespaceId": ""
-        }
-        resp = Http.parse_resp_body('post', url, data=req_body,
-                                    headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"})
-        response_headers = resp["headers"]
-        self.authorization = response_headers["Authorization"]
-        self.cookies = resp["cookies"]
+        try:
+            url = self.login_url.format(self.domain)
+            req_body = {
+                "username": self.username,
+                "password": self.password,
+                "namespaceId": ""
+            }
+            resp = Http.parse_resp_body('post', url, data=req_body,
+                                        headers={"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"})
+            response_headers = resp["headers"]
+            self.authorization = response_headers["Authorization"]
+            self.cookies = resp["cookies"]
+        except Exception as e:
+            print(e)
+            pass
 
     def get_config_id(self, config_name):
         url = self.get_config_id_url.format(self.domain, config_name, self.tenant, self.tenant)

@@ -11,19 +11,19 @@ class ChinaBizCentralAuto(BaseAuto):
 
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaBizCentralAuto, self).__init__('china', 'biz-central', env, run_env, check_req, return_req)
-        self.host_url = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.host_url = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.central_task_url = self.host_url + "/job/runTaskById?id={0}"
-        self.asset_import_url = self.host_url + "/asset/import"
+        self.central_task_url = self.biz_host + "/job/runTaskById?id={0}"
+        self.asset_import_url = self.biz_host + "/asset/import"
+        self.capital_asset_import_url = self.biz_host + "/capital-asset/import"
 
     def asset_import(self, req_data):
         ret = Http.http_post(self.asset_import_url, req_data)
         if not ret['code'] == 0:
             raise ValueError("import asset error, {0}".format(ret['message']))
         central_task_id = ret['data']
-        req = self.run_central_task_by_task_id(central_task_id)
-        if not req['code'] == 0:
-            raise ValueError("run asset import task error ,{0}".format(req['message']))
+        if central_task_id is not None:
+            req = self.run_central_task_by_task_id(central_task_id)
+            if not req['code'] == 0:
+                raise ValueError("run asset import task error ,{0}".format(req['message']))
         return ret
 
     def sync_withhold_to_history(self, item_no):
@@ -55,12 +55,19 @@ class ChinaBizCentralAuto(BaseAuto):
     def update_central_task_next_run_at_forward_by_task_id(self, task_id):
         central_task = self.db_session.query(CentralTask).filter(CentralTask.task_id == task_id).first()
         if not central_task:
-            raise ValueError("not found the central_task info with central_task'id {0}".format(central_task))
+            raise ValueError("not found the central_task info with central_task'id: {0}".format(task_id))
+        if central_task.task_status == 'close':
+            if json.loads(central_task.task_response_data)['code'] == 0:
+                print('task is run with success')
+                return
+            else:
+                raise ValueError("task is run but not success, with response is :{0}".format(
+                    central_task.task_response_data))
         central_task.task_next_run_at = self.get_date(minutes=1)
         self.db_session.add(central_task)
         self.db_session.commit()
 
-    def run_central_task_by_task_id(self, task_id, excepts={'code': 0}):
+    def run_central_task_by_task_id(self, task_id):
         self.update_central_task_next_run_at_forward_by_task_id(task_id)
         ret = Http.http_get(self.central_task_url.format(task_id))
         if not ret['code'] == 0:
