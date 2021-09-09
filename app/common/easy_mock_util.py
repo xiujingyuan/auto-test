@@ -70,7 +70,6 @@ class EasyMock(object):
         self.login(ACCOUNT['user'], ACCOUNT['password'])
         self.check_req = check_req
         self.return_req = return_req
-        LogUtil.log_info("Easymock.__init__()...")
 
     def login(self, user, password):
         body = {"name": user,

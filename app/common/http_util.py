@@ -11,7 +11,6 @@ from app.common.log_util import LogUtil
 def modify_resp(func):
     def wrapper(*args, **kwargs):
         url, req_data, resp = func(*args, **kwargs)
-        print(resp.content)
         content = json.loads(resp.content)
         log_info = dict(zip(('url', 'method', 'request', 'response'),
                             (url, 'post', req_data,  content)))

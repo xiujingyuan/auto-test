@@ -30,10 +30,10 @@ def repay_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    # try:
-    repay = RepayFactory.get_repay(country, env, environment)
-    ret['data'] = getattr(repay, tool)(**req)
-    # except Exception as e:
-    #     ret['code'] = 1
-    #     ret['message'] = str(e)
+    try:
+        repay = RepayFactory.get_repay(country, env, environment)
+        ret['data'] = getattr(repay, tool)(**req)
+    except Exception as e:
+        ret['code'] = 1
+        ret['message'] = str(e)
     return jsonify(ret)

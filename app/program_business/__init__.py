@@ -87,7 +87,7 @@ class BaseAuto(object):
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
-        self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=True)
+        self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False)
         self.grant_host = "https://kong-api-test.kuainiujinke.com/gbiz{0}".format(env)
         self.repay_host = "https://kong-api-test.kuainiujinke.com/rbiz{0}".format(env)
         self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
