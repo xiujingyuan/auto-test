@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 from app.program_business.china.repay.Model import WithholdOrder
 
@@ -8,7 +9,8 @@ def query_withhold(func):
         status = kwargs.pop('status', None)
         item_no = kwargs.get('item_no', None)
         request, request_url, response = func(self, **kwargs)
-        withhold_info, lock_info, withhold, asset_info = [], [], [], []
+        withhold_info, lock_info, withhold, asset_info, task_msg_ret, biz_task_msg_ret, biz_asset_info_ret  \
+            = [], [], [], [], [], [], []
         if item_no:
             if isinstance(request, str):
                 req_key = ''
@@ -23,6 +25,16 @@ def query_withhold(func):
                 calls = dict(zip(('serial_no', 'status'), (serial, status)))
                 call_ret = getattr(self, 'repay_callback')(**calls)
                 ret['callback'].append(call_ret)
+        if ret['withhold'] and ret['withhold']['request_no']:
+            task_msg = deepcopy(withhold)
+            task_msg['item_no'] = item_no
+            task_msg_ret = getattr(self, 'get_task_msg')(**task_msg)
+            biz_task_msg_ret = getattr(self, 'get_biz_task_msg')(**task_msg)
+            biz_asset_info_ret = getattr(self, 'get_biz_capital_info')(item_no)
+        ret['task_msg'] = task_msg_ret
+        ret['biz_task_msg'] = biz_task_msg_ret
+        ret['biz_asset_info'] = biz_asset_info_ret
+
         if item_no:
             ret['withhold_info'] = self.get_current_withhold_info(item_no, tuple(ret['withhold']['request_no']))
             ret['asset_info'] = self.get_asset_info(item_no)

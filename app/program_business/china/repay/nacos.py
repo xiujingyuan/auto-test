@@ -7,4 +7,4 @@ class ChinaRepayNacos(Nacos):
         super(ChinaRepayNacos, self).__init__('china', ''.join((self.program, env)))
 
     def update_repay_paysvr_config_by_value(self, value):
-        super(ChinaRepayNacos, self).update_configs('repay_paysvr_config', value)
+        super(ChinaRepayNacos, self).update_config('repay_paysvr_config', value)

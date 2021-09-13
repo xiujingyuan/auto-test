@@ -1,6 +1,7 @@
 
 import copy
 import json
+import time
 
 from functools import reduce
 from sqlalchemy import desc
@@ -160,9 +161,57 @@ class ChinaRepayAuto(BaseAuto):
         self.db_session.add(asset)
         self.db_session.commit()
 
+    def set_trail_mock(self, item_no, period_start, period_end, channel, status, principal_over=False, interest_type='less'):
+        """
+        设置微神马试算金额
+        :param item_no:资产编号
+        :param period_start: 还款开始期次
+        :param period_end: 还款到期期次
+        :param channel: 资方
+        :param status: 试算返回状态 0：成功，1：失败，2：其他，3：不存在
+        :param principal_over: 是否本金和试算本金不一致
+        :param interest_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
+        :return: 无返回
+        """
+        at_list = self.db_session.query(AssetTran).filter(
+            AssetTran.asset_tran_period >= period_start,
+            AssetTran.asset_tran_period <= period_end,
+            AssetTran.asset_tran_asset_item_no == item_no,
+            AssetTran.asset_tran_type.in_(('repayprincipal', 'repayinterest'))).all()
+        principal_amount = 0
+        interest_amount = 0
+        for at in at_list:
+            if at.asset_tran_type == 'repayprincipal':
+                principal_amount += at.asset_tran_balance_amount
+            elif at.asset_tran_period == period_start:
+                interest_amount = at.asset_tran_balance_amount
+        if principal_over:
+            principal_amount = principal_amount - 1
+        if interest_type == 'less':
+            interest_amount = interest_amount - 1
+        elif interest_type == 'more':
+            interest_amount = interest_amount + 1
+        self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, status)
+
     @staticmethod
     def _sum_amount_(amount_type, amount_list):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
+
+    def get_task_msg(self, request_no, serial_no, id_num, item_no):
+        task_order_no = tuple(request_no + serial_no + [id_num['card_acc_id_num_encrypt'], item_no])
+        task_list = self.db_session.query(Task).filter(
+            Task.task_order_no.in_(task_order_no)).order_by(desc(Task.task_id)).all()
+        msg_list = self.db_session.query(SendMsg).filter(
+            SendMsg.sendmsg_order_no.in_(task_order_no)).order_by(desc(SendMsg.sendmsg_id)).all()
+        task_list = list(map(lambda x: x.to_spec_dict, task_list))
+        msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
+        return dict(zip(('task', 'msg'), (task_list, msg_list)))
+
+    def get_biz_capital_info(self, item_no):
+        return self.biz_central.get_capital_info(item_no)
+
+    def get_biz_task_msg(self, request_no, serial_no, id_num, item_no):
+        return self.biz_central.get_task_msg(request_no, serial_no, id_num, item_no)
 
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
@@ -606,8 +655,28 @@ class ChinaRepayAuto(BaseAuto):
         resp = Http.http_post(self.fox_repay_url, fox_active_data)
         return fox_active_data, self.fox_repay_url, resp
 
+    def clear_auto_withhold(self, item_no):
+        item_no_x = self.get_no_loan(item_no)
+        auto_withhold_order_list = self.db_session.query(WithholdOrder).filter(
+            WithholdOrder.withhold_order_reference_no.in_((item_no, item_no_x)),
+            WithholdOrder.withhold_order_operate_type == 'auto').all()
+        if auto_withhold_order_list:
+            auto_request_tuple = tuple(map(lambda x: x.withhold_order_request_no, auto_withhold_order_list))
+            auto_withhold_request_list = self.db_session.query(WithholdRequest).filter(
+                WithholdRequest.withhold_request_no.in_(auto_request_tuple)).all()
+            for withhold_order in auto_withhold_order_list:
+                withhold_order.withhold_order_operate_type = 'manual'
+            for withhold_request in auto_withhold_request_list:
+                withhold_request.withhold_request_operate_type = 'manual'
+                withhold_request.withhold_request_trade_type = 'FOX_MANUAL_WITHHOLD'
+            self.db_session.add_all(auto_withhold_order_list)
+            self.db_session.add_all(auto_withhold_request_list)
+            self.db_session.commit()
+            time.sleep(1)
+
     @query_withhold
     def auto_repay(self, item_no):
+        self.clear_auto_withhold(item_no)
         self.xxljob.run_auto_repay()
         start = self.get_date()
         while True:

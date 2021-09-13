@@ -1,10 +1,11 @@
+from sqlalchemy import desc
 
 from app.program_business import BaseAuto
 from app.common.http_util import Http
 import json
 
 from app.program_business.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
-    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult
+    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail
 
 
 class ChinaBizCentralAuto(BaseAuto):
@@ -25,6 +26,32 @@ class ChinaBizCentralAuto(BaseAuto):
             if not req['code'] == 0:
                 raise ValueError("run asset import task error ,{0}".format(req['message']))
         return ret
+
+    def get_task_msg(self, request_no, serial_no, id_num, item_no):
+        task_order_no = tuple(request_no + serial_no + [id_num['card_acc_id_num_encrypt'], item_no])
+        task_list = self.db_session.query(CentralTask).filter(
+            CentralTask.task_order_no.in_(task_order_no)).order_by(desc(CentralTask.task_id)).all()
+        msg_list = self.db_session.query(CentralSendMsg).filter(
+            CentralSendMsg.sendmsg_order_no.in_(task_order_no)).order_by(desc(CentralSendMsg.sendmsg_id)).all()
+        task_list = list(map(lambda x: x.to_spec_dict, task_list))
+        msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
+        return dict(zip(('task', 'msg'), (task_list, msg_list)))
+
+    def get_capital_info(self, item_no):
+        capital_asset = self.db_session.query(CapitalAsset).filter(
+            CapitalAsset.capital_asset_item_no == item_no).first()
+        capital_tran_list = self.db_session.query(CapitalTransaction).filter(
+            CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
+        capital_notify_list = self.db_session.query(CapitalNotify).filter(
+            CapitalNotify.capital_notify_asset_item_no == item_no).order_by(desc(CapitalNotify.capital_notify_id)).all()
+        capital_detail_list = self.db_session.query(CapitalSettlementDetail).filter(
+            CapitalSettlementDetail.channel == capital_asset.capital_asset_channel)\
+            .order_by(desc(CapitalSettlementDetail.id)).all()
+        capital_tran_list = list(map(lambda x: x.to_spec_dict, capital_tran_list))
+        capital_notify_list = list(map(lambda x: x.to_spec_dict, capital_notify_list))
+        capital_detail_list = list(map(lambda x: x.to_spec_dict, capital_detail_list))
+        return dict(zip(('capital_tran', 'capital_notify', 'capital_detail'),
+                        (capital_tran_list, capital_notify_list, capital_detail_list)))
 
     def sync_withhold_to_history(self, item_no):
         withhold_results = self.db_session.query(WithholdResult).filter(

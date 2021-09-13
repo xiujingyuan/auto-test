@@ -2,6 +2,7 @@ import json
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 import re
+from jsonpath_ng import parse
 
 BASE_URL = "http://easy-mock.k8s-ingress-nginx.kuainiujinke.com"
 ACCOUNT = {
@@ -71,6 +72,32 @@ class EasyMock(object):
         self.check_req = check_req
         self.return_req = return_req
 
+    @staticmethod
+    def __get_new_value__(content, json_path_dict):
+        replace_dict = {}
+        # 查找function
+        for index in range(content.count('function')):
+            a_index = content.find('function')
+            b_index = content.find('},')
+            spect_str = content[a_index:b_index + len('}')]
+            spect_key = '"spect_str_' + str(index) + '"'
+            replace_dict[spect_key] = spect_str
+            content = content.replace(spect_str, spect_key)
+        content = json.loads(content)
+        # 替换key
+        for json_path, new_value in json_path_dict.items():
+            json_path_expr = parse(json_path)
+            b = json_path_expr.find(content)
+            if not b:
+                LogUtil.log_error('not fount the json path: {0} in {1}'.format(json_path, content))
+            else:
+                json_path_expr.update(content, new_value)
+        # 替换回function
+        content = json.dumps(content, ensure_ascii=False)
+        for replace_key, replace_value in replace_dict.items():
+            content = content.replace(replace_key, replace_value)
+        return content
+
     def login(self, user, password):
         body = {"name": user,
                 "password": password}
@@ -93,7 +120,7 @@ class EasyMock(object):
                 api_info["id"] = mock["_id"]
                 api_info["url"] = mock["url"]
                 api_info["method"] = mock["method"]
-                api_info["mode"] = ""
+                api_info["mode"] = mock["mode"]
                 api_info["description"] = mock["description"]
                 break
         if len(api_info) == 0:
@@ -109,7 +136,24 @@ class EasyMock(object):
         :return:
         """
         api_info = self.get_api_info_by_api(api, method)
+        if 'function' in api_info['mode']:
+            pass
         api_info["mode"] = mode if isinstance(mode, str) else json.dumps(mode, ensure_ascii=False)
+        if self.return_req:
+            api_info["mode"] = self.append_origin_req(api_info["mode"])
+        resp = Http.http_post(self.update_url, api_info, headers=self.header)
+        return resp
+
+    def update_by_json_path(self, api, json_path_dict, method=None):
+        """
+        :param api: 需要修改的api的url
+        :param json_path_dict:jsonpath的字典
+        :param method 方法类型
+        :return:
+        """
+        api_info = self.get_api_info_by_api(api, method)
+        new_value = self.__get_new_value__(api_info['mode'], json_path_dict)
+        api_info['mode'] = new_value
         if self.return_req:
             api_info["mode"] = self.append_origin_req(api_info["mode"])
         resp = Http.http_post(self.update_url, api_info, headers=self.header)

@@ -31,3 +31,20 @@ def easy_mock_change():
         easy_mock = EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         easy_mock.update(url, params)
     return jsonify(get_ret)
+
+
+@api_easy_mock.route('/<string:operate>', methods=['POST'])
+def change_easymock(operate):
+    get_ret = deepcopy(RET)
+    req = request.json
+    check_req = req.pop("check_req", False)
+    return_req = req.pop("return_req", False)
+    country = req.pop('country', 'china')
+    program = req.pop('program', 'repay')
+    # try:
+    easy_mock = EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
+    get_ret['data'] = getattr(easy_mock, operate)(**req)
+    # except Exception as e:
+    #     get_ret['code'] = 1
+    #     get_ret['message'] = str(e)
+    return jsonify(get_ret)

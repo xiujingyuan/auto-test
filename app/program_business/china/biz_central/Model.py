@@ -294,7 +294,6 @@ class CapitalTransaction(db.Model, BaseToDict):
     capital_transaction_asset_item_no = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue())
 
 
-
 class CentralSendMsg(db.Model, BaseToDict):
     __tablename__ = 'central_sendmsg'
     __table_args__ = (
