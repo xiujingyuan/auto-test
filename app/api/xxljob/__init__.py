@@ -13,8 +13,8 @@ def hello_world():
     return 'hello xxl job api'
 
 
-@api_xxljob.route('/exec_xxljob', methods=['POST'])
-def exec_xxljob():
+@api_xxljob.route('/xxljob_tools/<string:tool>', methods=['POST'])
+def exec_xxljob(tool):
     get_ret = deepcopy(RET)
     req = request.json
     country = req.get('country', 'china')

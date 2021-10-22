@@ -1,4 +1,3 @@
-
 import copy
 import json
 import time
@@ -6,7 +5,7 @@ import time
 from functools import reduce
 from sqlalchemy import desc
 from app import db
-from app.common.http_util import Http
+from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
 from app.model.AutoAssetDb import AutoAsset
 from app.program_business import BaseAuto
@@ -15,7 +14,7 @@ from app.program_business.china.grant.services import ChinaGrantAuto
 from app.program_business.china.repay import query_withhold
 from app.program_business.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
-    WithholdRequest, WithholdDetail
+    WithholdRequest, WithholdDetail, CardBind
 
 
 class ChinaRepayAuto(BaseAuto):
@@ -36,6 +35,21 @@ class ChinaRepayAuto(BaseAuto):
         self.run_task_id_url = self.repay_host + '/task/run?taskId={0}'
         self.run_msg_id_url = self.repay_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
+        self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
+
+    def calc_qinnong_early_settlement(self, item_no):
+        param = {
+            'project_num': item_no,
+            "project_type": "paydayloan"
+        }
+        req = Http.http_get(self.bc_query_asset_url, req_data=param, headers=FORM_HEADER)
+        total_amount, decrease_amount, repaid_amount = 0, 0, 0
+        for fee_type in req['data'].keys():
+            for _, value in req['data'][fee_type].items():
+                total_amount += value['amount']
+                repaid_amount += value['repaid_amount']
+                decrease_amount += value['advance_repay_decrease_amount']
+        return total_amount - decrease_amount - repaid_amount
 
     def auto_loan(self, channel, count, amount, source_type, from_system_name='香蕉'):
         self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, channel))
@@ -47,9 +61,10 @@ class ChinaRepayAuto(BaseAuto):
         # 大单
         asset_info, old_asset = self.grant.asset_import(item_no, channel, element, count, amount, source_type,
                                                         from_system_name, from_system, x_item_no)
-        self.grant.asset_import_success(asset_info)
+        import_asset_info = self.grant.asset_import_success(asset_info)
         withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info)
         self.grant.asset_withdraw_success(withdraw_success_data)
+        self.run_msg_by_type_and_order_no(item_no, 'AssetWithdrawSuccess', timeout=60)
         capital_data = self.grant.get_capital_asset_data(item_no)
         self.grant.capital_asset_success(capital_data)
 
@@ -58,15 +73,15 @@ class ChinaRepayAuto(BaseAuto):
         for index, x_asset in enumerate((x_item_no, x_rights)):
             if x_asset:
                 x_ref_asset = item_no if index == 1 else ''
-                no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, item_no, x_asset,
-                                                                              x_list[index])
+                no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
+                                                                              x_asset, x_list[index])
                 self.grant.asset_import_success(no_asset_info)
                 withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, x_ref_asset,
                                                                                 no_asset_info)
                 self.grant.asset_withdraw_success(withdraw_success_data_no)
-        if item_no:
-            self.add_asset(item_no, channel, count, 0)
-        return item_no, x_item_no, x_rights
+                self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
+        self.add_asset(item_no, 0)
+        return self.get_auto_asset(channel, count)
 
     def send_msg(self, serial_no):
         req_data = {
@@ -86,6 +101,7 @@ class ChinaRepayAuto(BaseAuto):
         return verify_seq
 
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
+        print(self.get_date(is_str=True))
         item_no_x = self.get_no_loan(item_no)
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
         asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
@@ -95,11 +111,16 @@ class ChinaRepayAuto(BaseAuto):
             AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
         capital_asset = self.db_session.query(CapitalAsset).filter(
             CapitalAsset.capital_asset_item_no == item_no).first()
+        print(self.get_date(is_str=True))
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_item_no == item_no).all()
+        print(self.get_date(is_str=True))
         self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                                  advance_month)
+        print(self.get_date(is_str=True))
         self.biz_central.change_asset(item_no, item_no_x, item_no_rights, advance_day, advance_month)
+        print(self.get_date(is_str=True))
+        return "修改完成"
 
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
         asset_tran_list = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no,
@@ -110,9 +131,9 @@ class ChinaRepayAuto(BaseAuto):
     def get_no_loan(self, item_no):
         item_no_x = ''
         asset_extend = self.db_session.query(AssetExtend).filter(
-                AssetExtend.asset_extend_asset_item_no == item_no,
-                AssetExtend.asset_extend_type == 'ref_order_no'
-            ).first()
+            AssetExtend.asset_extend_asset_item_no == item_no,
+            AssetExtend.asset_extend_type == 'ref_order_no'
+        ).first()
         if asset_extend:
             ref_order_type = self.db_session.query(AssetExtend).filter(
                 AssetExtend.asset_extend_asset_item_no == item_no,
@@ -161,7 +182,8 @@ class ChinaRepayAuto(BaseAuto):
         self.db_session.add(asset)
         self.db_session.commit()
 
-    def set_trail_mock(self, item_no, period_start, period_end, channel, status, principal_over=False, interest_type='less'):
+    def set_trail_mock(self, item_no, period_start, period_end, channel, status, principal_over=False,
+                       interest_type='less'):
         """
         设置微神马试算金额
         :param item_no:资产编号
@@ -182,40 +204,79 @@ class ChinaRepayAuto(BaseAuto):
         interest_amount = 0
         for at in at_list:
             if at.asset_tran_type == 'repayprincipal':
-                principal_amount += at.asset_tran_balance_amount
+                principal_amount += at.asset_tran_total_amount
             elif at.asset_tran_period == period_start:
-                interest_amount = at.asset_tran_balance_amount
+                interest_amount = at.asset_tran_total_amount
         if principal_over:
             principal_amount = principal_amount - 1
         if interest_type == 'less':
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
             interest_amount = interest_amount + 1
-        self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, status)
+        return self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, status)
+
 
     @staticmethod
     def _sum_amount_(amount_type, amount_list):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
 
-    def get_task_msg(self, request_no, serial_no, id_num, item_no):
-        task_order_no = tuple(request_no + serial_no + [id_num['card_acc_id_num_encrypt'], item_no])
+    def get_task(self, task_order_no, max_create_at):
         task_list = self.db_session.query(Task).filter(
-            Task.task_order_no.in_(task_order_no)).order_by(desc(Task.task_id)).all()
-        msg_list = self.db_session.query(SendMsg).filter(
-            SendMsg.sendmsg_order_no.in_(task_order_no)).order_by(desc(SendMsg.sendmsg_id)).all()
+            Task.task_order_no.in_(task_order_no),
+            Task.task_id >= max_create_at).order_by(desc(Task.task_id)).all()
         task_list = list(map(lambda x: x.to_spec_dict, task_list))
+        return {'task': task_list}
+
+    def get_msg(self, task_order_no, max_create_at):
+        msg_list = self.db_session.query(SendMsg).filter(
+            SendMsg.sendmsg_order_no.in_(task_order_no),
+            SendMsg.sendmsg_id >= max_create_at).order_by(desc(SendMsg.sendmsg_id)).all()
         msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
-        return dict(zip(('task', 'msg'), (task_list, msg_list)))
+        return {'msg': msg_list}
 
     def get_biz_capital_info(self, item_no):
-        return self.biz_central.get_capital_info(item_no)
+        ret = {}
+        biz_capital_detail = self.biz_central.get_capital_detail(item_no)
+        biz_capital = self.biz_central.get_capital(item_no)
+        biz_capital_tran = self.biz_central.get_capital_tran(item_no)
+        biz_capital_notify = self.biz_central.get_capital_notify(item_no)
+        ret.update(biz_capital_detail)
+        ret.update(biz_capital)
+        ret.update(biz_capital_tran)
+        ret.update(biz_capital_notify)
+        return ret
 
-    def get_biz_task_msg(self, request_no, serial_no, id_num, item_no):
-        return self.biz_central.get_task_msg(request_no, serial_no, id_num, item_no)
+    def get_biz_capital(self, item_no):
+        return self.biz_central.get_capital(item_no)
+
+    def get_biz_capital_tran(self, item_no):
+        return self.biz_central.get_capital_tran(item_no)
+
+    def get_biz_capital_notify(self, item_no, max_create_at):
+        return self.biz_central.get_capital_notify(item_no, max_create_at)
+
+    def get_biz_capital_detail(self, item_no):
+        return self.biz_central.get_capital_detail(item_no)
+
+    def get_biz_task(self, task_order_no, max_create_at):
+        return self.biz_central.get_task(task_order_no, max_create_at=max_create_at, channel=None)
+
+    def get_biz_msg(self, task_order_no, max_create_at):
+        return self.biz_central.get_msg(task_order_no, max_create_at)
+
+    def add_and_update_holiday(self, date_time, status):
+        return self.biz_central.add_and_update_holiday(date_time, status)
+
+    def run_xxl_job(self, job_type):
+        return self.xxljob.trigger_job(job_type)
 
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
-                     verify_code='', verify_seq=None, agree=False, period_start=None, period_end=None):
+                     verify_code='', verify_seq=None, agree=False, protocol=False,
+                     period_start=None, period_end=None):
+        asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
+        max_period = asset_tran[-1].asset_tran_period
+        is_overdue = False if self.cal_days(self.get_date(), asset_tran[-1].asset_tran_due_at) > 0 else True
         item_no_x = self.get_no_loan(item_no) if item_no else ''
         if item_no_rights:
             rights_info = self.db_session.query(AssetExtend).filter(
@@ -226,9 +287,10 @@ class ChinaRepayAuto(BaseAuto):
                 raise ValueError('The item {0} is not rights asset!'.format(item_no_rights))
         if not item_no and not item_no_rights:
             raise ValueError('need item_no or item_no_rights one is not null!')
-        amount = self.__get_repay_amount__(amount, item_no, period_start, period_end)
-        x_amount = self.__get_repay_amount__(x_amount, item_no_x, period_start, period_end)
-        rights_amount = self.__get_repay_amount__(rights_amount, item_no_rights, period_start, period_end)
+        amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
+        x_amount = self.__get_repay_amount__(x_amount, item_no_x, period_start, period_end, max_period, is_overdue)
+        rights_amount = self.__get_repay_amount__(rights_amount, item_no_rights, period_start, period_end, max_period,
+                                                  is_overdue)
         if amount == 0 and x_amount == 0 and rights_amount == 0:
             return "当前已结清", "", []
         request_data = self.__get_active_request_data__(item_no, item_no_x, item_no_rights, amount, x_amount,
@@ -244,23 +306,54 @@ class ChinaRepayAuto(BaseAuto):
             agree_request_data['key'] = self.__create_req_key__(item_no, prefix='Agree')
             agree_request_data['data']['order_no'] = first_serial_no
             agree_request_data['data']['verify_code'] = verify_code
-            agree_request_data['data']['verify_seq'] = verify_seq
+            agree_request_data['data']['verify_seq'] = verify_seq if protocol else 'error_test'
             agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
             # 执行协议签约任务
             request_data = [request_data, agree_request_data]
             resp = [resp, agree_resp]
         return request_data, self.active_repay_url, resp
 
-    def __get_repay_amount__(self, amount, item_no, period_start, period_end):
-        if amount == 0 and period_start is not None and period_end is not None:
-            amount = self.get_asset_tran_balance_amount_by_period(item_no, period_start, period_end)
+    def __early_settlement_need_decrease__(self, item_no):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        ret = False
+        if asset is None:
+            return ret
+        config_content = self.nacos.get_config_content('repay_{0}_config'.format(asset.asset_loan_channel))
+        if asset.asset_loan_channel in ('qinnong', 'qinnong_jieyi'):
+            advance_settle_decrease = config_content['advanceSettleDecrease']
+            advance_settle_decrease_start = config_content['advanceSettleDecreaseStart']
+            advance_settle_decrease_end = config_content['advanceSettleDecreaseEnd']
+            if advance_settle_decrease:
+                if advance_settle_decrease_start is not None:
+                    if advance_settle_decrease_end is not None and self.cal_days(advance_settle_decrease_start,
+                                                                                 asset.asset_actual_grant_at
+                                                                                 ) > 0 \
+                            and self.cal_days(asset.asset_actual_grant_at, advance_settle_decrease_end) > 0:
+                        ret = True
+                    elif self.cal_days(advance_settle_decrease_start, asset.asset_actual_grant_at) > 0:
+                        ret = True
+                elif advance_settle_decrease_end is not None and self.cal_days(asset.asset_actual_grant_at,
+                                                                               advance_settle_decrease_end) > 0:
+                    ret = True
+        return ret
+
+    def __get_repay_amount__(self, amount, item_no, period_start, period_end, max_period, is_overdue):
+        if amount == 0 and period_start is not None and period_end is not None and item_no:
+            if period_end == max_period and not is_overdue and self.__early_settlement_need_decrease__(item_no):
+                amount = self.calc_qinnong_early_settlement(item_no)
+            else:
+                amount = self.get_asset_tran_balance_amount_by_period(item_no, period_start, period_end)
         return amount
 
     def __get_active_request_data__(self, item_no, item_no_x, item_no_rights, amount, x_amount, rights_amount,
                                     repay_card, item_no_priority=12, item_no_rights_priority=5,
                                     item_no_x_priority=1, coupon_num=None, coupon_amount=None, order_no='',
                                     verify_code='', verify_seq=''):
-        card_info = self.get_active_card_info(item_no, repay_card)
+        # card_info = self.get_active_card_info('item_no_1634196466', repay_card)
+        if repay_card == 3:
+            card_info = self.get_active_card_info('item_no_1634196466', 1)
+        else:
+            card_info = self.get_active_card_info(item_no, repay_card)
         key = self.__create_req_key__(item_no, prefix='Active')
         active_request_data = {
             "type": "PaydayloanUserActiveRepay",
@@ -288,21 +381,27 @@ class ChinaRepayAuto(BaseAuto):
     @staticmethod
     def __get_four_element_key__(repay_card):
         repay_key = ('card_num_encrypt', 'card_user_id_encrypt', 'card_user_name_encrypt', 'card_user_phone_encrypt')
-        if repay_card == 1:
-            card_element = ('card_acc_num_encrypt', 'card_acc_id_num_encrypt', 'card_acc_tel_encrypt',
-                            'card_acc_name_encrypt')
-        elif repay_card in (0, 2):
+        if repay_card in (1, 3, 0):
+            card_element = ('card_acc_num_encrypt', 'card_acc_id_num_encrypt', 'card_acc_name_encrypt',
+                            'card_acc_tel_encrypt')
+        elif repay_card == 2:
             card_element = ('bank_code_encrypt', 'id_number_encrypt', 'user_name_encrypt', 'phone_number_encrypt')
         return dict(zip(repay_key, card_element))
 
     def get_active_card_info(self, item_no, repay_card):
-        # 1-还款卡还款
         card_info = self.get_repay_card_by_item_no(item_no)
-        if repay_card in (0, 2):
-            # 0-还款人身份证相同银行卡不同;2-还款人身份证和银行卡都不同
-            id_num = card_info['card_acc_id_num_encrypt'] if repay_card == 0 else None
-            card_info = self.get_four_element(id_num=id_num)['data']
-        return card_info
+        random_card = self.get_four_element()['data']
+        if repay_card == 1:
+            # 1-还款卡还款
+            return card_info
+        elif repay_card == 0:
+            # 0-还款人身份证相同银行卡不同;
+            # card_info['card_acc_num_encrypt'] = random_card['bank_code_encrypt']
+            card_info['card_acc_num_encrypt'] = 'enc_03_3639876358135875584_678'
+            return card_info
+        elif repay_card == 2:
+            # 2-还款人身份证相同银行卡都不同;
+            return random_card
 
     def get_repay_card_by_item_no(self, item_no):
         sql = "select card_acc_id_num_encrypt, card_acc_num_encrypt, card_acc_tel_encrypt, card_acc_name_encrypt " \
@@ -311,105 +410,199 @@ class ChinaRepayAuto(BaseAuto):
         id_num_info = self.db_session.execute(sql)
         return id_num_info[0] if id_num_info else ''
 
-    def get_withhold_info(self, item_no, req_key='', repay_type=''):
+    def get_withhold_key_info(self, item_no, request_no=None, req_key=None, max_create_at=None):
         item_no_x = self.get_no_loan(item_no)
-        withhold_status = 'success' if repay_type == 'crm_repay' else 'ready'
-        request_no, serial_no = set([]), set([])
-        if req_key:
-            withhold_order_list = self.db_session.query(WithholdOrder).filter(
-                WithholdOrder.withhold_order_req_key == req_key).all()
-            for withhold_order in withhold_order_list:
-                request_no.add(withhold_order.withhold_order_request_no)
-                serial_no.add(withhold_order.withhold_order_serial_no)
-        if not request_no:
-            withhold_order_list = self.db_session.query(WithholdOrder).filter(
-                WithholdOrder.withhold_order_reference_no.in_((item_no, item_no_x))
-            ).all()
-            for withhold_order in withhold_order_list:
-                is_add = False
-                if repay_type == 'crm_repay' and withhold_order.withhold_order_withhold_status == withhold_status\
-                        and withhold_order.withhold_order_serial_no.like('%DECREASE%'):
-                    is_add = True
-                elif withhold_order.withhold_order_withhold_status == withhold_status:
-                    is_add = True
-                if is_add:
-                    request_no.add(withhold_order.withhold_order_request_no)
-                    serial_no.add(withhold_order.withhold_order_serial_no)
-        id_num_encrypt = self.get_repay_card_by_item_no(item_no)
-        return dict(zip(('request_no', 'serial_no', 'id_num'), (list(request_no), list(serial_no), id_num_encrypt)))
-
-    def get_current_withhold_info(self, item_no, request_no):
+        max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
+        item_no_tuple = tuple(filter(lambda x: x, (item_no, item_no_x)))
         withhold_order_list = self.db_session.query(WithholdOrder).filter(
-            WithholdOrder.withhold_order_request_no.in_(request_no),
-            WithholdOrder.withhold_order_reference_no == item_no) \
-            .order_by(desc(WithholdOrder.withhold_order_create_at)).all()
-        serial_no_tuple = tuple(map(lambda x: x.withhold_order_serial_no, withhold_order_list))
-        withhold_detail_list = self.db_session.query(WithholdDetail).filter(
-            WithholdDetail.withhold_detail_serial_no.in_(serial_no_tuple),
-            WithholdDetail.withhold_detail_asset_item_no == item_no).all()
+            WithholdOrder.withhold_order_reference_no.in_(item_no_tuple),
+            WithholdOrder.withhold_order_create_at >= max_create_at).all()
+        withhold_order = []
+        if request_no is not None:
+            withhold_order = list(filter(lambda x: x.withhold_order_request_no in request_no, withhold_order_list))
+        if req_key is not None:
+            withhold_order = list(filter(lambda x: x.withhold_order_req_key == req_key, withhold_order_list))
+        if not withhold_order:
+            withhold_order = list(filter(lambda x: x.withhold_order_withhold_status == 'ready', withhold_order_list))
+        if not withhold_order and withhold_order_list:
+            max_request_no = withhold_order_list[-1].withhold_order_request_no
+            max_serial_no = withhold_order_list[-1].withhold_order_serial_no
+            if max_serial_no.startswith("PROV_"):
+                second_request_no = withhold_order_list[-2].withhold_order_request_no
+                request_tuple = (max_request_no, second_request_no)
+                withhold_order = list(
+                    filter(lambda x: x.withhold_order_request_no in request_tuple, withhold_order_list))
+            else:
+                withhold_order = list(filter(lambda x: x.withhold_order_request_no == max_request_no, withhold_order_list))
+        request_no_tuple = tuple(map(lambda x: x.withhold_order_request_no, withhold_order))
+        serial_no_tuple = tuple(map(lambda x: x.withhold_order_serial_no, withhold_order))
+        id_num_encrypt_tuple = (self.get_repay_card_by_item_no(item_no)['card_acc_id_num_encrypt'], )
+        withhold_order = list(map(lambda x: x.to_spec_dict, withhold_order))
+        return request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order
+
+    def get_withhold(self, withhold_serial_no, max_create_at):
         withhold_list = self.db_session.query(Withhold).filter(
-            Withhold.withhold_serial_no.in_(serial_no_tuple)).all()
-        withhold_request_list = self.db_session.query(WithholdRequest).filter(
-            WithholdRequest.withhold_request_req_key.in_(request_no)).all()
-        withhold_order_list = list(map(lambda x: x.to_spec_dict, withhold_order_list))
-        withhold_detail_list = list(map(lambda x: x.to_spec_dict, withhold_detail_list))
-        withhold_request_list = list(map(lambda x: x.to_spec_dict, withhold_request_list))
+            Withhold.withhold_serial_no.in_(withhold_serial_no),
+            Withhold.withhold_create_at >= max_create_at).all()
         withhold_list = list(map(lambda x: x.to_spec_dict, withhold_list))
-        return dict(zip(('withhold', 'withhold_order', 'withhold_detail', 'withhold_request'),
-                        (withhold_list, withhold_order_list, withhold_detail_list, withhold_request_list)))
+        return {'withhold': withhold_list}
 
-    def get_all_withhold_info(self, item_no):
-        withhold_order_list = self.db_session.query(WithholdOrder).filter(
-            WithholdOrder.withhold_order_reference_no == item_no)\
-            .order_by(desc(WithholdOrder.withhold_order_create_at)).all()
+    def get_withhold_request(self, withhold_request_no, max_create_at):
+        withhold_request_list = self.db_session.query(WithholdRequest).filter(
+            WithholdRequest.withhold_request_no.in_(withhold_request_no),
+            WithholdRequest.withhold_request_create_at >= max_create_at).all()
+        withhold_request_list = list(map(lambda x: x.to_spec_dict, withhold_request_list))
+        return {'withhold_request': withhold_request_list}
+
+    def get_card_bind(self, withhold_serial_no, max_create_at):
+        card_bind_list = self.db_session.query(CardBind).filter(
+            CardBind.card_bind_serial_no.in_(withhold_serial_no),
+            CardBind.card_bind_create_at >= max_create_at).all()
+        card_bind_list = list(map(lambda x: x.to_spec_dict, card_bind_list))
+        return {'card_bind': card_bind_list}
+
+    def get_withhold_detail(self, withhold_serial_no, max_create_at):
         withhold_detail_list = self.db_session.query(WithholdDetail).filter(
-            WithholdDetail.withhold_detail_asset_item_no == item_no)\
-            .order_by(desc(WithholdDetail.withhold_detail_create_at)).all()
-        req_key_tuple = tuple(set(map(lambda x: x.withhold_order_req_key, withhold_order_list)))
-        request_no_tuple = tuple(set(map(lambda x: x.withhold_order_request_no, withhold_order_list)))
-        withhold_request_list = self.db_session.query(WithholdRequest).filter(
-            WithholdRequest.withhold_request_req_key.in_(req_key_tuple))\
-            .order_by(desc(WithholdRequest.withhold_request_create_at)).all()
-        withhold_list = self.db_session.query(Withhold).filter(
-            Withhold.withhold_request_no.in_(request_no_tuple))\
-            .order_by(desc(Withhold.withhold_create_at)).all()
-        withhold_order_list = list(map(lambda x: x.to_spec_dict, withhold_order_list))
+            WithholdDetail.withhold_detail_serial_no.in_(withhold_serial_no),
+            WithholdDetail.withhold_detail_create_at >= max_create_at).all()
         withhold_detail_list = list(map(lambda x: x.to_spec_dict, withhold_detail_list))
-        withhold_request_list = list(map(lambda x: x.to_spec_dict, withhold_request_list))
-        withhold_list = list(map(lambda x: x.to_spec_dict, withhold_list))
+        return {'withhold_detail': withhold_detail_list}
 
-        return dict(zip(('withhold', 'withhold_order', 'withhold_detail', 'withhold_request'),
-                        (withhold_list, withhold_order_list, withhold_detail_list, withhold_request_list)))
+    def get_withhold_info(self, item_no, max_create_at, request_no=None, req_key=None):
+        """
 
-    def add_asset(self, name, channel, period, source_type):
+        :param item_no: 查询的资产编号
+        :param max_create_at: 查询的资产编号
+        :param request_no: 当次请求的no，如果为None，则查所有代扣信息
+        :param req_key: 当次请求的key,如果为None，则查所有代扣信息
+        :return:
+        """
+        request_no_tuple, serial_no_tuple, _, item_no_tuple, \
+            withhold_order_list = self.get_withhold_key_info(item_no, request_no, req_key)
+        withhold_dict = self.get_withhold(serial_no_tuple, max_create_at)
+        withhold_detail_dict = self.get_withhold_detail(serial_no_tuple, max_create_at)
+        withhold_request_dict = self.get_withhold_request(serial_no_tuple, max_create_at)
+        ret = {'withhold_order': withhold_order_list}
+        ret.update(withhold_dict)
+        ret.update(withhold_detail_dict)
+        ret.update(withhold_request_dict)
+        return ret
+
+    def check_item_exist(self, item_no):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        return asset
+
+    def add_asset(self, name, source_type):
+        grant_asset = self.grant.check_item_exist(name)
+        repay_asset = self.check_item_exist(name)
+        if grant_asset is None and repay_asset is None:
+            return '没有该资产'
+        exist_asset = AutoAsset.query.filter(AutoAsset.asset_name == name, AutoAsset.asset_env == self.env).first()
+        if exist_asset:
+            return '该资产已经存在'
         asset = AutoAsset()
         asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
-        asset.asset_channel = channel
+        asset.asset_channel = repay_asset.asset_loan_channel if repay_asset is not None else\
+            grant_asset.asset_loan_channel
         asset.asset_descript = ''
         asset.asset_name = name
-        asset.asset_period = period
+        asset.asset_period = repay_asset.asset_period_count if repay_asset is not None else \
+            grant_asset.asset_loan_channel
         asset.asset_env = self.env
-        asset.asset_source_type = source_type
+        asset.asset_type = source_type
+        asset.asset_source_type = 1
         db.session.add(asset)
         db.session.flush()
-        return asset.to_dict
+        return self.get_auto_asset(repay_asset.asset_loan_channel, repay_asset.asset_period_count)
 
-    def get_asset(self, channel, period):
+    def get_auto_asset(self, channel, period):
         asset_list = AutoAsset.query.filter(AutoAsset.asset_period == period,
                                             AutoAsset.asset_channel == channel,
-                                            AutoAsset.asset_env == self.env)\
-            .order_by(desc(AutoAsset.asset_create_at)).all()
+                                            AutoAsset.asset_env == self.env,
+                                            AutoAsset.asset_create_at >= self.get_date(is_str=True, days=-7)) \
+            .order_by(desc(AutoAsset.asset_id)).all()
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
-        return asset_list
+        ret = {'assets': asset_list}
+        if asset_list:
+            ret_info = self.get_asset_info(asset_list[0]['name'])
+            ret.update(ret_info)
+        return ret
+
+    def get_asset(self, item_no):
+        asset = self.check_item_exist(item_no)
+        if asset is None:
+            return {'asset': []}
+        asset = asset.to_spec_dict
+        extend_list = self.db_session.query(AssetExtend).filter(AssetExtend.asset_extend_asset_item_no == item_no).all()
+        for extend in extend_list:
+            asset[extend.asset_extend_type] = extend.asset_extend_val
+        four_ele = self.get_repay_card_by_item_no(item_no)
+        asset['id_num'] = four_ele['card_acc_id_num_encrypt']
+        asset['repay_card'] = four_ele['card_acc_num_encrypt']
+        asset['item_x'] = self.get_no_loan(item_no)
+        return {'asset': [asset]}
+
+    def get_asset_tran(self, item_no):
+        item_no_x = self.get_no_loan(item_no)
+        item_tuple = (item_no, item_no_x) if item_no_x else (item_no,)
+        asset_tran_list = self.db_session.query(AssetTran).filter(
+            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
+        asset_tran_list = list(map(lambda x: x.to_spec_dict, asset_tran_list))
+        return {'asset_tran': asset_tran_list}
 
     def get_asset_info(self, item_no):
-        item_no_x = self.get_no_loan(item_no)
-        asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_((item_no, item_no_x))).all()
-        asset_tran_list = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no.in_(
-            (item_no, item_no_x))).all()
-        asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
-        asset_tran_list = list(map(lambda x: x.to_spec_dict, asset_tran_list))
-        return dict(zip(('asset', 'asset_tran'), (asset_list, asset_tran_list)))
+        asset_info = {}
+        asset = self.get_asset(item_no)
+        asset_tran = self.get_asset_tran(item_no)
+        asset_info.update(asset)
+        asset_info.update(asset_tran)
+        return asset_info
+
+    def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
+        print(self.get_date(is_str=True))
+        asset = self.get_asset(item_no)
+        max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
+        request_no, serial_no, id_num, item_no_tuple, withhold_order = \
+            self.get_withhold_key_info(item_no, max_create_at=max_create_at)
+        channel = asset['asset'][0]['loan_channel']
+        task_order_no = tuple(list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple)
+                              + [channel])
+        ret = {}
+        if refresh_type in ('task', 'msg', 'biz_task'):
+            ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at)
+        elif refresh_type == 'biz_msg':
+            ret = self.get_biz_msg(item_no, max_create_at)
+        elif refresh_type in ('withhold', 'withhold_detail', 'card_bind'):
+            ret = getattr(self, 'get_{0}'.format(refresh_type))(serial_no, max_create_at)
+        elif refresh_type == 'withhold_order':
+            ret = {'withhold_order': withhold_order}
+        elif refresh_type == 'withhold_request':
+            ret = self.get_withhold_request(request_no, max_create_at)
+        elif refresh_type in ('asset_tran', 'biz_capital', 'biz_capital_tran'):
+            ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
+        elif refresh_type == 'biz_capital_detail':
+            ret = self.get_biz_capital_detail(channel)
+        elif refresh_type == 'biz_capital_notify':
+            ret = self.get_biz_capital_notify(item_no, max_create_at)
+        ret.update(asset)
+        print(self.get_date(is_str=True))
+        return ret
+
+    def copy_asset(self, item_no, asset_import, capital_import, withdraw_success, grant_msg, source_type):
+        is_run = True
+        for index, task in enumerate((asset_import, capital_import, withdraw_success)):
+            if index == 2:
+                is_run = False
+            task_id = self.biz_central.add_central_task(task, is_run)
+
+        self.grant.add_msg(grant_msg)
+        self.biz_central.run_central_task_by_task_id(task_id)
+        return self.add_asset(item_no, source_type)
+
+    def get_exist_asset_request(self, item_no):
+        biz_task = self.biz_central.get_loan_asset_task(item_no)
+        grant_msg = self.grant.get_withdraw_success_info_from_db(item_no, get_type='msg')
+        return dict(zip(('biz_task', 'grant_msg'), (biz_task, grant_msg)))
 
     def get_lock_info(self, item_no):
         item_no_x = self.get_no_loan(item_no)
@@ -443,7 +636,7 @@ class ChinaRepayAuto(BaseAuto):
         return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
             if asset_x else [resp]
 
-    def reverse_item_no(self, item_no, serial_no):
+    def reverse_item_no(self, item_no, serial_no, max_create_at=None):
         req_data = {
             "from_system": "Biz",
             "key": self.__create_req_key__(item_no, prefix='Reverse'),
@@ -457,12 +650,21 @@ class ChinaRepayAuto(BaseAuto):
                 "send_change_mq": True
             }
         }
-        withhold_info = self.db_session.query(Withhold).filter(Withhold.withhold_serial_no == serial_no).first()
-        if not withhold_info:
+        order_info = self.db_session.query(WithholdOrder).filter(WithholdOrder.withhold_order_serial_no == serial_no,
+                                                                 WithholdOrder.withhold_order_reference_no == item_no
+                                                                 ).first()
+        if not order_info:
             raise ValueError('withhold not found !')
+        withhold_info = self.db_session.query(Withhold).filter(Withhold.withhold_serial_no == serial_no).first()
         req_data['data']['serial_no'] = withhold_info.withhold_channel_key
         resp = Http.http_post(self.reverse_url, req_data)
-        return req_data, self.refresh_url, resp
+        if max_create_at is not None:
+            info_ret = self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='withhold')
+            info_ret['request'] = req_data
+            info_ret['response'] = resp
+            info_ret['request_url'] = self.refresh_url
+            return info_ret
+        return dict(zip(('request', 'response', 'request_url'), (req_data, self.refresh_url, resp)))
 
     def sync_withhold_to_history(self, item_no):
         return self.biz_central.sync_withhold_to_history(item_no)
@@ -470,14 +672,14 @@ class ChinaRepayAuto(BaseAuto):
     @query_withhold
     def crm_repay(self, item_no, amount):
         req_data = {
-          "type": "CombineWithholdTaskHandler",
-          "key": self.__create_req_key__(item_no, prefix='Crm'),
-          "from_system": "DSQ",
-          "data": {
-            "asset_item_no": item_no,
-            "bill_balance_amount": amount,
-            "operator": "测试1"
-          }
+            "type": "CombineWithholdTaskHandler",
+            "key": self.__create_req_key__(item_no, prefix='Crm'),
+            "from_system": "DSQ",
+            "data": {
+                "asset_item_no": item_no,
+                "bill_balance_amount": amount,
+                "operator": "测试1"
+            }
         }
         item_no_x = self.get_no_loan(item_no)
         repay_ret = Http.http_post(self.decrease_url, req_data)
@@ -487,31 +689,53 @@ class ChinaRepayAuto(BaseAuto):
             self.run_task_by_id(task.task_id)
         return req_data, self.decrease_url, repay_ret
 
+    def del_row_data(self, item_no, del_id, del_type, max_create_at):
+        if del_type.startswith('biz_'):
+            return self.biz_central.delete_row_data(del_id, del_type[4:])
+        else:
+            obj = eval(del_type)
+            self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(del_type)) == del_id).delete()
+            self.db_session.flush()
+            self.db_session.commit()
+        return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=del_type)
+
     def offline_recharge_repay(self, item_no, amount, serial_no, period):
         req_data, offline_recharge_url, recharge_ret = self.offline_recharge(item_no, amount, serial_no)
         if recharge_ret['code'] == 0:
             offline_req, offline_repay_url, repay_ret = self.offline_repay(item_no, serial_no, period)
         else:
-            offline_req, offline_repay_url, repay_ret = '', '', ''
+            offline_req, offline_repay_url, repay_ret = '', '', '线下还款失败'
         return dict(zip(('offline_recharge', 'offline_repay'), ([req_data, offline_recharge_url, recharge_ret],
                                                                 [offline_req, offline_repay_url, repay_ret])))
 
+    def run_task_by_id(self, task_id, max_create_at=None, item_no=None):
+        ret = super(ChinaRepayAuto, self).run_task_by_id(task_id)
+        if max_create_at is not None:
+            return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type="task")
+        return ret
+
+    def run_msg_by_id(self, msg_id, max_create_at=None, item_no=None):
+        ret = super(ChinaRepayAuto, self).run_msg_by_id(msg_id)
+        if max_create_at is not None:
+            return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='msg')
+        return ret
+
     def offline_repay(self, item_no, serial_no, period):
         req_data = {
-          "busi_key": "4123123123",
-          "data": {
-            "asset_item_no": item_no,
-            "comment": "测试",
-            "operator_id": 0,
-            "operator_name": "test",
-            "period": period,
-            "recharge_serial_no": serial_no,
-            "send_change_mq": True
-          },
-          "from_system": "BIZ",
-          "key": self.__create_req_key__(item_no, prefix='OfflineRepay'),
-          "sync_datetime": 0,
-          "type": "512312312"
+            "busi_key": "4123123123",
+            "data": {
+                "asset_item_no": item_no,
+                "comment": "测试",
+                "operator_id": 0,
+                "operator_name": "test",
+                "period": period,
+                "recharge_serial_no": serial_no,
+                "send_change_mq": True
+            },
+            "from_system": "BIZ",
+            "key": self.__create_req_key__(item_no, prefix='OfflineRepay'),
+            "sync_datetime": 0,
+            "type": "512312312"
         }
         repay_ret = Http.http_post(self.offline_repay_url, req_data)
         return req_data, self.offline_repay_url, repay_ret
@@ -544,7 +768,7 @@ class ChinaRepayAuto(BaseAuto):
         repay_ret = Http.http_post(self.offline_recharge_url, req_data)
         return req_data, self.offline_recharge_url, repay_ret
 
-    def repay_callback(self, serial_no, status):
+    def repay_callback(self, serial_no, status, refresh_type=None, max_create_at=None, item_no=None):
         withhold = self.db_session.query(Withhold).filter(Withhold.withhold_serial_no == serial_no).first()
         if not withhold:
             raise ValueError('代扣记录不存在')
@@ -565,21 +789,24 @@ class ChinaRepayAuto(BaseAuto):
         if resp['code'] != 0:
             raise ValueError('执行回调接口失败，返回:{0}'.format(resp))
         self.run_callback_task_and_msg(serial_no, status)
-        # return dict(zip(('request', 'request_url', 'response', 'withhold_info'),
-        #                 (req_data, self.pay_svr_callback_url, resp, [])))
+        if refresh_type is not None:
+            return self.info_refresh(item_no, refresh_type=refresh_type, max_create_at=max_create_at)
         return req_data, self.pay_svr_callback_url, resp
 
     def run_callback_task_and_msg(self, serial_no, repay_status):
         withhold_order = self.db_session.query(WithholdOrder).filter(
             WithholdOrder.withhold_order_serial_no == serial_no).first()
-        request_no, _, id_num_encrypt = self.get_withhold_info(withhold_order.withhold_order_reference_no)
+        id_num_encrypt = self.get_repay_card_by_item_no(
+            withhold_order.withhold_order_reference_no)['card_acc_id_num_encrypt']
+        request_no = withhold_order.withhold_order_request_no
         self.run_task_by_type_and_order_no('withhold_callback_process', withhold_order.withhold_order_reference_no)
         if repay_status == 2:
             # 跑充值还款任务
             self.run_task_by_type_and_order_no('assetWithholdOrderRecharge', serial_no)
+            self.run_msg_by_type_and_order_no(id_num_encrypt, 'account_change_tran_repay')
         self.run_task_by_type_and_order_no('withhold_order_sync', serial_no)
         self.run_task_by_type_and_order_no('execute_combine_withhold', request_no)
-        self.run_msg_by_type_and_order_no('', id_num_encrypt)
+        self.run_msg_by_type_and_order_no(serial_no, 'WithholdResultImport')
 
     def run_task_by_type_and_order_no(self, task_type, order_no):
         task_list = self.db_session.query(Task).filter(Task.task_type == task_type,
@@ -588,26 +815,47 @@ class ChinaRepayAuto(BaseAuto):
         for task in task_list:
             self.run_task_by_id(task.task_id)
 
-    def run_msg_by_type_and_order_no(self, order_no, sendmsg_type=''):
-        msg_list = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_type == sendmsg_type,
-                                                         SendMsg.sendmsg_order_no == order_no).all()
-        for msg in msg_list:
-            self.run_msg_by_id(msg.sendmsg_id)
+    def run_msg_by_type_and_order_no(self, order_no, sendmsg_type, timeout=5):
+        num = 0
+        while True:
+            msg_list = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_type == sendmsg_type,
+                                                             SendMsg.sendmsg_order_no == order_no).all()
+            if msg_list:
+                for msg in msg_list:
+                    self.run_msg_by_id(msg.sendmsg_id)
+                break
+            time.sleep(1)
+            num += 1
+            if num > timeout:
+                raise ValueError('not found the msg with order_no:{0}, type:{1}'.format(order_no, sendmsg_type))
 
     def run_task_by_order_no(self, order_no, task_type):
         for item_order in order_no:
             task = self.db_session.query(Task).filter(Task.task_order_no == item_order,
                                                       Task.task_type == task_type).first()
             if task:
-                req = Http.http_get(self.run_task_id_url.format(task.task_id))
-                if req['code'] != 0:
-                    return req
+                self.run_task_by_id(task.task_id)
+
+    def run_biz_task(self, task_id, run_date, re_run, max_create_at=None, item_no=None):
+        ret = self.biz_central.run_central_task_by_task_id(task_id, run_date, re_run)
+        if max_create_at is not None:
+            return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_task')
+        return ret
+
+    def run_biz_msg(self, msg_id, max_create_at=None, item_no=None):
+        ret = self.biz_central.run_central_msg_by_msg_id(msg_id)
+        if max_create_at is not None:
+            return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_msg')
+        return ret
+
+    def run_biz_xxl_job(self, job_type, run_date):
+        return self.biz_central.run_xxl_job(job_type, run_date)
 
     def run_crm_task_msg_by_item_no(self, item_no):
         item_no_x = self.get_no_loan(item_no)
         item_no_x_info = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no_x).first()
         item_no_x_status = item_no_x_info.asset_status if item_no_x_info else ''
-        item_list = (item_no, item_no_x) if item_no_x_status == 'repay' else (item_no, )
+        item_list = (item_no, item_no_x) if item_no_x_status == 'repay' else (item_no,)
         serial_no_list, request_no_list = set([]), set([])
         for item in item_list:
             task_info = self.db_session.query(Task).filter(Task.task_order_no == item,
@@ -628,24 +876,27 @@ class ChinaRepayAuto(BaseAuto):
 
     @query_withhold
     def fox_repay(self, item_no, amount=0, period_start=None, period_end=None):
+        asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
+        max_period = asset_tran[-1].asset_tran_period
+        is_overdue = False if self.cal_days(self.get_date(), asset_tran[-1].asset_tran_due_at) > 0 else True
         if amount == 0 and period_start is not None and period_end is not None:
-            amount = self.__get_repay_amount__(amount, item_no, period_start, period_end)
+            amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
         req_key = self.__create_req_key__(item_no, prefix='FOX')
         fox_active_data = {
             "busi_key": "20190731061116179",
             "data": {
-              "amount": amount,
-              "asset_item_no": item_no,
-              "asset_period": None,
-              "customer_bank_card_encrypt": "enc_03_2767440037125031936_469",
-              "customer_bank_code": "CCB",
-              "customer_mobile_encrypt": "enc_01_2764219608117807104_022",
-              "manual_user_id_num": None,
-              "manual_user_id_num_encrypt": None,
-              "manual_user_name": None,
-              "manual_user_name_encrypt": None,
-              "operator": "zss",
-              "serial_no": req_key
+                "amount": amount,
+                "asset_item_no": item_no,
+                "asset_period": None,
+                "customer_bank_card_encrypt": "enc_03_2767440037125031936_469",
+                "customer_bank_code": "CCB",
+                "customer_mobile_encrypt": "enc_01_2764219608117807104_022",
+                "manual_user_id_num": None,
+                "manual_user_id_num_encrypt": None,
+                "manual_user_name": None,
+                "manual_user_name_encrypt": None,
+                "operator": "zss",
+                "serial_no": req_key
             },
             "from_system": "Fox",
             "key": req_key,
@@ -702,4 +953,3 @@ class ChinaRepayAuto(BaseAuto):
                 return '到日期不是当天', '', '',
         ret = self.run_task_by_id(auto_task.task_id)
         return '执行成功', '', ''
-

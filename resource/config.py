@@ -16,7 +16,7 @@ class AutoTestConfig:
     SQLALCHEMY_DICT = {
         'china': {"repay": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/rbiz{0}",
                   "grant": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/gbiz{0}",
-                  "biz-central": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz{0}"}
+                  "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz{0}"}
     }
     # SQLALCHEMY设置配置
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False

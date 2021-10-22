@@ -44,7 +44,7 @@ class XxlJobFactory(object):
     def get_xxljob(cls, country, program, env):
         if country == 'china' and program == 'repay':
             return ChinaRepayXxlJob(env)
-        if country == 'china' and program == 'biz-central':
+        if country == 'china' and program == 'biz_central':
             return ChinaBizCentralXxlJob(env)
 
 

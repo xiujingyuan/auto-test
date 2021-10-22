@@ -7,26 +7,32 @@ import requests
 
 from app.common.log_util import LogUtil
 
+JSON_HEADER = {"Content-Type": "application/json", "Connection": "close"}
+WWW_FORM_HEADER = {"Content-Type": "application/x-www-form-urlencoded", "Connection": "close"}
+FORM_HEADER = {"Content-Type": "multipart/form-data", "Connection": "close"}
+
 
 def modify_resp(func):
     def wrapper(*args, **kwargs):
         url, req_data, resp = func(*args, **kwargs)
+        if resp.status_code not in (200, 201, 400):
+            raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+                resp.status_code, url, json.dumps(req_data, ensure_ascii=False)))
         content = json.loads(resp.content)
         log_info = dict(zip(('url', 'method', 'request', 'response'),
-                            (url, 'post', req_data,  content)))
+                            (url, 'post', req_data, content)))
         LogUtil.log_info(log_info)
-        if resp.status_code in (200, 201, 400):
-            content = content[0] if isinstance(content, list) else content
-            if 'code' not in content:
-                raise ValueError('request url error {0}'.format(content))
-            elif 'kong-api-test.kuainiujinke.com' in url:
-                return content
-            elif not content['code'] in (0, 200):
-                raise ValueError('request run  error {0}, with url: {1}, req_data: {2}'.format(
-                    content['message'], url, req_data))
-        else:
-            raise ValueError('request error, with status code:{0}'.format(resp.status_code))
+        content = content[0] if isinstance(content, list) else content
+        if 'code' not in content:
+            raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+                content, url, json.dumps(req_data, ensure_ascii=False)))
+        elif 'kong-api-test.kuainiujinke.com' in url:
+            return content
+        elif not content['code'] in (0, 200):
+            raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+                content['message'], url, json.dumps(req_data, ensure_ascii=False)))
         return content if resp is not None else resp
+
     return wrapper
 
 
@@ -36,14 +42,15 @@ class Http(object):
     @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
     def http_post(cls, url, req_data, headers=None, cookies=None):
-        if headers is None:
-            headers = {"Content-Type": "application/json", "Connection": "close"}
+        headers = JSON_HEADER if headers is None else headers
         resp = None
         try:
             if 'application/json' in str(headers).lower():
                 resp = requests.post(url=url, json=req_data, headers=headers, cookies=cookies, timeout=150)
             elif 'application/x-www-form-urlencoded' in str(headers).lower():
                 resp = requests.post(url=url, data=req_data, headers=headers, cookies=cookies, timeout=150)
+            elif 'multipart/form-data' in str(headers).lower():
+                resp = requests.post(url, headers=headers, cookies=cookies, data=req_data, files=[])
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
         return url, req_data, resp
@@ -51,22 +58,39 @@ class Http(object):
     @classmethod
     @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
-    def http_get(cls, url, headers=None, cookies=None):
-        if headers is None:
-            headers = {"Content-Type": "application/json", "Connection": "close"}
+    def http_get(cls, url, req_data=None, headers=None, cookies=None):
+        headers = JSON_HEADER if headers is None else headers
         try:
-            resp = requests.get(url, headers=headers, cookies=cookies, timeout=150)
+            if 'multipart/form-data' in str(headers).lower():
+                for key in headers:
+                    if key.lower() == "content-type":
+                        headers[key] += ";boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"
+                        break
+                payload = """------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data;"""
+                for index, item in enumerate(req_data):
+                    req_data_value = req_data[item] if isinstance(req_data[item], str) else req_data[item]
+                    # print(item, req_data_value, type(req_data_value))
+                    if index == len(req_data) - 1:
+                        payload += """  name=\"{0}\"\r\n\r\n{1}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW--""".format(
+                            item, req_data_value)
+                    else:
+                        payload += """  name=\"{0}\"\r\n\r\n{1}\r\n------WebKitFormBoundary7MA4YWxkTrZu0gW\r\nContent-Disposition: form-data; """.format(
+                            item, req_data_value)
+                print(payload, type(payload))
+                resp = requests.get(url, headers=headers, data=payload)
+            else:
+                resp = requests.get(url, headers=headers, cookies=cookies, timeout=150)
         except Exception as e:
             LogUtil.log_info("http request error: %s" % e)
-        return url, '', resp
+            resp = str(e)
+        return url, 'success', resp
 
     @classmethod
     @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
     def http_put(cls, url, req_data, headers):
         resp = None
-        if headers is None:
-            headers = {"Content-Type": "application/json"}
+        headers = JSON_HEADER if headers is None else headers
         try:
             if 'application/json' in str(headers).lower():
                 resp = requests.put(url=url, json=req_data, headers=headers, timeout=150)

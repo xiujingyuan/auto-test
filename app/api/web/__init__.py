@@ -31,7 +31,7 @@ def get_all_menu(menu_list):
         if sub_menu:
             menu_dict['subs'] = get_all_menu(sub_menu)
         ret_menu.append(menu_dict)
-    return ret_menu
+    return {'menu': ret_menu}
 
 
 

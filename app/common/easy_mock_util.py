@@ -5,70 +5,51 @@ import re
 from jsonpath_ng import parse
 
 BASE_URL = "http://easy-mock.k8s-ingress-nginx.kuainiujinke.com"
+CD_BIZ_PROJECT_ID = '5b555fbc3a0f770020651dda'
 ACCOUNT = {
     "user": "carltonliu",
     "password": "lx19891115"
 }
 
-MOCK_PROJECT_DICT = {
-    "gbiz_auto_test": {
-        "name": "gbiz",
-        "id": "5f9bfaf562081c0020d7f5a7"
-    },
-    "global_gbiz_auto_test": {
-        "name": "nbfc",
-        "id": "5e465f0ed53ef1165b982496"
-    },
-    "rbiz_auto_test": {
-        "name": "rbiz_auto_test",
-        "id": "5de5d515d1784d36471d6041"
-    },
-    "contract": {
-        "name": "contract",
-        "id": "6007a8b11242fa00160534bb"
-    },
-    "global_rbiz_auto_test": {
-        "name": "global_rbiz_auto_test",
-        "id": "5e46037fd53ef1165b98246e"
-    },
-    "global_payment_auto_test": {
-        "name": "global_payment_auto_test",
-        "id": "5f9640cc62081c0020d7f560"
-    },
-    "global_payment_scb_test": {
-        "name": "global_payment_auto_test",
-        "id": "5f33abd683be280020b70ad8"
-    },
-    "dcs_auto_test": {
-        "name": "dcs",
-        "id": "5bd800c7b820c00016b21ddb"
-    },
-    "old_dcs_auto_test": {
-        "name": "dcs",
-        "id": "5caeea78c2c04c0020a98498"
-    }
-}
+
+def check_login(func):
+    def wrapper(self, *kw, **kwargs):
+        if not self.token or not self.header:
+            self.login(ACCOUNT['user'], ACCOUNT['password'])
+        ret = func(self, *kw, **kwargs)
+        return ret
+    return wrapper
+
+
+def check_project_id(func):
+    def wrapper(self, **kwargs):
+        if self.project_id is None:
+            self.project_id = self.get_project_id(self.project_name)
+        ret = func(self, **kwargs)
+        return ret
+    return wrapper
 
 
 class EasyMock(object):
 
     login_url = "{0}/api/u/login".format(BASE_URL)
     get_api_id_url = "{0}/api/mock?project_id={1}&page_size=2000&page_index=1"
+    get_project_id_url = "{0}/api/project?page_size=300&page_index=1&keywords=&type=&group={1}&filter_by_author=0"
     update_url = "{0}/api/mock/update".format(BASE_URL)
-    create_url = "{0}/api/mock/create".format(BASE_URL)
+    delete_url = "{0}/api/project/delete".format(BASE_URL)
+    create_api_url = "{0}/api/mock/create".format(BASE_URL)
+    create_project_url = "{0}/api/project/create".format(BASE_URL)
 
-    def __init__(self, project, check_req=True, return_req=False):
+    def __init__(self, project=None, check_req=True, return_req=False):
         """
         :param project: 项目名，easymock_config.mock_project的key
         :param check_req: bool，是否检查_req请求数据
         :param return_req:  bool，是否返回_req请求数据，返回到"origin_req"
         """
         self.token = ""
-        self.project = project
-        self.project_id = MOCK_PROJECT_DICT[project]['id']
-        self.project_name = MOCK_PROJECT_DICT[project]['name']
+        self.project_name = project
+        self.project_id = None
         self.header = None
-        self.login(ACCOUNT['user'], ACCOUNT['password'])
         self.check_req = check_req
         self.return_req = return_req
 
@@ -78,7 +59,7 @@ class EasyMock(object):
         # 查找function
         for index in range(content.count('function')):
             a_index = content.find('function')
-            b_index = content.find('},')
+            b_index = content.find('}', content.find('}') + 1)
             spect_str = content[a_index:b_index + len('}')]
             spect_key = '"spect_str_' + str(index) + '"'
             replace_dict[spect_key] = spect_str
@@ -107,6 +88,8 @@ class EasyMock(object):
         self.header = {"Content-Type": "application/json;charset=UTF-8",
                        "Authorization": self.token}
 
+    @check_login
+    @check_project_id
     def get_api_list(self):
         url = self.get_api_id_url.format(BASE_URL, self.project_id)
         resp = Http.http_get(url,  headers=self.header)
@@ -170,22 +153,95 @@ class EasyMock(object):
                 api_info["mode"] = ""
                 api_info["description"] = mock["description"]
                 break
-        if len(api_info) == 0:
+        if not api_info:
             raise Exception("未找到api")
         api_info["mode"] = mode if isinstance(mode, str) else json.dumps(mode, ensure_ascii=False)
         resp = Http.http_post(self.update_url, api_info, headers=self.header)
         return resp
 
-    def create_project(self, project_id):
+    @check_login
+    def get_project_id_list(self, group=''):
+        group = group if group else CD_BIZ_PROJECT_ID
+        resp = Http.http_get(self.get_project_id_url.format(BASE_URL, group), headers=self.header)
+        return resp
+
+    @check_login
+    def get_project_id(self, name, group='', is_del=False):
+        project_id_list = self.get_project_id_list(group=group)
+
+        def find_project_id():
+            for project in project_id_list["data"]:
+                if project['name'] == name:
+                    return project['_id']
+            return None
+
+        finial = find_project_id()
+        if is_del and finial is None:
+            raise ValueError("not found the project's id with name:{0}".format(name))
+        if finial is None:
+            self.create_project(name, group=group)
+            project_id_list = self.get_project_id_list(group=group)
+            finial = find_project_id()
+            if finial is None:
+                raise ValueError("not found the project's id with name:{0}".format(name))
+            return finial
+        return finial
+
+    @property
+    def get_mock_base_url(self):
+        if self.project_id is None:
+            raise ValueError("the project'id is none!")
+        return '{0}/mock/{1}/{2}'.format(BASE_URL, self.project_id, self.project_name)
+
+    @check_login
+    def create_project(self, name, group='', desc='', url=''):
+        """
+        创建新项目
+        :param name: 新建项目名字
+        :param group: 默认CD-BIZ项目组
+        :param desc: 项目描述
+        :param url:项目地址
+        :return:
+        """
+        project_info = {
+            "id": "",
+            "name": name,
+            "group": group if group else CD_BIZ_PROJECT_ID,
+            "swagger_url": "",
+            "description": desc,
+            "url": "/{0}".format(url if url else name),
+            "members": []
+        }
+        ret = Http.http_post(self.create_project_url, project_info, headers=self.header)
+        return ret
+
+    def delete_project(self, project_name):
+        self.project_id = self.get_project_id(project_name, is_del=True)
+        req = {'id': self.project_id}
+        ret = Http.http_post(self.delete_url, req, headers=self.header)
+        return ret
+
+    def copy_project(self, source_project_name, to_project_name, new_group=''):
+        """
+        复制当期项目的mock到新项目
+        :param source_project_name: 来源项目名字
+        :param to_project_name: 目标项目名字
+        :param new_group: 新项目所在组,默认cd_biz
+        :return:
+        """
+        self.project_name = source_project_name
+        self.project_id = self.get_project_id(self.project_name)
         api_list = self.get_api_list()
+        if not api_list:
+            raise ValueError("the source project's api list is empty with name is :{0}".format(source_project_name))
+        new_project_id = self.get_project_id(to_project_name, group=new_group)
         for api in api_list["data"]["mocks"]:
             api_info = {"url": "" + api["url"],
                         "method": api["method"],
                         "mode": api["mode"],
                         "description": api["description"],
-                        "project_id": project_id}
-
-            Http.http_post(self.create_url, api_info, headers=self.header)
+                        "project_id": new_project_id}
+            Http.http_post(self.create_api_url, api_info, headers=self.header)
 
     @staticmethod
     def append_origin_req(data):
@@ -256,3 +312,10 @@ class EasyMock(object):
         # 不需要检查_req，返回原始数据
         else:
             return self.get_str_by_type(origin_data)
+
+
+if __name__ == "__main__":
+    test = EasyMock()
+    #print(test.copy_project('rbiz_auto_test', 'test4'))
+    test.delete_project('test51213')
+

@@ -1,57 +1,143 @@
-from sqlalchemy import desc
+import time
+
+from sqlalchemy import desc, or_
 
 from app.program_business import BaseAuto
 from app.common.http_util import Http
 import json
 
 from app.program_business.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
-    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail
+    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
 
 
 class ChinaBizCentralAuto(BaseAuto):
 
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaBizCentralAuto, self).__init__('china', 'biz-central', env, run_env, check_req, return_req)
+        super(ChinaBizCentralAuto, self).__init__('china', 'biz_central', env, run_env, check_req, return_req)
         self.central_task_url = self.biz_host + "/job/runTaskById?id={0}"
+        self.central_msg_url = self.biz_host + "/job/sendMsgById?id={0}"
         self.asset_import_url = self.biz_host + "/asset/import"
         self.capital_asset_import_url = self.biz_host + "/capital-asset/import"
+        self.central_task_date_url = self.biz_host + "/job/runTaskWithDate?id={0}&date={1}"
+        self.refresh_holiday_url = self.biz_host + "/job/refreshholiday"
+        self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
+
+    def delete_row_data(self, del_id, del_type):
+        obj = eval(del_type.title().replace("_", ""))
+        self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(del_type)) == del_id).delete()
+        self.db_session.flush()
+        self.db_session.commit()
+
+    def add_central_task(self, task, is_run=True):
+        new_task = CentralTask()
+        for key, value in task.items():
+            if key != 'task_id':
+                setattr(new_task, key, value)
+        new_task.task_next_run_at = self.get_date(is_str=True)
+        new_task.task_status = 'open'
+        self.db_session.add(new_task)
+        self.db_session.flush()
+        self.db_session.commit()
+        if is_run:
+            ret = self.run_central_task_by_task_id(new_task.task_id)
+        return new_task.task_id
+
+    def run_xxl_job(self, job_type, run_date):
+        param = self.xxljob.get_job_info(job_type)[0]['executorParam']
+        param = json.dumps(json.loads(param))
+        url = self.run_job_by_date_url.format(job_type, param, run_date)
+        return Http.http_get(url)
+
+    def add_and_update_holiday(self, date_time, status):
+        get_date = self.db_session.query(Holiday).filter(Holiday.holiday_date == date_time).first()
+        if not get_date:
+            get_date = Holiday()
+            get_date.holiday_date = date_time
+            get_date.holiday_status = status
+        else:
+            get_date.holiday_status = status
+        self.db_session.add(get_date)
+        self.db_session.commit()
+        time.sleep(1)
+        return Http.http_get(self.refresh_holiday_url)
 
     def asset_import(self, req_data):
         ret = Http.http_post(self.asset_import_url, req_data)
-        if not ret['code'] == 0:
-            raise ValueError("import asset error, {0}".format(ret['message']))
         central_task_id = ret['data']
         if central_task_id is not None:
-            req = self.run_central_task_by_task_id(central_task_id)
-            if not req['code'] == 0:
-                raise ValueError("run asset import task error ,{0}".format(req['message']))
+            self.run_central_task_by_task_id(central_task_id)
         return ret
 
-    def get_task_msg(self, request_no, serial_no, id_num, item_no):
-        task_order_no = tuple(request_no + serial_no + [id_num['card_acc_id_num_encrypt'], item_no])
+    def get_loan_asset_task(self, item_no):
         task_list = self.db_session.query(CentralTask).filter(
-            CentralTask.task_order_no.in_(task_order_no)).order_by(desc(CentralTask.task_id)).all()
-        msg_list = self.db_session.query(CentralSendMsg).filter(
-            CentralSendMsg.sendmsg_order_no.in_(task_order_no)).order_by(desc(CentralSendMsg.sendmsg_id)).all()
-        task_list = list(map(lambda x: x.to_spec_dict, task_list))
-        msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
-        return dict(zip(('task', 'msg'), (task_list, msg_list)))
+            CentralTask.task_order_no == item_no,
+            CentralTask.task_type.in_(('AssetImport', 'CapitalAssetImport', 'AssetWithdrawSuccess')))\
+            .order_by(CentralTask.task_id).all()
+        return list(map(lambda x: x.to_dict, task_list))
 
-    def get_capital_info(self, item_no):
+    def get_task_msg(self, task_order_no, channel, item_no, max_create_at):
+        ret = {}
+        task_dict = self.get_task(task_order_no, max_create_at, channel)
+        msg_dict = self.get_msg(item_no,  max_create_at)
+        ret.update(task_dict)
+        ret.update(msg_dict)
+        return ret
+
+    def get_task(self, task_order_no, channel=None, max_create_at=None):
+        max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
+        task_order_no = tuple(list(task_order_no) + [channel]) if channel is not None else task_order_no
+        task_list = self.db_session.query(CentralTask).filter(CentralTask.task_order_no.in_(task_order_no),
+                                                              CentralTask.task_create_at >= max_create_at)\
+            .order_by(desc(CentralTask.task_id)).all()
+        task_list = list(map(lambda x: x.to_spec_dict, task_list))
+        return {'biz_task': task_list}
+
+    def get_msg(self, item_no, max_create_at=None):
+        max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
+        msg_list = self.db_session.query(CentralSendMsg). \
+            filter(CentralSendMsg.sendmsg_order_no.like('{0}%'.format(item_no)),
+                   CentralSendMsg.sendmsg_create_at >= max_create_at) \
+            .order_by(desc(CentralSendMsg.sendmsg_id)).all()
+        msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
+        return {'biz_msg': msg_list}
+
+    def get_capital_info(self, item_no, channel):
+        ret = {}
+        capital = self.get_capital(item_no)
+        capital_tran = self.get_capital_tran(item_no)
+        capital_notify = self.get_capital_notify(item_no)
+        capital_detail = self.get_capital_detail(channel)
+        ret.update(capital)
+        ret.update(capital_tran)
+        ret.update(capital_notify)
+        ret.update(capital_detail)
+        return ret
+
+    def get_capital(self, item_no):
         capital_asset = self.db_session.query(CapitalAsset).filter(
-            CapitalAsset.capital_asset_item_no == item_no).first()
+            CapitalAsset.capital_asset_item_no == item_no).first().to_spec_dict
+        return {"biz_capital_asset": [capital_asset]}
+
+    def get_capital_tran(self, item_no):
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
-        capital_notify_list = self.db_session.query(CapitalNotify).filter(
-            CapitalNotify.capital_notify_asset_item_no == item_no).order_by(desc(CapitalNotify.capital_notify_id)).all()
-        capital_detail_list = self.db_session.query(CapitalSettlementDetail).filter(
-            CapitalSettlementDetail.channel == capital_asset.capital_asset_channel)\
-            .order_by(desc(CapitalSettlementDetail.id)).all()
         capital_tran_list = list(map(lambda x: x.to_spec_dict, capital_tran_list))
+        return {"biz_capital_tran": capital_tran_list}
+
+    def get_capital_notify(self, item_no, max_create_at):
+        capital_notify_list = self.db_session.query(CapitalNotify).filter(
+            CapitalNotify.capital_notify_asset_item_no == item_no,
+            CapitalNotify.capital_notify_create_at >= max_create_at)\
+            .order_by(desc(CapitalNotify.capital_notify_id)).all()
         capital_notify_list = list(map(lambda x: x.to_spec_dict, capital_notify_list))
+        return {"biz_capital_notify": capital_notify_list}
+
+    def get_capital_detail(self, channel):
+        capital_detail_list = self.db_session.query(CapitalSettlementDetail).filter(
+            CapitalSettlementDetail.channel == channel) \
+            .order_by(desc(CapitalSettlementDetail.id)).all()
         capital_detail_list = list(map(lambda x: x.to_spec_dict, capital_detail_list))
-        return dict(zip(('capital_tran', 'capital_notify', 'capital_detail'),
-                        (capital_tran_list, capital_notify_list, capital_detail_list)))
+        return {"biz_capital_detail": capital_detail_list}
 
     def sync_withhold_to_history(self, item_no):
         withhold_results = self.db_session.query(WithholdResult).filter(
@@ -66,6 +152,7 @@ class ChinaBizCentralAuto(BaseAuto):
             withhold_histories.append(withhold_history)
         self.db_session.add_all(withhold_histories)
         self.db_session.commit()
+        return 'success'
 
     def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
@@ -79,33 +166,61 @@ class ChinaBizCentralAuto(BaseAuto):
         self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                                  advance_month)
 
-    def update_central_task_next_run_at_forward_by_task_id(self, task_id):
+    def update_central_task_next_run_at_forward_by_task_id(self, task_id, re_run):
         central_task = self.db_session.query(CentralTask).filter(CentralTask.task_id == task_id).first()
         if not central_task:
             raise ValueError("not found the central_task info with central_task'id: {0}".format(task_id))
+        if re_run:
+            central_task.task_next_run_at = self.get_date(minutes=1)
+            central_task.task_status = 'open'
+            self.db_session.add(central_task)
+            self.db_session.commit()
+            return True
         if central_task.task_status == 'close':
             if json.loads(central_task.task_response_data)['code'] == 0:
                 print('task is run with success')
-                return
+                return None
             else:
                 raise ValueError("task is run but not success, with response is :{0}".format(
                     central_task.task_response_data))
-        central_task.task_next_run_at = self.get_date(minutes=1)
-        self.db_session.add(central_task)
+        elif central_task.task_status == 'open':
+            return True
+        return None
+
+    def update_central_msg_next_run_at_forward_by_msg_id(self, msg_id):
+        central_msg = self.db_session.query(CentralSendMsg).filter(CentralSendMsg.sendmsg_id == msg_id).first()
+        if not central_msg:
+            raise ValueError("not found the central_msg info with central_msg'id: {0}".format(msg_id))
+        central_msg.sendmsg_next_run_at = self.get_date(minutes=1)
+        central_msg.sendmsg_status = 'open'
+        self.db_session.add(central_msg)
         self.db_session.commit()
 
-    def run_central_task_by_task_id(self, task_id):
-        self.update_central_task_next_run_at_forward_by_task_id(task_id)
-        ret = Http.http_get(self.central_task_url.format(task_id))
-        if not ret['code'] == 0:
-            raise ValueError('the central task run error, {0}'.format(ret['message']))
+    def run_central_task_by_task_id(self, task_id, run_date=None, re_run=False):
+        task = self.update_central_task_next_run_at_forward_by_task_id(task_id, re_run)
+        if task is None:
+            return '运行中或已执行'
+        run_date = self.get_date() if run_date is None else run_date
+        url = self.central_task_url.format(task_id) \
+            if run_date and (self.cal_days(run_date, self.get_date(is_str=True)) >= 0) \
+            else self.central_task_date_url.format(task_id, run_date)
+        ret = Http.http_get(url)
         return ret
 
     def get_asset_info(self, item_no):
-        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
-        if not asset:
+        while True:
+            asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+            if asset:
+                break
+            time.sleep(1)
+        if asset is None:
             raise ValueError("not found the asset info in biz")
         return asset
+
+    def run_central_msg_by_msg_id(self, msg_id):
+        self.update_central_msg_next_run_at_forward_by_msg_id(msg_id)
+        ret = Http.http_get(self.central_msg_url.format(msg_id))
+        return ret
 
     @staticmethod
     def get_item_no(msg):

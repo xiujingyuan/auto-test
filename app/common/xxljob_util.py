@@ -16,14 +16,14 @@ XXL_JOB_DICT = {
             "1": 53,
             "2": 122,
             "3": 55,
-            "4": 55,
-            "5": 56,
-            "6": 57,
+            "4": 56,
+            "5": 57,
+            "6": 51,
             "7": 58,
             "8": 59,
             "9": 60,
         },
-        'biz-central': {
+        'biz_central': {
             "1": 130,
             "2": 131,
             "3": 132,
@@ -99,6 +99,7 @@ class XxlJob(object):
         return resp
 
     def get_job_info(self, executor_handler):
+        self.login()
         page_list = self.get_page_list(self.job_group)['content']['data']
         job_page = []
         for page in page_list:
@@ -107,7 +108,6 @@ class XxlJob(object):
         return job_page
 
     def trigger_job(self, executor_handler, executor_param=None):
-        self.login()
         job_info = self.get_job_info(executor_handler)
         if not job_info:
             raise Exception("没有查询到对应的executorHandler")

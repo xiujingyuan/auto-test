@@ -18,13 +18,21 @@ class RepayEasyMock(EasyMock):
     def __init__(self, check_req, return_req):
         super(RepayEasyMock, self).__init__('rbiz_auto_test', check_req, return_req)
 
-    def update_trail_amount(self, channel, principal, interest):
-        getattr(self, 'update_{0}_trail_amount'.format(channel))(principal, interest)
-
     def update_trail_status(self, channel, value):
         super(RepayEasyMock, self).update('/weishenma_daxinganling/pre-loan/repayTrial', '', value)
 
-    def update_weishenma_daxinganling_trail_amount(self, principal, interest):
-        value = dict(zip(('$.rest_principal', '$.total_amount'), (principal, principal + interest)))
-        super(RepayEasyMock, self).update_by_json_path('/weishenma_daxinganling/pre-loan/repayTrial', value,
-                                                       method='post')
+    def update_trail_amount(self, channel, principal, interest, status):
+        if channel == 'weishenma_daxinganling':
+            value = dict(zip(('$.rest_principal', '$.total_amount'), (principal, principal + interest)))
+            trail_url = '/weishenma_daxinganling/pre-loan/repayTrial'
+        elif channel == 'longjiang_daqin':
+            value = dict(
+                zip(('$.data.assets[0].principal', '$.data.assets[0].interest', '$.data.assets[0].total_amount'),
+                    (round(float(principal / 100), 2), round(float(interest / 100), 2),
+                     round(float((principal + interest) / 100), 2))))
+            trail_url = '/longjiang/std/repayment/calculate'
+        elif channel == 'qinnong':
+            value = dict(zip(('$.data.assets[0].principal', '$.data.assets[0].interest', '$.data.assets[0].total_amount'),
+                             (principal, interest, principal + interest)))
+            trail_url = '/qinnong/std/repayment/calculate'
+        return super(RepayEasyMock, self).update_by_json_path(trail_url, value, method='post')

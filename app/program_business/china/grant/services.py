@@ -1,5 +1,6 @@
 import json
 import random
+import time
 from copy import deepcopy
 from datetime import datetime
 
@@ -23,10 +24,83 @@ class ChinaGrantAuto(BaseAuto):
         self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
         self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
+        self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v5/rate/standard-calculate'
 
-    @staticmethod
-    def create_item_no():
-        return '2020' + str(datetime.now().timestamp()).replace('.', '')
+    def add_msg(self, msg):
+        new_msg = Sendmsg()
+        for key, value in msg.items():
+            if key != 'sendmsg_id':
+                setattr(new_msg, key, value)
+        new_msg.sendmsg_next_run_at = self.get_date(is_str=True)
+        new_msg.sendmsg_status = 'open'
+        self.db_session.add(new_msg)
+        self.db_session.flush()
+        self.db_session.commit()
+        self.run_msg_by_id(new_msg.sendmsg_id)
+
+    def get_apr36_total_amount(self, principal_amount, period_count):
+        return self.get_total_amount(principal_amount, period_count, 36, "equal")
+
+    def get_irr36_total_amount(self, principal_amount, period_count):
+        return self.get_total_amount(principal_amount, period_count, 36, "acpi")
+
+    def get_total_amount(self, principal_amount, period_count, interest_rate, repay_type):
+        """
+        标准还款计划计算
+        :param principal_amount:
+        :param period_count:
+        :param interest_rate:
+        :param repay_type: acpi / equal
+        :return:
+        """
+        cmdb_tran = self.cmdb_standard_calc_v5(principal_amount, period_count, interest_rate, repay_type)
+        total_interest = 0
+        for item in cmdb_tran['data']['calculate_result']['interest']:
+            total_interest += item['amount']
+        total_amount = principal_amount + total_interest
+        return total_amount
+
+    def cmdb_standard_calc_v5(self, principal_amount, period_count, interest_rate, repay_type):
+        req = {
+            "type": "CalculateStandardRepayPlan",
+            "key": "calculate_${key}",
+            "from_system": "bc",
+            "data": {
+                "sign_date": self.get_date(is_str=True),
+                "principal_amount": principal_amount,
+                "period_count": period_count,
+                "period_type": "month",
+                "period_term": 1,
+                "interest_rate": interest_rate,
+                "repay_type": repay_type
+            }
+        }
+        resp = Http.http_post(self.cmdb_url, req)
+        return resp
+
+    def calc_noloan_amount(self, loan_asset_info, noloan_source_type):
+        """
+        计算小单金额
+        # APR融担小单金额 = APR36总额 - 大单总额
+        # IRR融担小单金额 = IRR36总额 - 大单总额
+        # IRR权益小单金额 = APR36总额 - IRR36总额
+        :param loan_asset_info:
+        :param noloan_source_type:
+        :return:
+        """
+        loan_principal_amount = loan_asset_info["data"]["asset"]["amount"] * 100
+        loan_period_count = loan_asset_info["data"]["asset"]["period_count"]
+        loan_total_amount = loan_asset_info["data"]["asset"]["total_amount"] * 100
+        apr36_total = self.get_apr36_total_amount(loan_principal_amount, loan_period_count)
+        irr36_total = self.get_irr36_total_amount(loan_principal_amount, loan_period_count)
+        noloan_amount_dict = dict(zip(("rongdan", "rongdan_irr", "lieyin"),
+                                      (apr36_total - loan_total_amount, irr36_total - loan_total_amount,
+                                       apr36_total - irr36_total)))
+        return noloan_amount_dict[noloan_source_type] / 100 \
+            if noloan_source_type in noloan_amount_dict else loan_principal_amount / 8000
+
+    def create_item_no(self):
+        return "{0}{1}".format(self.get_date().year, int(time.time()))
 
     @staticmethod
     def get_from_system_and_ref(from_system_name, source_type):
@@ -112,6 +186,7 @@ class ChinaGrantAuto(BaseAuto):
                 .join(Asset, Asset.asset_item_no == Synctask.synctask_order_no).filter(
                 Asset.asset_loan_channel != 'noloan',
                 Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
+                Asset.asset_from_system != 'pitaya',
                 Asset.asset_status.in_(('repay', 'payoff')),
                 Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
                 .order_by(desc(Synctask.synctask_create_at)).first()
@@ -125,6 +200,11 @@ class ChinaGrantAuto(BaseAuto):
         if not asset_extend:
             raise ValueError('not found the asset extend info!')
         return asset_extend.asset_extend_ref_order_no
+
+    def check_item_exist(self, item_no):
+        asset = self.db_session.query(Asset).filter(
+            Asset.asset_item_no == item_no).first()
+        return asset
 
     def get_withdraw_success_data(self, item_no, old_asset, x_item_no, asset_info):
         now = self.get_date(is_str=True)
@@ -185,13 +265,13 @@ class ChinaGrantAuto(BaseAuto):
             withdraw_success_data["data"]['loan_record']['trade_no'] = 'TN' + asset.asset_item_no
             withdraw_success_data["data"]['loan_record']['due_bill_no'] = 'DN' + asset.asset_item_no
 
-    def get_withdraw_success_info_from_db(self, old_asset):
+    def get_withdraw_success_info_from_db(self, old_asset, get_type='body'):
         send_msg = self.db_session.query(Sendmsg).filter(
             Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
             Sendmsg.sendmsg_order_no == old_asset).first()
         if not send_msg:
             raise ValueError('not fount the asset withdraw success msg!')
-        return json.loads(send_msg.sendmsg_content)['body']
+        return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
 
     def get_asset_item_info(self, channel, source_type, from_system_name, item_no=None):
         item_no = item_no if item_no else self.create_item_no()
@@ -227,7 +307,7 @@ class ChinaGrantAuto(BaseAuto):
             self.insert_router_record(item_no, channel, amount, count, sub_order_type, element, asset_info)
         return asset_info, old_asset
 
-    def asset_no_loan_import(self, asset_info, item_no, x_item_no, source_type):
+    def asset_no_loan_import(self, asset_info, import_asset_info, item_no, x_item_no, source_type):
         _, no_old_asset = self.get_asset_info_from_db(loan=True)
         no_asset_info = deepcopy(asset_info)
         asset_extend = self.db_session.query(AssetExtend).filter(
@@ -238,7 +318,7 @@ class ChinaGrantAuto(BaseAuto):
         no_asset_info['data']['asset']['item_no'] = x_item_no
         no_asset_info['data']['asset']['name'] = x_item_no
         no_asset_info['data']['asset']['source_number'] = item_no
-        no_asset_info['data']['asset']['amount'] = asset_info['data']['asset']['amount'] / 60
+        no_asset_info['data']['asset']['amount'] = self.calc_noloan_amount(import_asset_info, source_type)
         no_asset_info['data']['asset']['source_type'] = source_type
         no_asset_info['data']['asset']['loan_channel'] = 'noloan'
         no_asset_info['data']['asset']['sub_order_type'] = asset_extend.asset_extend_sub_order_type
@@ -261,7 +341,9 @@ class ChinaGrantAuto(BaseAuto):
                                                            Sendmsg.sendmsg_type == 'AssetImportSync').first()
         if not import_msg:
             raise ValueError("not found the import send msg!")
-        self.biz_central.asset_import(json.loads(import_msg.sendmsg_content)['body'])
+        asset_info = json.loads(import_msg.sendmsg_content)['body']
+        self.biz_central.asset_import(asset_info)
+        return asset_info
 
     def asset_withdraw_success(self, withdraw_success_data):
         resp = Http.http_post(self.repay_asset_withdraw_success_url, withdraw_success_data)

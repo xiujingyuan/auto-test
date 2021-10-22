@@ -88,8 +88,8 @@ class BaseAuto(object):
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
         self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False)
-        self.grant_host = "https://kong-api-test.kuainiujinke.com/gbiz{0}".format(env)
-        self.repay_host = "https://kong-api-test.kuainiujinke.com/rbiz{0}".format(env)
+        self.grant_host = "http://grant{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.db_session = MyScopedSession(sessionmaker())
         self.db_session.configure(bind=self.engine)
@@ -164,8 +164,8 @@ class BaseAuto(object):
         real_now = self.get_date(months=advance_month, days=advance_day).date()
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
-
-        capital_asset.capital_asset_granted_at = real_now
+        if capital_asset is not None:
+            capital_asset.capital_asset_granted_at = real_now
 
         for asset_tran in asset_tran_list:
             asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
@@ -211,8 +211,10 @@ class BaseAuto(object):
                     days=cal_advance_day)
             capital_tran.capital_transaction_expect_finished_at = expect_finished_at
         self.db_session.add_all(asset_list)
-        self.db_session.add_all([capital_asset])
-        self.db_session.add_all(capital_tran_list)
+        if capital_asset is not None:
+            self.db_session.add_all([capital_asset])
+        if capital_tran_list:
+            self.db_session.add_all(capital_tran_list)
         self.db_session.add_all(asset_tran_list)
         self.db_session.commit()
 

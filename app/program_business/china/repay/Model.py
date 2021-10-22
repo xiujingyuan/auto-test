@@ -424,29 +424,6 @@ class CapitalConfig(db.Model, BaseToDict):
     capital_config_need_split = db.Column(db.Enum('Y', 'N'), nullable=False, server_default=db.FetchedValue(), info='是否需要拆单，默认为n')
 
 
-
-class CapitalNotify(db.Model, BaseToDict):
-    __tablename__ = 'capital_notify'
-
-    capital_notify_id = db.Column(db.BigInteger, primary_key=True)
-    capital_notify_asset_item_no = db.Column(db.String(64), nullable=False, index=True, info='资产编号')
-    capital_notify_period_start = db.Column(db.Integer, nullable=False, info='还款起始期次')
-    capital_notify_period_end = db.Column(db.Integer, nullable=False, info='还款结束期次')
-    capital_notify_loan_channel = db.Column(db.String(32), nullable=False, info='放款渠道')
-    capital_notify_withhold_result_serial_no = db.Column(db.String(50), index=True, info='执行代扣流水号')
-    capital_notify_status = db.Column(db.Enum('open', 'ready', 'process', 'success', 'fail'), nullable=False, server_default=db.FetchedValue(), info='推送状态:')
-    capital_notify_push_info = db.Column(db.Text, info='推送信息-根据资金方通知需求，记录计算明细，便于通知失败排查问题')
-    capital_notify_req_data = db.Column(db.Text, info='请求消息体内容')
-    capital_notify_res_data = db.Column(db.Text, info='接口返回结果内容')
-    capital_notify_create_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='创建时间')
-    capital_notify_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='更新时间')
-    capital_notify_plan_at = db.Column(db.DateTime, nullable=False, index=True, info='计划发送时间')
-    capital_notify_res_msg = db.Column(db.Text)
-    capital_notify_action_type = db.Column(db.Enum('overdue', 'repay', 'payoff', 'register'), nullable=False, info='overdue：逾期推送,repay：还款推送,payoff:偿清通知, register:还款计划上报')
-    capital_notify_capital_receive_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='资方接收推送成功时间')
-
-
-
 class CapitalReconLog(db.Model, BaseToDict):
     __tablename__ = 'capital_recon_log'
 

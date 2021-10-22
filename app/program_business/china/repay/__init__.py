@@ -8,54 +8,40 @@ def query_withhold(func):
     def wrapper(self, **kwargs):
         status = kwargs.pop('status', None)
         item_no = kwargs.get('item_no', None)
-        request, request_url, response = func(self, **kwargs)
-        withhold_info, lock_info, withhold, asset_info, task_msg_ret, biz_task_msg_ret, biz_asset_info_ret  \
-            = [], [], [], [], [], [], []
-        if item_no:
-            if isinstance(request, str):
-                req_key = ''
-            else:
-                req_key = request[-1]['key'] if response and isinstance(response, list) else request['key']
-        withhold = self.get_withhold_info(item_no, req_key=req_key, repay_type=func.__name__)
-        ret = dict(zip(('request', 'request_url', 'response', 'withhold', 'withhold_info', 'lock_info', 'asset_info'),
-                       (request, request_url, response, withhold, withhold_info, lock_info, asset_info)))
-        if status is not None and ret['withhold'] and ret['withhold']['serial_no']:
-            ret['callback'] = []
-            for serial in ret['withhold']['serial_no']:
-                calls = dict(zip(('serial_no', 'status'), (serial, status)))
-                call_ret = getattr(self, 'repay_callback')(**calls)
-                ret['callback'].append(call_ret)
-        if ret['withhold'] and ret['withhold']['request_no']:
-            task_msg = deepcopy(withhold)
-            task_msg['item_no'] = item_no
-            task_msg_ret = getattr(self, 'get_task_msg')(**task_msg)
-            biz_task_msg_ret = getattr(self, 'get_biz_task_msg')(**task_msg)
-            biz_asset_info_ret = getattr(self, 'get_biz_capital_info')(item_no)
-        ret['task_msg'] = task_msg_ret
-        ret['biz_task_msg'] = biz_task_msg_ret
-        ret['biz_asset_info'] = biz_asset_info_ret
+        request, request_url, response = "", "", "error"
+        try:
+            request, request_url, response = func(self, **kwargs)
+        except ValueError as e:
+            # 'request run  error {0}, with url: {1}, req_data: {2}'
+            e_list = str(e).split("#==#")
+            request, request_url, response = json.loads(e_list[2].replace('req_data: ', '')), e_list[1].replace(
+                "with url: ", ''), e_list[0].replace("request run  error: ", '')
+            raise ValueError
+        except Exception as e:
+            response = str(e)
+            raise Exception
+        finally:
+            withhold_info, lock_info, asset_info, task_msg_ret, biz_task_msg_ret, biz_asset_info_ret \
+                = [], [], [], [], [], []
+            if item_no:
+                if isinstance(request, str):
+                    req_key = ''
+                else:
+                    req_key = request[-1]['key'] if response and isinstance(response, list) else request['key']
+            # withhold_key = self.get_withhold_info(item_no, req_key=req_key, repay_type=func.__name__)
+            request_no_tuple, serial_no_tuple, id_num_tuple, _, _ = self.get_withhold_key_info(item_no, req_key=req_key)
+            ret = dict(
+                zip(('request', 'request_url', 'response', 'withhold_info', 'lock_info', 'asset_info'),
+                    (request, request_url, response, withhold_info, lock_info, asset_info)))
+            if status is not None and serial_no_tuple:
+                ret['callback'] = []
+                for serial in serial_no_tuple:
+                    calls = dict(zip(('serial_no', 'status'), (serial, status)))
+                    call_ret = getattr(self, 'repay_callback')(**calls)
+                    ret['callback'].append(call_ret)
+            return ret
 
-        if item_no:
-            ret['withhold_info'] = self.get_current_withhold_info(item_no, tuple(ret['withhold']['request_no']))
-            ret['asset_info'] = self.get_asset_info(item_no)
-            ret['lock_info'] = self.get_lock_info(item_no)
-        return ret
     return wrapper
-
-# def query_withhold(is_callback=True):
-#     def wrapper(func):
-#         def _wrapper(self, **kwargs):
-#             ret = WITHHOLD_RET
-#             status = None if func.__name__ == 'repay_callback' else kwargs.pop('status', None)
-#             ret['request'], ret['request_url'], ret['response'], ret['withhold_info'] = func(self, **kwargs)
-#             if is_callback and status is not None:
-#                 for serial in ret['withhold_info']['serial_no']:
-#                     calls = dict(zip(('serial_no', 'status'), (serial, status)))
-#                     getattr(self, 'repay_callback')(**calls)
-#             return ret
-#         return _wrapper
-#     return wrapper
-
 
 def run_callback(func):
     def wrapper(self, **kwargs):
@@ -64,19 +50,5 @@ def run_callback(func):
             calls = dict(zip(('serial_no', 'status'), (serial, status)))
             getattr(self, 'repay_callback')(**calls)
         return ret
+
     return wrapper
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
