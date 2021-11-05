@@ -2,7 +2,7 @@ import time
 
 from sqlalchemy import desc, or_
 
-from app.program_business import BaseAuto
+from app.program_business import BaseService
 from app.common.http_util import Http
 import json
 
@@ -10,10 +10,10 @@ from app.program_business.china.biz_central.Model import CentralTask, CentralSen
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
 
 
-class ChinaBizCentralAuto(BaseAuto):
+class ChinaBizCentralService(BaseService):
 
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaBizCentralAuto, self).__init__('china', 'biz_central', env, run_env, check_req, return_req)
+        super(ChinaBizCentralService, self).__init__('china', 'biz_central', env, run_env, check_req, return_req)
         self.central_task_url = self.biz_host + "/job/runTaskById?id={0}"
         self.central_msg_url = self.biz_host + "/job/sendMsgById?id={0}"
         self.asset_import_url = self.biz_host + "/asset/import"

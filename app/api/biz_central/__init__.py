@@ -1,10 +1,7 @@
 from copy import deepcopy
-
 from flask import Blueprint, request, jsonify
 from flask import current_app
-
-from app import BizCentralFactory
-from app.common import RET
+from app.common import RET, BizCentralServiceFactory
 
 api_biz_central = Blueprint('api_biz_central', __name__)
 
@@ -22,6 +19,6 @@ def biz_central_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    repay = BizCentralFactory.get_biz_central(country, env, environment)
+    repay = BizCentralServiceFactory.get_biz_central(country, env, environment)
     ret['data'] = getattr(repay, tool)(**req)
     return jsonify(ret)

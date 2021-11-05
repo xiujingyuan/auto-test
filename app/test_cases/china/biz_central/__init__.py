@@ -1,4 +1,4 @@
-from app import BizCentralFactory, RepayFactory
+from app import BizCentralServiceFactory, RepayServiceFactory, ChinaBizCentralService, ChinaRepayService
 
 
 class BizCentralTest(object):
@@ -7,8 +7,9 @@ class BizCentralTest(object):
         self.country = country
         self.env = env
         self.environment = environment
-        self.central = BizCentralFactory(country, env, environment)
-        self.repay = RepayFactory(country, env, environment)
+        self.central = ChinaBizCentralService(env, environment)
+        self.repay = ChinaRepayService(env, environment)
+        self.item_no = None
 
     def get_case_list(self, case_id_list, case_group, case_scene):
         cases = []
@@ -34,8 +35,8 @@ class BizCentralTest(object):
         self.prepare_asset(case)
         self.prepare_mock(case)
         self.prepare_kv(case)
+        self.repay_asset(case)
         getattr(self, 'run_{0}'.format(case.case_scene))(case)
-        # self.run_bussiness_logic(case)
 
     def run_interface_scene(self, case):
         """接口请求/返回测试"""

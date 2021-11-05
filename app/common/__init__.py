@@ -8,12 +8,11 @@
  @site:
  @email:
 """
-from app.program_business.china.biz_central.services import ChinaBizCentralAuto
+from app.program_business.china.biz_central.services import ChinaBizCentralService
 from app.program_business.china.biz_central.xxljob import ChinaBizCentralXxlJob
-from app.program_business.china.grant.services import ChinaGrantAuto
 from app.program_business.china.repay.easy_mock import RepayEasyMock
 from app.program_business.china.repay.nacos import ChinaRepayNacos
-from app.program_business.china.repay.services import ChinaRepayAuto
+from app.program_business.china.repay.services import ChinaRepayService
 from app.program_business.china.repay.xxljob import ChinaRepayXxlJob
 
 RET = {
@@ -53,4 +52,18 @@ class AutoFactory(object):
     @classmethod
     def get_auto(cls, country, program, env, run_env):
         if country == 'china' and program == 'repay':
-            return ChinaRepayAuto(env, run_env)
+            return ChinaRepayService(env, run_env)
+
+
+class RepayServiceFactory(object):
+    @classmethod
+    def get_repay(cls, country, env, environment):
+        if country == 'china':
+            return ChinaRepayService(env, environment)
+
+
+class BizCentralServiceFactory(object):
+    @classmethod
+    def get_biz_central(cls, country, env, environment):
+        if country == 'china':
+            return ChinaBizCentralService(env, environment)

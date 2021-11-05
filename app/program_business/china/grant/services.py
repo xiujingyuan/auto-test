@@ -6,18 +6,18 @@ from datetime import datetime
 
 from sqlalchemy import desc
 
-from app.program_business import BaseAuto
+from app.program_business import BaseService
 from app.common.http_util import Http
-from app.program_business.china.biz_central.services import ChinaBizCentralAuto
+from app.program_business.china.biz_central.services import ChinaBizCentralService
 from app.program_business.china.grant import GRANT_ASSET_IMPORT_URL, FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.program_business.china.grant.Model import Asset, Task, Synctask, Sendmsg, RouterLoadRecord, AssetExtend, \
     AssetTran, AssetCard, CapitalAsset
 
 
-class ChinaGrantAuto(BaseAuto):
+class ChinaGrantService(BaseService):
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaGrantAuto, self).__init__('china', 'grant', env, run_env, check_req, return_req)
-        self.biz_central = ChinaBizCentralAuto(env, run_env, check_req, return_req)
+        super(ChinaGrantService, self).__init__('china', 'grant', env, run_env, check_req, return_req)
+        self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
         self.asset_import_url = self.grant_host + '/paydayloan/asset-sync-new'
         self.repay_capital_asset_import_url = self.repay_host + '/capital-asset/grant'
         self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"

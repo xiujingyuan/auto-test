@@ -3,9 +3,7 @@ from copy import deepcopy
 
 from flask import Blueprint, request, jsonify
 from flask import current_app
-
-from app import RepayFactory
-from app.common import RET
+from app.common import RET, RepayServiceFactory
 
 api_repay = Blueprint('api_repay', __name__)
 
@@ -31,7 +29,7 @@ def repay_tools(tool):
                 ret['code'] = 1
                 ret['message'] = 'need from environment'
             else:
-                from_repay = RepayFactory.get_repay(country, env, environment)
+                from_repay = RepayServiceFactory.get_repay(country, env, environment)
                 from_req = {'item_no': req.get('item_no')}
                 req_param = getattr(from_repay, 'get_exist_asset_request')(**from_req)
                 if not req_param['biz_task']:
@@ -41,10 +39,10 @@ def repay_tools(tool):
                 req['withdraw_success'] = req_param['biz_task'][-1]
                 req['grant_msg'] = req_param['grant_msg']
                 for e in to_env:
-                    repay = RepayFactory.get_repay(country, e, environment)
+                    repay = RepayServiceFactory.get_repay(country, e, environment)
                     ret['data'].append({e: getattr(repay, tool)(**req)})
         else:
-            repay = RepayFactory.get_repay(country, env, environment)
+            repay = RepayServiceFactory.get_repay(country, env, environment)
             ret['data'] = getattr(repay, tool)(**req)
     except Exception as e:
         ret['code'] = 1

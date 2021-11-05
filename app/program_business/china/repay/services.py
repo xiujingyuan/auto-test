@@ -8,20 +8,20 @@ from app import db
 from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
 from app.model.AutoAssetDb import AutoAsset
-from app.program_business import BaseAuto
-from app.program_business.china.biz_central.services import ChinaBizCentralAuto
-from app.program_business.china.grant.services import ChinaGrantAuto
+from app.program_business import BaseService
+from app.program_business.china.biz_central.services import ChinaBizCentralService
+from app.program_business.china.grant.services import ChinaGrantService
 from app.program_business.china.repay import query_withhold
 from app.program_business.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
     WithholdRequest, WithholdDetail, CardBind
 
 
-class ChinaRepayAuto(BaseAuto):
+class ChinaRepayService(BaseService):
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaRepayAuto, self).__init__('china', 'repay', env, run_env, check_req, return_req)
-        self.grant = ChinaGrantAuto(env, run_env, check_req, return_req)
-        self.biz_central = ChinaBizCentralAuto(env, run_env, check_req, return_req)
+        super(ChinaRepayService, self).__init__('china', 'repay', env, run_env, check_req, return_req)
+        self.grant = ChinaGrantService(env, run_env, check_req, return_req)
+        self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
         self.decrease_url = self.repay_host + "/asset/bill/decrease"
         self.offline_recharge_url = self.repay_host + "/account/recharge-encrypt"
         self.offline_repay_url = self.repay_host + "/asset/repayPeriod"
@@ -724,13 +724,13 @@ class ChinaRepayAuto(BaseAuto):
                                                                 [offline_req, offline_repay_url, repay_ret])))
 
     def run_task_by_id(self, task_id, max_create_at=None, item_no=None):
-        ret = super(ChinaRepayAuto, self).run_task_by_id(task_id)
+        ret = super(ChinaRepayService, self).run_task_by_id(task_id)
         if max_create_at is not None:
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type="task")
         return ret
 
     def run_msg_by_id(self, msg_id, max_create_at=None, item_no=None):
-        ret = super(ChinaRepayAuto, self).run_msg_by_id(msg_id)
+        ret = super(ChinaRepayService, self).run_msg_by_id(msg_id)
         if max_create_at is not None:
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='msg')
         return ret

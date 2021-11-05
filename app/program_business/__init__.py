@@ -75,7 +75,7 @@ class MyScopedSession(scoped_session):
         return [dict(zip(result.keys(), result)) for result in ret]
 
 
-class BaseAuto(object):
+class BaseService(object):
 
     def __init__(self, country, program, env, run_env, check_req, return_req):
         self.env = env
