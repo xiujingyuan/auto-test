@@ -81,7 +81,8 @@ class ChinaRepayAuto(BaseAuto):
                 self.grant.asset_withdraw_success(withdraw_success_data_no)
                 self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
         self.add_asset(item_no, 0)
-        return self.get_auto_asset(channel, count)
+        # return self.get_auto_asset(channel, count)
+        return item_no
 
     def send_msg(self, serial_no):
         req_data = {
@@ -102,24 +103,26 @@ class ChinaRepayAuto(BaseAuto):
 
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
         print(self.get_date(is_str=True))
-        item_no_x = self.get_no_loan(item_no)
-        item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
-        asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
-        if not asset_list:
-            raise ValueError('not found the asset, check the env!')
-        asset_tran_list = self.db_session.query(AssetTran).filter(
-            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
-        capital_asset = self.db_session.query(CapitalAsset).filter(
-            CapitalAsset.capital_asset_item_no == item_no).first()
-        print(self.get_date(is_str=True))
-        capital_tran_list = self.db_session.query(CapitalTransaction).filter(
-            CapitalTransaction.capital_transaction_item_no == item_no).all()
-        print(self.get_date(is_str=True))
-        self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                                 advance_month)
-        print(self.get_date(is_str=True))
-        self.biz_central.change_asset(item_no, item_no_x, item_no_rights, advance_day, advance_month)
-        print(self.get_date(is_str=True))
+        item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
+        for index, item in enumerate(item_no_tuple):
+            item_no_x = self.get_no_loan(item)
+            item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
+            asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
+            if not asset_list:
+                raise ValueError('not found the asset, check the env!')
+            asset_tran_list = self.db_session.query(AssetTran).filter(
+                AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
+            capital_asset = self.db_session.query(CapitalAsset).filter(
+                CapitalAsset.capital_asset_item_no == item).first()
+            print(self.get_date(is_str=True))
+            capital_tran_list = self.db_session.query(CapitalTransaction).filter(
+                CapitalTransaction.capital_transaction_item_no == item).all()
+            print(self.get_date(is_str=True))
+            self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
+                                     advance_month)
+            print(self.get_date(is_str=True))
+            self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
+            print(self.get_date(is_str=True))
         return "修改完成"
 
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
@@ -215,7 +218,6 @@ class ChinaRepayAuto(BaseAuto):
             interest_amount = interest_amount + 1
         return self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, status)
 
-
     @staticmethod
     def _sum_amount_(amount_type, amount_list):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
@@ -258,8 +260,8 @@ class ChinaRepayAuto(BaseAuto):
     def get_biz_capital_detail(self, item_no):
         return self.biz_central.get_capital_detail(item_no)
 
-    def get_biz_task(self, task_order_no, max_create_at):
-        return self.biz_central.get_task(task_order_no, max_create_at=max_create_at, channel=None)
+    def get_biz_task(self, task_order_no, channel, max_create_at):
+        return self.biz_central.get_task(task_order_no, max_create_at=max_create_at, channel=channel)
 
     def get_biz_msg(self, task_order_no, max_create_at):
         return self.biz_central.get_msg(task_order_no, max_create_at)
@@ -351,7 +353,7 @@ class ChinaRepayAuto(BaseAuto):
                                     verify_code='', verify_seq=''):
         # card_info = self.get_active_card_info('item_no_1634196466', repay_card)
         if repay_card == 3:
-            card_info = self.get_active_card_info('item_no_1634196466', 1)
+            card_info = self.get_active_card_info('B2021102108114492056', 1)
         else:
             card_info = self.get_active_card_info(item_no, repay_card)
         key = self.__create_req_key__(item_no, prefix='Active')
@@ -396,11 +398,13 @@ class ChinaRepayAuto(BaseAuto):
             return card_info
         elif repay_card == 0:
             # 0-还款人身份证相同银行卡不同;
-            # card_info['card_acc_num_encrypt'] = random_card['bank_code_encrypt']
-            card_info['card_acc_num_encrypt'] = 'enc_03_3639876358135875584_678'
+            #card_info['card_acc_num_encrypt'] = random_card['bank_code_encrypt']
+            card_info['card_acc_num_encrypt'] = 'enc_03_3645332643065104384_199'
+            return card_info
             return card_info
         elif repay_card == 2:
             # 2-还款人身份证相同银行卡都不同;
+            random_card['bank_code_encrypt'] = 'enc_03_3649718305943980032_644'
             return random_card
 
     def get_repay_card_by_item_no(self, item_no):
@@ -568,8 +572,10 @@ class ChinaRepayAuto(BaseAuto):
         task_order_no = tuple(list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple)
                               + [channel])
         ret = {}
-        if refresh_type in ('task', 'msg', 'biz_task'):
+        if refresh_type in ('task', 'msg'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at)
+        elif refresh_type == 'biz_task':
+            ret = self.get_biz_task(task_order_no, channel, max_create_at)
         elif refresh_type == 'biz_msg':
             ret = self.get_biz_msg(item_no, max_create_at)
         elif refresh_type in ('withhold', 'withhold_detail', 'card_bind'):
@@ -580,7 +586,7 @@ class ChinaRepayAuto(BaseAuto):
             ret = self.get_withhold_request(request_no, max_create_at)
         elif refresh_type in ('asset_tran', 'biz_capital', 'biz_capital_tran'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
-        elif refresh_type == 'biz_capital_detail':
+        elif refresh_type == 'biz_capital_settlement_detail':
             ret = self.get_biz_capital_detail(channel)
         elif refresh_type == 'biz_capital_notify':
             ret = self.get_biz_capital_notify(item_no, max_create_at)
@@ -593,16 +599,25 @@ class ChinaRepayAuto(BaseAuto):
         for index, task in enumerate((asset_import, capital_import, withdraw_success)):
             if index == 2:
                 is_run = False
-            task_id = self.biz_central.add_central_task(task, is_run)
+            if task:
+                task_id = self.biz_central.add_central_task(task, is_run)
 
         self.grant.add_msg(grant_msg)
         self.biz_central.run_central_task_by_task_id(task_id)
         return self.add_asset(item_no, source_type)
 
+    def get_withdraw_success_info(self, item_no, get_type='body'):
+        msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == item_no,
+                                                    SendMsg.sendmsg_type == 'AssetWithdrawSuccess').first()
+        return json.loads(msg.sendmsg_content)['body'] if get_type == 'body' else msg.to_dict
+
     def get_exist_asset_request(self, item_no):
         biz_task = self.biz_central.get_loan_asset_task(item_no)
+        is_noloan = True if self.get_no_loan(item_no) else False
         grant_msg = self.grant.get_withdraw_success_info_from_db(item_no, get_type='msg')
-        return dict(zip(('biz_task', 'grant_msg'), (biz_task, grant_msg)))
+        if grant_msg is None:
+            grant_msg = self.get_withdraw_success_info(item_no, get_type='msg')
+        return dict(zip(('biz_task', 'grant_msg', 'is_noloan'), (biz_task, grant_msg, is_noloan)))
 
     def get_lock_info(self, item_no):
         item_no_x = self.get_no_loan(item_no)
@@ -693,7 +708,7 @@ class ChinaRepayAuto(BaseAuto):
         if del_type.startswith('biz_'):
             return self.biz_central.delete_row_data(del_id, del_type[4:])
         else:
-            obj = eval(del_type)
+            obj = eval(del_type.title().replace("_", ""))
             self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(del_type)) == del_id).delete()
             self.db_session.flush()
             self.db_session.commit()
@@ -803,7 +818,7 @@ class ChinaRepayAuto(BaseAuto):
         if repay_status == 2:
             # 跑充值还款任务
             self.run_task_by_type_and_order_no('assetWithholdOrderRecharge', serial_no)
-            self.run_msg_by_type_and_order_no(id_num_encrypt, 'account_change_tran_repay')
+            # self.run_msg_by_type_and_order_no(id_num_encrypt, 'account_change_tran_repay')
         self.run_task_by_type_and_order_no('withhold_order_sync', serial_no)
         self.run_task_by_type_and_order_no('execute_combine_withhold', request_no)
         self.run_msg_by_type_and_order_no(serial_no, 'WithholdResultImport')

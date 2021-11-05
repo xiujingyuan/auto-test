@@ -4,17 +4,10 @@ from copy import deepcopy
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
+from app import RepayFactory
 from app.common import RET
-from app.program_business.china.repay.services import ChinaRepayAuto
 
 api_repay = Blueprint('api_repay', __name__)
-
-
-class RepayFactory(object):
-    @classmethod
-    def get_repay(cls, country, env, environment):
-        if country == 'china':
-            return ChinaRepayAuto(env, environment)
 
 
 @api_repay.route('/')
@@ -44,8 +37,8 @@ def repay_tools(tool):
                 if not req_param['biz_task']:
                     raise ValueError('not found the asset_import or capital_import or withdraw_success msg!')
                 req['asset_import'] = req_param['biz_task'][0]
-                req['capital_import'] = req_param['biz_task'][1]
-                req['withdraw_success'] = req_param['biz_task'][2]
+                req['capital_import'] = req_param['biz_task'][1] if req_param['is_noloan'] else []
+                req['withdraw_success'] = req_param['biz_task'][-1]
                 req['grant_msg'] = req_param['grant_msg']
                 for e in to_env:
                     repay = RepayFactory.get_repay(country, e, environment)

@@ -3,17 +3,10 @@ from copy import deepcopy
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
+from app import BizCentralFactory
 from app.common import RET
-from app.program_business.china.biz_central.services import ChinaBizCentralAuto
 
 api_biz_central = Blueprint('api_biz_central', __name__)
-
-
-class BizCentralFactory(object):
-    @classmethod
-    def get_biz_central(cls, country, env, environment):
-        if country == 'china':
-            return ChinaBizCentralAuto(env, environment)
 
 
 @api_biz_central.route('/')

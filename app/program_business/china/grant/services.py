@@ -100,7 +100,7 @@ class ChinaGrantAuto(BaseAuto):
             if noloan_source_type in noloan_amount_dict else loan_principal_amount / 8000
 
     def create_item_no(self):
-        return "{0}{1}".format(self.get_date().year, int(time.time()))
+        return "{0}{1}{2}".format(random.choice(('B', 'S')), self.get_date().year, int(time.time()))
 
     @staticmethod
     def get_from_system_and_ref(from_system_name, source_type):
@@ -270,7 +270,8 @@ class ChinaGrantAuto(BaseAuto):
             Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
             Sendmsg.sendmsg_order_no == old_asset).first()
         if not send_msg:
-            raise ValueError('not fount the asset withdraw success msg!')
+            # raise ValueError('not fount the asset withdraw success msg!')
+            return None
         return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
 
     def get_asset_item_info(self, channel, source_type, from_system_name, item_no=None):

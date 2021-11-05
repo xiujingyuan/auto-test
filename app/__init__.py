@@ -11,6 +11,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+from app.program_business.china.biz_central.services import ChinaBizCentralAuto
+from app.program_business.china.repay.services import ChinaRepayAuto
 from resource.config import AutoTestConfig
 
 db = SQLAlchemy(session_options={"autocommit": True})
@@ -39,7 +41,24 @@ def create_app():
     from app.api.repay import api_repay as api_repay_blueprint
     app.register_blueprint(api_repay_blueprint, url_prefix='/api/repay/')
 
+    from app.api.test_case import api_test_case as api_test_case_blueprint
+    app.register_blueprint(api_test_case_blueprint, url_prefix='/api/test_case/')
+
     from app.api.web import api_web as api_web_blueprint
     app.register_blueprint(api_web_blueprint, url_prefix='/api/backend/')
 
     return app
+
+
+class RepayFactory(object):
+    @classmethod
+    def get_repay(cls, country, env, environment):
+        if country == 'china':
+            return ChinaRepayAuto(env, environment)
+
+
+class BizCentralFactory(object):
+    @classmethod
+    def get_biz_central(cls, country, env, environment):
+        if country == 'china':
+            return ChinaBizCentralAuto(env, environment)

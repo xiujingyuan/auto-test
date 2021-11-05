@@ -316,6 +316,6 @@ class EasyMock(object):
 
 if __name__ == "__main__":
     test = EasyMock()
-    #print(test.copy_project('rbiz_auto_test', 'test4'))
-    test.delete_project('test51213')
+    print(test.copy_project('rbiz_manual_test', 'rbiz_dcs_test'))
+    # test.delete_project('test51213')
 

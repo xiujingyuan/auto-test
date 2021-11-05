@@ -5,10 +5,8 @@ import math
 import random
 import time
 
-
 from dateutil.relativedelta import relativedelta
 from faker import Faker
-
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -20,8 +18,6 @@ from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
 from app.program_business.china.repay.Model import Task
 from resource.config import AutoTestConfig
-
-
 
 ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
 ENCRYPT_DICT = {
