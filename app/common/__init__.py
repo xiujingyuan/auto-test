@@ -8,12 +8,12 @@
  @site:
  @email:
 """
-from app.program_business.china.biz_central.services import ChinaBizCentralService
-from app.program_business.china.biz_central.xxljob import ChinaBizCentralXxlJob
-from app.program_business.china.repay.easy_mock import RepayEasyMock
-from app.program_business.china.repay.nacos import ChinaRepayNacos
-from app.program_business.china.repay.services import ChinaRepayService
-from app.program_business.china.repay.xxljob import ChinaRepayXxlJob
+from app.services.china.biz_central.services import ChinaBizCentralService
+from app.services.china.biz_central.xxljob import ChinaBizCentralXxlJob
+from app.services.china.repay.easy_mock import RepayEasyMock
+from app.services.china.repay.nacos import ChinaRepayNacos
+from app.services.china.repay.services import ChinaRepayService
+from app.services.china.repay.xxljob import ChinaRepayXxlJob
 
 RET = {
         "code": 0,

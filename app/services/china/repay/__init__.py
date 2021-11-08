@@ -1,7 +1,7 @@
 import json
 from copy import deepcopy
 
-from app.program_business.china.repay.Model import WithholdOrder
+from app.services.china.repay.Model import WithholdOrder
 
 
 def query_withhold(func):

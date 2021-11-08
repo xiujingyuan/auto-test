@@ -2,11 +2,11 @@ import time
 
 from sqlalchemy import desc, or_
 
-from app.program_business import BaseService
+from app.services import BaseService
 from app.common.http_util import Http
 import json
 
-from app.program_business.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
+from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
 
 

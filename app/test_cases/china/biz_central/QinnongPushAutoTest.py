@@ -25,7 +25,7 @@ class QinnongCentralAutoTest(BizCentralTest):
         # 检查资方推送
         self.check_interface()
         # 检查settlement状态
-        self.check_settlment()
+        self.check_settlement()
         # 检查生成新的推送
         self.check_capital_notify()
 

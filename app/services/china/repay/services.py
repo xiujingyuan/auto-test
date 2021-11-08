@@ -8,11 +8,11 @@ from app import db
 from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
 from app.model.AutoAssetDb import AutoAsset
-from app.program_business import BaseService
-from app.program_business.china.biz_central.services import ChinaBizCentralService
-from app.program_business.china.grant.services import ChinaGrantService
-from app.program_business.china.repay import query_withhold
-from app.program_business.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
+from app.services import BaseService
+from app.services.china.biz_central.services import ChinaBizCentralService
+from app.services.china.grant.services import ChinaGrantService
+from app.services.china.repay import query_withhold
+from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
     WithholdRequest, WithholdDetail, CardBind
 

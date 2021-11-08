@@ -16,7 +16,7 @@ from app.common.db_util import DataBase
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
-from app.program_business.china.repay.Model import Task
+from app.services.china.repay.Model import Task
 from resource.config import AutoTestConfig
 
 ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
