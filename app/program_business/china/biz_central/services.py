@@ -22,6 +22,15 @@ class ChinaBizCentralService(BaseService):
         self.refresh_holiday_url = self.biz_host + "/job/refreshholiday"
         self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
 
+    def run_capital_push(self, plan_at):
+        self.run_xxl_job('capitalNotifyPushJob', plan_at)
+
+    def run_compensate_push(self, plan_at):
+        self.run_xxl_job('generateCompensateJob', plan_at)
+
+    def run_guarantor_push(self, plan_at):
+        self.run_xxl_job('guarantorPushJob', plan_at)
+
     def delete_row_data(self, del_id, del_type):
         obj = eval(del_type.title().replace("_", ""))
         except_id = 'id' if del_type == 'capital_settlement_detail' else '{0}_id'.format(del_type)

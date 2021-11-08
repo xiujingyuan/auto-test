@@ -1,15 +1,35 @@
-from app import BizCentralServiceFactory, RepayServiceFactory, ChinaBizCentralService, ChinaRepayService
+from app.program_business.china.biz_central.services import ChinaBizCentralService
+from app.program_business.china.repay.services import ChinaRepayService
 
 
 class BizCentralTest(object):
 
-    def __init__(self, country, env, environment):
-        self.country = country
+    def __init__(self, env, environment):
         self.env = env
         self.environment = environment
         self.central = ChinaBizCentralService(env, environment)
         self.repay = ChinaRepayService(env, environment)
         self.item_no = None
+        self.result = None
+
+    def prepare_asset(self, case):
+        # 放款新资产
+        self.item_no = self.repay.auto_loan(**case.test_cases_asset)
+        # 存入本次使用资产
+        self.result.test_cases_run_info = {'item_no': self.item_no}
+        # 修改还款计划状态
+        self.repay.set_asset_tran_status(self.item_no, case.test_cases_asset_tran)
+        # 修改资方还款计划状态
+        self.central.set_capital_tran_status(self.item_no, case.test_cases_capital_tran)
+
+    def repay_asset(self, case, result):
+        # 发起代扣并执行成功
+        request_data, _, resp = getattr(self.repay, case.test_cases_repay_info)(self.item_no,
+                                                                                period_start=None,
+                                                                                period_end=None,
+                                                                                status=2)
+        # 存入本次使用的代扣记录
+        self.result.test_cases_run_info.update({'withhold': request_data})
 
     def get_case_list(self, case_id_list, case_group, case_scene):
         cases = []
@@ -26,10 +46,11 @@ class BizCentralTest(object):
                 continue
 
     def set_case_success(self, case):
-        pass
+        self.result.run_result = 'success'
+        session
 
     def set_case_fail(self, case, reason):
-        pass
+        self.result.run_result = 'success'
 
     def run_single_case(self, case):
         self.prepare_asset(case)

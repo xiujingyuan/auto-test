@@ -65,3 +65,67 @@
 127.0.0.1 - - [05/Nov/2021 17:38:26] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
 127.0.0.1 - - [05/Nov/2021 17:38:28] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
 127.0.0.1 - - [05/Nov/2021 17:38:30] "POST /api/repay/repay_tools/get_asset_info HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/services.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/services.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/services.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/services.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/biz_central/services.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/program_business/china/repay/services.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/test_case/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/test_cases/china/biz_central/QinnongPushAutoTest.py', reloading
+ * Restarting with stat

@@ -1,26 +1,7 @@
 from app.test_cases.china.biz_central import BizCentralTest
 
 
-class QinnongPushAutoTest(BizCentralTest):
-
-    def prepare_asset(self, case, result):
-        # 放款新资产
-        self.item_no = self.repay.auto_loan(**case.test_cases_asset)
-        # 存入本次使用资产
-        result.test_cases_run_info = {'item_no': self.item_no}
-        # 修改还款计划状态
-        self.repay.set_asset_tran_status(self.item_no, case.test_cases_asset_tran)
-        # 修改资方还款计划状态
-        self.central.set_capital_tran_status(self.item_no, case.test_cases_capital_tran)
-
-    def repay_asset(self, case, result):
-        # 发起代扣并执行成功
-        request_data, _, resp = getattr(self.repay, case.test_cases_repay_info)(self.item_no,
-                                                                                period_start=None,
-                                                                                period_end=None,
-                                                                                status=2)
-        # 存入本次使用的代扣记录
-        result.test_cases_run_info.update({'withhold': request_data})
+class QinnongCentralAutoTest(BizCentralTest):
 
     def run_interface_scene(self, case):
         """返回测试"""
@@ -33,14 +14,20 @@ class QinnongPushAutoTest(BizCentralTest):
     def run_normal_scene(self, case):
         """正常还款场景"""
         # 执行UserRepay任务
-        self.central.run_task_by_order_no(self.item_no, task_type='')
-        # 执行notify任务 - check capital_notify 时间，类型，期次
-
+        self.central.run_task_by_order_no(self.item_no, task_type='UserRepay')
+        # 执行notify任务
+        self.central.run_task_by_order_no(self.item_no, task_type='GenerateCapitalNotify')
+        # check capital_notify 时间，类型，期次
+        capital_plan_at = self.check_capital_notify()
         # 捞取推送
-
+        self.central.run_capital_push(capital_plan_at)
+        self.central.run_task_by_order_no(self.item_no, task_type='QinnongCapitalPush')
+        # 检查资方推送
+        self.check_interface()
         # 检查settlement状态
-
-        pass
+        self.check_settlment()
+        # 检查生成新的推送
+        self.check_capital_notify()
 
     def run_advance_scene(self, case):
         """提前还款场景"""

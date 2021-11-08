@@ -81,7 +81,6 @@ class ChinaRepayService(BaseService):
                 self.grant.asset_withdraw_success(withdraw_success_data_no)
                 self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
         self.add_asset(item_no, 0)
-        # return self.get_auto_asset(channel, count)
         return item_no
 
     def send_msg(self, serial_no):
