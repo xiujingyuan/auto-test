@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from app import db
 from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
-from app.model.AutoAssetDb import AutoAsset
+from app.model.Model import AutoAsset
 from app.services import BaseService
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.grant.services import ChinaGrantService

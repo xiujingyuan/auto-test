@@ -3,7 +3,7 @@ from jsonpath_ng import parse
 
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
-from app.model.NocosConfigDb import NacosConfig
+from app.model.Model import NacosConfig
 
 NACOS_DOMAIN_DICT = {
     "china": "nacos.k8s-ingress-nginx.kuainiujinke.com",

@@ -22,12 +22,6 @@ class QinnongCentralAutoTest(BizCentralTest):
         # 捞取推送
         self.central.run_capital_push(capital_plan_at)
         self.central.run_task_by_order_no(self.item_no, task_type='QinnongCapitalPush')
-        # 检查资方推送
-        self.check_interface()
-        # 检查settlement状态
-        self.check_settlement()
-        # 检查生成新的推送
-        self.check_capital_notify()
 
     def run_advance_scene(self, case):
         """提前还款场景"""

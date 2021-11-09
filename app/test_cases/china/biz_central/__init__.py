@@ -1,5 +1,7 @@
+from app import db
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.repay.services import ChinaRepayService
+from app.model.Model import TestCase, RunCaseLog
 
 
 class BizCentralTest(object):
@@ -10,13 +12,13 @@ class BizCentralTest(object):
         self.central = ChinaBizCentralService(env, environment)
         self.repay = ChinaRepayService(env, environment)
         self.item_no = None
-        self.run_case_log = None
+        self.run_case_log = RunCaseLog()
 
     def prepare_asset(self, case):
         # 放款新资产
         self.item_no = self.repay.auto_loan(**case.test_cases_asset_info)
         # 存入本次使用资产
-        self.run_case_log.test_cases_run_info = {'item_no': self.item_no}
+        self.run_case_log.run_case_log_case_run_item_no = self.item_no
         # 修改还款计划状态
         self.repay.set_asset_tran_status(self.item_no, case.test_cases_asset_tran)
         # 修改资方还款计划状态
@@ -43,8 +45,15 @@ class BizCentralTest(object):
         # 存入本次使用的代扣记录
         self.run_case_log.test_cases_run_info.update({'withhold': request_data})
 
-    def get_case_list(self, case_id_list, case_group, case_scene):
+    @staticmethod
+    def get_case_list(case_id_list, case_group, case_scene):
         cases = []
+        if case_id_list:
+            cases = TestCase.query.filter(TestCase.in_(tuple(case_id_list))).all()
+        elif case_group:
+            cases = TestCase.query.filter(TestCase.test_cases_group == case_group).all()
+        elif case_scene:
+            cases = TestCase.query.filter(TestCase.test_cases_scene == case_scene).all()
         return cases
 
     def run_cases(self, case_id_list, case_group, case_scene):
@@ -52,23 +61,41 @@ class BizCentralTest(object):
         for case in cases:
             try:
                 self.run_single_case(case)
-                self.set_case_success(case)
+                self.set_case_success()
             except Exception as e:
-                self.set_case_fail(case, str(e))
+                self.set_case_fail(str(e))
                 continue
+            finally:
+                self.run_case_log = RunCaseLog()
 
-    def set_case_success(self, case):
+    def set_case_success(self):
         self.run_case_log.run_case_log_case_run_result = 'success'
+        db.session.add(self)
+        db.session.flush()
 
-    def set_case_fail(self, case, reason):
+    def set_case_fail(self, error_message):
         self.run_case_log.run_case_log_case_run_result = 'fail'
+        self.run_case_log.run_case_log_case_run_result = error_message
+        db.session.add(self.run_case_log)
+        db.session.flush()
 
     def run_single_case(self, case):
+        # 资产准备
         self.prepare_asset(case)
+        # 还款准备-mock
         self.prepare_mock(case)
+        # 还款准备-kv
         self.prepare_kv(case)
+        # 还款
         self.repay_asset(case)
+        # 执行本次逻辑
         getattr(self, 'run_{0}'.format(case.case_scene))(case)
+        # 检查资方推送
+        self.check_interface()
+        # 检查settlement状态
+        self.check_settlement()
+        # 检查生成新的推送
+        self.check_capital_notify()
 
     def run_interface_scene(self, case):
         """接口请求/返回测试"""
@@ -87,7 +114,7 @@ class BizCentralTest(object):
         pass
 
     def run_early_settlement_scene(self, case):
-        """逾期还款场景"""
+        """提前结清场景"""
         pass
 
     def run_overdue_scene(self, case):

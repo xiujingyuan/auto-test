@@ -1,1 +1,127 @@
  * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 09:45:56] "[35m[1mGET /api/backend/cases HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 09:45:58] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 09:48:51] "[35m[1mGET /api/backend/cases HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 09:48:53] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 09:50:17] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:50:31] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:50:45] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:51:44] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:51:46] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:52:09] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:52:22] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:52:23] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:52:52] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:52:53] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:52:55] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:53:33] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 09:53:35] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/model/Model.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/model/Model.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/model/Model.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 10:12:20] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:12:22] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:17:13] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:17:15] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 10:28:21] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:28:22] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:28:39] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:28:41] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:32:33] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:38:51] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:40:43] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:40:44] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:40:58] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:41:00] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:41:14] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:41:16] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:43:59] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:44:01] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:44:28] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:44:30] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 10:45:54] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 10:45:56] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:00:35] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:00:37] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:00:56] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:00:58] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:01:56] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:01:58] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:09:05] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:09:20] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:09:36] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:11:06] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 11:45:03] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:45:05] "GET /api/backend/menu HTTP/1.1" 200 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 11:45:53] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 11:45:53] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 13:15:21] "[35m[1mGET /api/backend/cases HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 13:15:23] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:05:40] "[35m[1mGET /api/backend/menu HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 14:05:40] "[35m[1mGET /api/backend/cases HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 14:05:52] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:05:54] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:06:41] "[35m[1mPOST /api/backend/update_single_case HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 14:06:57] "[35m[1mPOST /api/backend/update_single_case HTTP/1.1[0m" 500 -
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py', reloading
+ * Restarting with stat
+127.0.0.1 - - [09/Nov/2021 14:08:03] "[35m[1mPOST /api/backend/update_single_case HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 14:09:12] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:09:14] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:10:04] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:10:05] "[35m[1mPOST /api/backend/update_single_case HTTP/1.1[0m" 500 -
+127.0.0.1 - - [09/Nov/2021 14:13:21] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:14:44] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:15:39] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:16:10] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:16:14] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:08] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:19] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:21] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:34] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:38] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:54] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:20:56] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:21:05] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:21:53] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:26:14] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:30:33] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:30:35] "POST /api/repay/repay_tools/add_and_update_holiday HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:30:49] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:30:53] "GET /api/backend/cases HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:30:55] "GET /api/backend/menu HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:40:12] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:42:41] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:42:55] "POST /api/backend/update_single_case HTTP/1.1" 200 -
+127.0.0.1 - - [09/Nov/2021 14:43:07] "POST /api/backend/update_single_case HTTP/1.1" 200 -
