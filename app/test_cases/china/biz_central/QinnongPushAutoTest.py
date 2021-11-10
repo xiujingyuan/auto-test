@@ -3,6 +3,10 @@ from app.test_cases.china.biz_central import BizCentralTest
 
 class QinnongCentralAutoTest(BizCentralTest):
 
+    def prepare_mock(self, channel):
+        # 秦农肯定走我方
+        pass
+
     def run_interface_scene(self, case):
         """返回测试"""
         pass

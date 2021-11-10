@@ -124,18 +124,18 @@ class BaseService(object):
         if same_month_date > end_date:
             if end_date.month > 1:
                 try:
-                    pre_manth_date = datetime.date(end_date.year, end_date.month - 1, start_date.day)
+                    pre_month_date = datetime.date(end_date.year, end_date.month - 1, start_date.day)
                 except:
-                    pre_manth_date = datetime.date(end_date.year, end_date.month - 1, c.monthrange(end_date.year,
+                    pre_month_date = datetime.date(end_date.year, end_date.month - 1, c.monthrange(end_date.year,
                                                                                                end_date.month - 1)[1])
             else:
                 try:
-                    pre_manth_date = datetime.date(end_date.year - 1, 12, start_date.day)
+                    pre_month_date = datetime.date(end_date.year - 1, 12, start_date.day)
                 except:
-                    pre_manth_date = datetime.date(end_date.year - 1, 12, c.monthrange(end_date.year - 1, 1)[1])
-            curr_month_days = (same_month_date - pre_manth_date).days
-            hold_months = (pre_manth_date.year - start_date.year) * 12 + pre_manth_date.month - start_date.month
-            decimal_month = (end_date - pre_manth_date).days / curr_month_days
+                    pre_month_date = datetime.date(end_date.year - 1, 12, c.monthrange(end_date.year - 1, 1)[1])
+            curr_month_days = (same_month_date - pre_month_date).days
+            hold_months = (pre_month_date.year - start_date.year) * 12 + pre_month_date.month - start_date.month
+            decimal_month = (end_date - pre_month_date).days / curr_month_days
         elif same_month_date < end_date:
             if end_date.month < 12:
                 try:
@@ -215,7 +215,7 @@ class BaseService(object):
         self.db_session.commit()
 
     def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
-        task_id = self.db.get_task_info(order_no, task_type, status=status)[0]['task_id']
+        task_id = self.get(order_no, task_type, status=status)[0]['task_id']
         return self.run_task_by_id(task_id, excepts=excepts)
 
     def update_task_next_run_at_forward_by_task_id(self, task_id):

@@ -22,6 +22,34 @@ class ChinaBizCentralService(BaseService):
         self.refresh_holiday_url = self.biz_host + "/job/refreshholiday"
         self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
 
+    def set_capital_tran_status(self, item_no, period, operate_type='grant', status='finished', capital_notify=False):
+        capital_tran_list = self.db_session.query(CapitalTransaction).filter(
+            CapitalTransaction.capital_transaction_asset_item_no == item_no,
+            CapitalTransaction.capital_transaction_period < period).all()
+        for capital_tran in capital_tran_list:
+            capital_tran.capital_transaction_operation_type = operate_type
+            capital_tran.capital_transaction_status = status
+        if capital_notify and operate_type != 'grant' and period > 1:
+            notify_list = []
+            channel = capital_tran_list[0].capital_transaction_channel
+            for index in range(1, period - 1):
+                notify = CapitalNotify()
+                notify.capital_notify_channel = channel
+                notify.capital_notify_period_start = index
+                notify.capital_notify_period_end = index
+                notify.capital_notify_asset_item_no = item_no
+                notify.capital_notify_plan_at = self.get_date()
+                notify.capital_notify_push_serial = 'test_{0}'.format(self.get_date(fmt='%Y%m%d%H%M%S'))
+                notify.capital_notify_to_system = channel
+                notify.capital_notify_status = 'success'
+                notify.capital_notify_type = operate_type
+                notify_list.append(notify)
+            self.db_session.add_all(notify_list)
+
+        self.db_session.add_all(capital_tran_list)
+        self.db_session.flush()
+        self.db_session.commit()
+
     def run_capital_push(self, plan_at):
         self.run_xxl_job('capitalNotifyPushJob', plan_at)
 
@@ -261,6 +289,18 @@ class ChinaBizCentralService(BaseService):
             else self.central_task_date_url.format(task_id, run_date)
         ret = Http.http_get(url)
         return ret
+
+    def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
+        task_id = self.get_task_info(order_no, task_type, status=status)[0].task_id
+        return self.run_task_by_id(task_id, excepts=excepts)
+
+    def get_task_info(self, order_no, task_type, status='open'):
+        task = self.db_session.query(CentralTask).filter(CentralTask.task_order_no == order_no,
+                                                         CentralTask.task_type == task_type,
+                                                         CentralTask.task_status == status).first()
+        if not task:
+            raise ValueError('not found the task!')
+        return task
 
     def get_asset_info(self, item_no):
         while True:

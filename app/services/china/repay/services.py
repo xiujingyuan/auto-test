@@ -152,11 +152,13 @@ class ChinaRepayService(BaseService):
             raise ValueError('status error, only finish, nofinish!')
         item_no_x = self.get_no_loan(item_no)
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
-        asset_x = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no_x).first()
+        if item_no_x:
+            asset_x = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no_x).first()
+            asset_x.asset_balance_amount = asset_x.asset_repaid_amount = 0
+        item_tuple = tuple(filter(lambda x: x, [item_no, item_no_x]))
         asset_tran_list = self.db_session.query(AssetTran).filter(
-            AssetTran.asset_tran_asset_item_no.in_((item_no, item_no_x))).all()
+            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
         asset.asset_balance_amount = asset.asset_repaid_amount = 0
-        asset_x.asset_balance_amount = asset_x.asset_repaid_amount = 0
         no_status = 'finish' if status == 'nofinish' else 'nofinish'
 
         def set_asset_tran(tran_item, item_status):
@@ -173,7 +175,7 @@ class ChinaRepayService(BaseService):
             if asset_tran.asset_tran_asset_item_no == item_no:
                 asset.asset_repaid_amount += asset_tran.asset_tran_repaid_amount
                 asset.asset_balance_amount += asset_tran.asset_tran_balance_amount
-            elif asset_tran.asset_tran_asset_item_no == item_no_x:
+            elif item_no_x and asset_tran.asset_tran_asset_item_no == item_no_x:
                 asset_x.asset_repaid_amount += asset_tran.asset_tran_repaid_amount
                 asset_x.asset_balance_amount += asset_tran.asset_tran_balance_amount
 
@@ -602,6 +604,7 @@ class ChinaRepayService(BaseService):
                 task_id = self.biz_central.add_central_task(task, is_run)
 
         self.grant.add_msg(grant_msg)
+        self.grant.asset_withdraw_success(json.loads(grant_msg['sendmsg_content'])['body'])
         self.biz_central.run_central_task_by_task_id(task_id)
         return self.add_asset(item_no, source_type)
 
@@ -817,7 +820,7 @@ class ChinaRepayService(BaseService):
         if repay_status == 2:
             # 跑充值还款任务
             self.run_task_by_type_and_order_no('assetWithholdOrderRecharge', serial_no)
-            # self.run_msg_by_type_and_order_no(id_num_encrypt, 'account_change_tran_repay')
+            self.run_msg_by_type_and_order_no(id_num_encrypt, 'account_change_tran_repay')
         self.run_task_by_type_and_order_no('withhold_order_sync', serial_no)
         self.run_task_by_type_and_order_no('execute_combine_withhold', request_no)
         self.run_msg_by_type_and_order_no(serial_no, 'WithholdResultImport')

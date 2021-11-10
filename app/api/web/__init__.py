@@ -6,6 +6,8 @@ from flask import current_app
 from app import db
 from app.common import RET
 from app.model.Model import Menu, TestCase
+from app.test_cases.china.biz_central.QinnongPushAutoTest import QinnongCentralAutoTest
+
 
 api_web = Blueprint('api_web', __name__)
 
@@ -35,7 +37,24 @@ def get_case():
 @api_web.route('/run_single_case', methods=["POST"])
 def run_case():
     ret = deepcopy(RET)
-
+    req = request.json
+    case_id = req.get("case_id", None)
+    environment = req.get("environment", 'dev')
+    env = req.get("env", "1")
+    if env is None:
+        ret['message'] = 'need env, but not found'
+        ret['code'] = 1
+    if case_id is None:
+        ret['message'] = 'need case, but not found'
+        ret['code'] = 1
+    find_case = TestCase.query.filter(TestCase.test_cases_id == case_id).first()
+    if find_case is None:
+        ret['message'] = "not fount the case with case's {0}".format(case_id)
+        ret['code'] = 1
+    channel = find_case.test_cases_channel
+    program = find_case.test_cases_group.lower()
+    obj = eval('{0}{1}AutoTest'.format(channel.title(), program.title()))(env, environment)
+    obj.run_single_case(find_case)
     return jsonify(ret)
 
 
