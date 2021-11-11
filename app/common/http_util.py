@@ -23,6 +23,8 @@ def modify_resp(func):
                             (url, 'post', req_data, content)))
         LogUtil.log_info(log_info)
         content = content[0] if isinstance(content, list) else content
+        if url.endswith("nacos/v1/cs/configs"):
+            return content
         if 'code' not in content:
             raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
                 content, url, json.dumps(req_data, ensure_ascii=False)))

@@ -1,3 +1,4 @@
+from app.test_cases import CaseException
 from app.test_cases.china.biz_central import BizCentralTest
 
 

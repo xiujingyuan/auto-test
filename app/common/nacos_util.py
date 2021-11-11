@@ -71,7 +71,7 @@ class Nacos(object):
         self.update_config_by_json_path(get_config.nacos_config_name, nacos_config_value)
 
     def update_config(self, config_name, content, group="KV", types="json"):
-        configs_id = self.get_configs_id(config_name)
+        configs_id = self.get_config_id(config_name)
         url = self.update_config_url.format(self.domain)
         req_body = {
             "dataId": config_name,

@@ -1,7 +1,9 @@
 import time
+from datetime import datetime
 
 from sqlalchemy import desc, or_
 
+from app.common.easy_mock_util import EasyMock
 from app.services import BaseService
 from app.common.http_util import Http
 import json
@@ -22,6 +24,36 @@ class ChinaBizCentralService(BaseService):
         self.central_task_date_url = self.biz_host + "/job/runTaskWithDate?id={0}&date={1}"
         self.refresh_holiday_url = self.biz_host + "/job/refreshholiday"
         self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
+        self.gate_str = 'gate.client.serviceUrl'
+
+    def update_service_url(self, mock_name):
+        config_name = 'biz-central-{0}.properties'.format(self.env)
+        system_config = self.nacos.get_config(config_name, group='SYSTEM')['content']
+        easy_mock = EasyMock(mock_name)
+        mock_url = '{0}={1}'.format(self.gate_str, easy_mock.get_mock_base_url())
+        system_config = system_config.replace(self.gate_str, "#{0}".format(self.gate_str))
+        system_config += mock_url
+        self.nacos.update_config(config_name, system_config)
+
+    def get_kv(self, channel):
+        return json.loads(self.nacos.get_config('{0}_config'.format(channel))['content'])
+
+    def get_system_url(self):
+        system_config = self.nacos.get_config('biz-central-{0}.properties'.format(self.env), group='SYSTEM')
+        for content in system_config['content'].split("\n"):
+            if content.startswith(self.gate_str):
+                service_url = content.strip().replace(self.gate_str, '')[1:]
+                break
+        return service_url
+
+    def check_and_add_push_channel(self, channel):
+        account_import_config = json.loads(self.nacos.get_config('account_import_config')['content'])
+        if 'newProgramChannels' not in account_import_config:
+            account_import_config['newProgramChannels'] = ['channel']
+            self.nacos.update_config('account_import_config', account_import_config)
+        elif channel not in account_import_config['newProgramChannels']:
+            account_import_config['newProgramChannels'].append(channel)
+            self.nacos.update_config('account_import_config', json.dumps(account_import_config))
 
     def set_capital_tran_status(self, item_no, period, operate_type='grant', status='finished', capital_notify=False):
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
@@ -291,16 +323,21 @@ class ChinaBizCentralService(BaseService):
         ret = Http.http_get(url)
         return ret
 
-    def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
-        task_id = self.get_task_info(order_no, task_type, status=status)[0].task_id
-        return self.run_task_by_id(task_id, excepts=excepts)
+    def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}, timeout=60):
+        begin = datetime.now()
+        while True:
+            task = self.get_task_info(order_no, task_type, status=status)
+            if task:
+                break
+            if (datetime.now() - begin).seconds >= 60:
+                raise CaseException('not found the task with order no is {0}, type is {1} in 60s'.format(order_no,
+                                                                                                         task_type))
+        return self.run_task_by_id(task.task_id, excepts=excepts)
 
     def get_task_info(self, order_no, task_type, status='open'):
         task = self.db_session.query(CentralTask).filter(CentralTask.task_order_no == order_no,
                                                          CentralTask.task_type == task_type,
                                                          CentralTask.task_status == status).first()
-        if not task:
-            raise CaseException('not found the task!')
         return task
 
     def get_asset_info(self, item_no):

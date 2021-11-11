@@ -187,10 +187,8 @@ class EasyMock(object):
             return finial
         return finial
 
-    @property
+    @check_project_id
     def get_mock_base_url(self):
-        if self.project_id is None:
-            raise ValueError("the project'id is none!")
         return '{0}/mock/{1}/{2}'.format(BASE_URL, self.project_id, self.project_name)
 
     @check_login

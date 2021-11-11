@@ -8,6 +8,7 @@
  @site:
  @email:
 """
+from app.services.china.biz_central.nacos import ChinaBizCentralNacos
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.biz_central.xxljob import ChinaBizCentralXxlJob
 from app.services.china.repay.easy_mock import RepayEasyMock
@@ -27,6 +28,8 @@ class EasyMockFactory(object):
     def get_easy_mock(cls, country, program, check_req, return_req):
         if country == 'china' and program == 'repay':
             return RepayEasyMock(check_req, return_req)
+        elif country == 'china' and program == 'biz_central':
+            return RepayEasyMock(check_req, return_req)
 
 
 class NacosFactory(object):
@@ -35,6 +38,8 @@ class NacosFactory(object):
     def get_nacos(cls, country, program, env):
         if country == 'china' and program == 'repay':
             return ChinaRepayNacos(env)
+        elif country == 'china' and program == 'biz_central':
+            return ChinaBizCentralNacos(env)
 
 
 class XxlJobFactory(object):

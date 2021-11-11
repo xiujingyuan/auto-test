@@ -1,7 +1,7 @@
 import json
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.repay.services import ChinaRepayService
-from app.test_cases import BaseAutoTest, run_case_prepare
+from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
 
 
 class BizCentralTest(BaseAutoTest):
@@ -47,8 +47,15 @@ class BizCentralTest(BaseAutoTest):
     def prepare_mock(self, case):
         pass
 
-    def prepare_kv(self, case):
-        pass
+    def prepare_kv(self, case, mock_name):
+        channel_config = self.central.get_kv(case.test_cases_channel)
+        self.central.check_and_add_push_channel(case.test_cases_channel)
+        if 'compensate_config' not in channel_config or 'push_guarantee_config' not in channel_config:
+            raise CaseException("config is not new config!")
+        service_url = self.central.get_system_url()
+        if 'gate{0}.k8s-ingress-nginx.kuainiujinke.com'.format(self.env) in service_url:
+            self.central.update_service_url(mock_name)
+            raise CaseException("the gate config is error,need mock!")
 
     def repay_asset(self, case):
         repay_info = json.loads(case.test_cases_repay_info)
@@ -56,6 +63,7 @@ class BizCentralTest(BaseAutoTest):
         repay_period_end = repay_info['period_end']
         before_capital_tran_type = repay_info['before_capital_tran_type']
         capital_notify = repay_info['capital_notify']
+        mock_name = repay_info['mock_name']
         channel = repay_info['channel']
         repay_type = repay_info['repay_type']
         # 修改还款计划状态
@@ -66,7 +74,7 @@ class BizCentralTest(BaseAutoTest):
         # 还款准备-mock
         self.prepare_mock(channel)
         # 还款准备-kv
-        self.prepare_kv(case)
+        self.prepare_kv(case, mock_name)
         # 发起代扣并执行成功
         resp = getattr(self.repay, repay_type)(item_no=self.item_no, period_start=repay_period_start,
                                                period_end=repay_period_end,
