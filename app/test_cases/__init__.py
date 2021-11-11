@@ -18,9 +18,9 @@ def run_case_prepare(func):
             func(self, case, **kwargs)
         except CaseException as e:
             self.set_case_fail('case', str(e))
-        # except Exception as e:
-        #     print(e)
-        #     self.set_case_fail('system', str(traceback.format_exc()))
+        except Exception as e:
+            print(e)
+            self.set_case_fail('system', str(traceback.format_exc()))
         else:
             self.set_case_success()
         finally:

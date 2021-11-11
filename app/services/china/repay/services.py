@@ -150,6 +150,8 @@ class ChinaRepayService(BaseService):
             raise ValueError('period or item_no can not be none!')
         if status not in ('finish', 'nofinish'):
             raise ValueError('status error, only finish, nofinish!')
+        if period <= 1:
+            return
         item_no_x = self.get_no_loan(item_no)
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         if item_no_x:
@@ -168,7 +170,7 @@ class ChinaRepayService(BaseService):
             tran_item.asset_tran_finish_at = get_date() if item_status == 'finish' else '1000-01-01'
 
         for asset_tran in asset_tran_list:
-            if asset_tran.asset_tran_period <= period:
+            if asset_tran.asset_tran_period <= (period - 1):
                 set_asset_tran(asset_tran, status)
             else:
                 set_asset_tran(asset_tran, no_status)
@@ -591,6 +593,8 @@ class ChinaRepayService(BaseService):
             ret = self.get_biz_capital_detail(channel)
         elif refresh_type == 'biz_capital_notify':
             ret = self.get_biz_capital_notify(item_no, max_create_at)
+        elif refresh_type in ('auth_lock', 'detail_lock'):
+            ret = self.get_lock_info(item_no)
         ret.update(asset)
         print(self.get_date(is_str=True))
         return ret
@@ -702,8 +706,19 @@ class ChinaRepayService(BaseService):
         repay_ret = Http.http_post(self.decrease_url, req_data)
         task_list = self.db_session.query(Task).filter(Task.task_type == 'provisionRecharge',
                                                        Task.task_order_no.in_((item_no, item_no_x))).all()
+        serial_no_list = []
         for task in task_list:
             self.run_task_by_id(task.task_id)
+            serial_no = json.loads(task.task_request_data)['data']['rechargeSerialNo']
+            serial_no_list.append(serial_no)
+
+        for serial_no in list(set(serial_no_list)):
+            while True:
+                withhold_task = self.db_session.query(Task).filter(Task.task_type == 'withhold_order_sync',
+                                                                   Task.task_order_no == serial_no).first()
+                if withhold_task:
+                    self.run_task_by_id(withhold_task.task_id)
+                    break
         return req_data, self.decrease_url, repay_ret
 
     def del_row_data(self, item_no, del_id, del_type, max_create_at):

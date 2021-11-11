@@ -61,7 +61,8 @@ class BizCentralTest(BaseAutoTest):
         # 修改还款计划状态
         self.repay.set_asset_tran_status(repay_period_start, self.item_no)
         # 修改资方还款计划状态
-        self.central.set_capital_tran_status(self.item_no, repay_period_start, before_capital_tran_type, capital_notify)
+        self.central.set_capital_tran_status(self.item_no, repay_period_start, before_capital_tran_type,
+                                             capital_notify)
         # 还款准备-mock
         self.prepare_mock(channel)
         # 还款准备-kv
@@ -71,7 +72,10 @@ class BizCentralTest(BaseAutoTest):
                                                period_end=repay_period_end,
                                                status=2)
         # 存入本次使用的代扣记录
-        self.run_case_log.run_case_log_case_run_withhold_no = resp
+        order_no_list = []
+        for withhold in resp['response']['data']['project_list']:
+            order_no_list.append(withhold['order_no'])
+        self.run_case_log.run_case_log_case_run_withhold_no = json.dumps(order_no_list)
 
     def run_interface_scene(self, case):
         """接口请求/返回测试"""

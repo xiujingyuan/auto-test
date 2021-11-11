@@ -8,6 +8,7 @@ import json
 
 from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
+from app.test_cases import CaseException
 
 
 class ChinaBizCentralService(BaseService):
@@ -299,7 +300,7 @@ class ChinaBizCentralService(BaseService):
                                                          CentralTask.task_type == task_type,
                                                          CentralTask.task_status == status).first()
         if not task:
-            raise ValueError('not found the task!')
+            raise CaseException('not found the task!')
         return task
 
     def get_asset_info(self, item_no):

@@ -78,7 +78,7 @@ class RunCaseLog(db.Model, BaseToDict):
     run_case_log_case_id = db.Column(db.Integer, nullable=False, index=True, info='执行用例的用例ID')
     run_case_log_case_run_date = db.Column(db.Date, nullable=False, index=True, info='用例执行日期')
     run_case_log_case_run_item_no = db.Column(db.String(40), nullable=False, server_default=db.FetchedValue(), info='用例相关资产')
-    run_case_log_case_run_withhold_no = db.Column(db.String(50), nullable=False, server_default=db.FetchedValue(), info='用例相关代扣就')
+    run_case_log_case_run_withhold_no = db.Column(db.String(255), nullable=False, server_default=db.FetchedValue(), info='用例相关代扣就')
     run_case_log_case_run_result = db.Column(db.String(8), nullable=False, server_default=db.FetchedValue(), info='用例执行结果')
     run_case_log_case_fail_type = db.Column(db.String(8), nullable=False, server_default=db.FetchedValue(), info='用例失败类型')
     run_case_log_case_run_error_message = db.Column(db.Text, info='用例异常信息')

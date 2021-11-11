@@ -221,6 +221,25 @@ class EasyMock(object):
         ret = Http.http_post(self.delete_url, req, headers=self.header)
         return ret
 
+    def copy_increment_project(self, source_project_name, to_project_name):
+        self.project_name = source_project_name
+        self.project_id = self.get_project_id(self.project_name)
+        source_api_list = self.get_api_list()
+        if not source_api_list:
+            raise ValueError("the source project's api list is empty with name is :{0}".format(source_project_name))
+        project_name = to_project_name
+        to_project_id = self.get_project_id(project_name)
+        to_api_list = self.get_api_list()
+        to_api_url = tuple(map(lambda x: x['url'], to_api_list["data"]["mocks"]))
+        for api in source_api_list["data"]["mocks"]:
+            if api['url'] not in to_api_url:
+                api_info = {"url": "" + api["url"],
+                            "method": api["method"],
+                            "mode": api["mode"],
+                            "description": api["description"],
+                            "project_id": to_project_id}
+                Http.http_post(self.create_api_url, api_info, headers=self.header)
+
     def copy_project(self, source_project_name, to_project_name, new_group=''):
         """
         复制当期项目的mock到新项目
@@ -316,6 +335,6 @@ class EasyMock(object):
 
 if __name__ == "__main__":
     test = EasyMock()
-    print(test.copy_project('rbiz_manual_test', 'rbiz_dcs_test'))
+    print(test.copy_increment_project('rbiz_manual_test', 'rbiz_auto_test'))
     # test.delete_project('test51213')
 
