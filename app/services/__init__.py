@@ -17,6 +17,7 @@ from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
 from app.services.china.repay.Model import Task
+from app.test_cases import CaseException
 from resource.config import AutoTestConfig
 
 ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
@@ -30,42 +31,18 @@ ENCRYPT_DICT = {
         }
 
 
-class DataBaseAuto(DataBase):
-    def __init__(self,  system, num, country, run_env):
-        super(DataBaseAuto, self).__init__(system, num, country, run_env)
-
-    @CheckExist(check=False)
-    def get_task_info(self, task_type='', order_no='', status='', **kwargs):
-        return self.get_data('task', order_by='task_id', **kwargs)
-
-    @CheckExist()
-    def get_synctask_info(self, synctask_key='', synctask_type='', **kwargs):
-        return self.get_data('synctask', order_by='synctask_id', **kwargs)
-
-    @CheckExist()
-    def get_sendmsg_info(self, order_no='', sendmsg_type='', **kwargs):
-        return self.get_data('sendmsg', **kwargs)
-
-    def get_task_info_with_timeout(self, order_no, task_type, status='open', timeout=60):
-        begin = 0
+def wait_timeout(func):
+    def wrapper(self, *kw, **kwargs):
+        begin = self.get_date()
+        timeout = kwargs.pop("timeout") if 'timeout' in kwargs else 60
         while True:
-            task_list = self.get_task_info(task_type=task_type, order_no=order_no, status=status)
-            if task_list or begin >= timeout * 100:
+            ret = func(self, *kw, **kwargs)
+            if ret:
                 break
-            begin += 1
-            time.sleep(0.01)
-        return task_list
-
-    def get_sync_task_id(self, req_key, task_type):
-        sync_info = self.get_synctask_info(synctask_key=req_key, synctask_type=task_type)
-        return sync_info[0]
-
-    def get_task_id_with_timeout(self, task_type, task_order_no, task_status='open', timeout=60):
-        task_info = self.get_task_info_with_timeout(task_order_no, task_type, status=task_status, timeout=timeout)
-        return task_info[0]['task_id']
-
-    def update_task_next_run_at_forward_by_task_id(self, task_id):
-        self.update_data('task', 'task_id', task_id, task_next_run_at='DATE_SUB(now(), interval 20 minute)')
+            elif (self.get_date() - begin).seconds >= 60:
+                raise CaseException('not found the record with {0}'.format(timeout))
+        return ret
+    return wrapper
 
 
 class MyScopedSession(scoped_session):
@@ -226,12 +203,14 @@ class BaseService(object):
         self.db_session.add(task)
         self.db_session.commit()
 
-    def run_task_by_id(self, task_id):
+    def run_task_by_id(self, task_id, excepts={'code': 0}):
         self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = Http.http_get(self.run_task_id_url.format(task_id))
         ret = ret[0] if isinstance(ret, list) else ret
         if not isinstance(ret, dict):
             raise ValueError(ret)
+        elif not ret['code'] == excepts['code']:
+            raise CaseException("run task error, {0}".format(ret['message']))
         elif not ret["code"] == 0:
             raise ValueError("run task error, {0}".format(ret['message']))
         return ret

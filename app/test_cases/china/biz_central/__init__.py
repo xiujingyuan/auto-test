@@ -1,4 +1,7 @@
 import json
+import math
+from datetime import datetime
+
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.repay.services import ChinaRepayService
 from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
@@ -10,6 +13,34 @@ class BizCentralTest(BaseAutoTest):
         super().__init__(env, environment)
         self.central = ChinaBizCentralService(env, environment)
         self.repay = ChinaRepayService(env, environment)
+        self.repay_info = None
+        self.channel = 'qinnong'
+
+    @classmethod
+    def add_work_days(cls, date, days):
+        if isinstance(date, datetime.date):
+            raise TypeError('need date type')
+        if days == 0:
+            return date
+        direct = days / math.abs(days)
+        days = math.abs(days)
+        while days:
+            date = cls.get_date(date, days=direct, fmt='%Y-%m-%d 00:00:00')
+            if cls.is_work_day(date):
+                days -= 1
+        return date
+
+    def is_work_day(self, date):
+        holiday = self.central.get_date_is_holiday(date)
+        if holiday is not None:
+            return holiday
+        return self.is_week_day(date)
+
+    @staticmethod
+    def is_week_day(date):
+        if date.isoweekday() in (6, 7):
+            return True
+        return False
 
     def prepare_asset(self, case):
         # 放款新资产
@@ -32,6 +63,24 @@ class BizCentralTest(BaseAutoTest):
         # 检查生成新的推送
         self.check_capital_notify()
 
+    def get_real_plan_at(self, plan_at, plan_period_start):
+        ret_plan_at = ''
+        plan_at_list = plan_at.split("+")
+        plan_at_base, plan_at_type, plan_at_day = plan_at_list[0], plan_at_list[1], plan_at_list[2]
+        if plan_at_base.lower() == 'push':
+            ret_plan_at = self.get_date()
+        elif plan_at_base.lower() == 'user':
+            ret_plan_at = self.central.get_capital_principal(self.item_no, plan_period_start)\
+                .capital_transaction_expect_finished_at
+        elif plan_at_base.lower() == 'due_at':
+            ret_plan_at = self.central.get_capital_principal(self.item_no, plan_period_start)\
+                .capital_transaction_user_repay_at
+        if plan_at_type.upper() == "T":
+            ret_plan_at = self.add_work_days(ret_plan_at, plan_at_day)
+        elif plan_at_type.upper() == 'D':
+            ret_plan_at = self.get_date(date=ret_plan_at, days=plan_at_day)
+        return ret_plan_at
+
     def check_interface(self):
         # 检查资方推送
         pass
@@ -40,15 +89,24 @@ class BizCentralTest(BaseAutoTest):
         # 检查settlement状态
         pass
 
-    def check_capital_notify(self):
+    def check_capital_notify(self, check_capital_notify, item_no):
         # 检查生成新的推送
+        # {
+        #     "plan_at": "push+D+1",
+        #     "plan_type": "normal",
+        #     "plan_period_start": 1,
+        #     "plan_period_end": 1,
+        # }
+        capital_notify = self.central.get_capital_notify(item_no)
         pass
 
-    def prepare_mock(self, case):
+    def prepare_mock(self, withhold_channel):
         pass
 
     def prepare_kv(self, case, mock_name):
-        channel_config = self.central.get_kv(case.test_cases_channel)
+        if not self.channel == case.test_cases_channel:
+            raise CaseException("the case channel is error!")
+        channel_config = self.central.get_kv(self.channel)
         self.central.check_and_add_push_channel(case.test_cases_channel)
         if 'compensate_config' not in channel_config or 'push_guarantee_config' not in channel_config:
             raise CaseException("config is not new config!")
@@ -58,21 +116,21 @@ class BizCentralTest(BaseAutoTest):
             raise CaseException("the gate config is error,need mock!")
 
     def repay_asset(self, case):
-        repay_info = json.loads(case.test_cases_repay_info)
-        repay_period_start = repay_info['period_start']
-        repay_period_end = repay_info['period_end']
-        before_capital_tran_type = repay_info['before_capital_tran_type']
-        capital_notify = repay_info['capital_notify']
-        mock_name = repay_info['mock_name']
-        channel = repay_info['channel']
-        repay_type = repay_info['repay_type']
+        self.repay_info = json.loads(case.test_cases_repay_info)
+        repay_period_start = self.repay_info['period_start']
+        repay_period_end = self.repay_info['period_end']
+        before_capital_tran_type = self.repay_info['before_capital_tran_type']
+        capital_notify = self.repay_info['capital_notify']
+        mock_name = self.repay_info['mock_name']
+        withhold_channel = self.repay_info['withhold_channel']
+        repay_type = self.repay_info['repay_type']
         # 修改还款计划状态
         self.repay.set_asset_tran_status(repay_period_start, self.item_no)
         # 修改资方还款计划状态
         self.central.set_capital_tran_status(self.item_no, repay_period_start, before_capital_tran_type,
                                              capital_notify)
         # 还款准备-mock
-        self.prepare_mock(channel)
+        self.prepare_mock(withhold_channel)
         # 还款准备-kv
         self.prepare_kv(case, mock_name)
         # 发起代扣并执行成功

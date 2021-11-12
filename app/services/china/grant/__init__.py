@@ -27,6 +27,8 @@ CHANNEL_SOURCE_TYPE_DICT = {
   "longjiang_daqin": [APR_RONGDAN, IRR_RONGDAN_QUANYI],
   "mozhi_beiyin_zhongyi": [APR_RONGDAN],
   "zhongke_lanzhou": [APR_RONGDAN, IRR_RONGDAN_QUANYI],
+  # "zhongke_hegang": [IRR_NO, IRR_QUANYI],
+  "zhongke_hegang": [APR_RONGDAN, IRR_RONGDAN_QUANYI],
   "shilong_siping": [APR_RONGDAN, IRR_RONGDAN_QUANYI],
   "lanzhou_haoyue": [APR_RONGDAN, IRR_RONGDAN_QUANYI],
   "lanzhou_dingsheng_zkbc2": [APR_RONGDAN, IRR_RONGDAN_QUANYI],

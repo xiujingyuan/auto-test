@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import desc, or_
 
 from app.common.easy_mock_util import EasyMock
-from app.services import BaseService
+from app.services import BaseService, wait_timeout
 from app.common.http_util import Http
 import json
 
@@ -26,17 +26,30 @@ class ChinaBizCentralService(BaseService):
         self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
         self.gate_str = 'gate.client.serviceUrl'
 
+    def get_capital_principal(self, item_no, period):
+        capital_principal = self.db_session.query(CapitalTransaction.capital_transaction_asset_item_no == item_no,
+                                                  CapitalTransaction.capital_transaction_period == period,
+                                                  CapitalTransaction.capital_transaction_type == 'principal').first()
+        return capital_principal
+
     def update_service_url(self, mock_name):
         config_name = 'biz-central-{0}.properties'.format(self.env)
         system_config = self.nacos.get_config(config_name, group='SYSTEM')['content']
         easy_mock = EasyMock(mock_name)
         mock_url = '{0}={1}'.format(self.gate_str, easy_mock.get_mock_base_url())
         system_config = system_config.replace(self.gate_str, "#{0}".format(self.gate_str))
-        system_config += mock_url
-        self.nacos.update_config(config_name, system_config)
+        system_config += "\n{0}".format(mock_url)
+        self.nacos.update_config(config_name, system_config, group='SYSTEM', types='properties')
 
     def get_kv(self, channel):
         return json.loads(self.nacos.get_config('{0}_config'.format(channel))['content'])
+
+    @wait_timeout
+    def get_capital_notify(self, item_no):
+        capital_notify = self.db_session.query(CapitalNotify).filter(
+            CapitalNotify.capital_notify_asset_item_no == item_no,
+            CapitalNotify.capital_notify_status == 'open').all()
+        return capital_notify
 
     def get_system_url(self):
         system_config = self.nacos.get_config('biz-central-{0}.properties'.format(self.env), group='SYSTEM')
@@ -131,6 +144,12 @@ class ChinaBizCentralService(BaseService):
         self.db_session.commit()
         time.sleep(1)
         return Http.http_get(self.refresh_holiday_url)
+
+    def get_date_is_holiday(self, date_time):
+        get_date = self.db_session.query(Holiday).filter(Holiday.holiday_date == date_time).first()
+        if get_date:
+            return get_date.holiday_status
+        return None
 
     def asset_import(self, req_data):
         ret = Http.http_post(self.asset_import_url, req_data)
@@ -323,18 +342,19 @@ class ChinaBizCentralService(BaseService):
         ret = Http.http_get(url)
         return ret
 
-    def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}, timeout=60):
+    def run_central_task_by_order_no(self, order_no, task_type, status='open', timeout=60):
         begin = datetime.now()
         while True:
-            task = self.get_task_info(order_no, task_type, status=status)
+            task = self.get_central_task_info(order_no, task_type, status=status)
             if task:
                 break
-            if (datetime.now() - begin).seconds >= 60:
+            if (datetime.now() - begin).seconds >= timeout:
                 raise CaseException('not found the task with order no is {0}, type is {1} in 60s'.format(order_no,
                                                                                                          task_type))
-        return self.run_task_by_id(task.task_id, excepts=excepts)
+        return self.run_central_task_by_task_id(task.task_id)
 
-    def get_task_info(self, order_no, task_type, status='open'):
+    @wait_timeout
+    def get_central_task_info(self, order_no, task_type, status='open'):
         task = self.db_session.query(CentralTask).filter(CentralTask.task_order_no == order_no,
                                                          CentralTask.task_type == task_type,
                                                          CentralTask.task_status == status).first()
