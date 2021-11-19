@@ -72,11 +72,10 @@ class ChinaRepayService(BaseService):
         x_list = (x_source_type, x_right)
         for index, x_asset in enumerate((x_item_no, x_rights)):
             if x_asset:
-                x_ref_asset = item_no if index == 1 else ''
                 no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
                                                                               x_asset, x_list[index])
                 self.grant.asset_import_success(no_asset_info)
-                withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, x_ref_asset,
+                withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, item_no,
                                                                                 no_asset_info)
                 self.grant.asset_withdraw_success(withdraw_success_data_no)
                 self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
@@ -103,6 +102,7 @@ class ChinaRepayService(BaseService):
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
         print(self.get_date(is_str=True))
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
+        now = self.get_date(is_str=True)
         for index, item in enumerate(item_no_tuple):
             item_no_x = self.get_no_loan(item)
             item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
@@ -113,15 +113,15 @@ class ChinaRepayService(BaseService):
                 AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
             capital_asset = self.db_session.query(CapitalAsset).filter(
                 CapitalAsset.capital_asset_item_no == item).first()
-            print(self.get_date(is_str=True))
             capital_tran_list = self.db_session.query(CapitalTransaction).filter(
                 CapitalTransaction.capital_transaction_item_no == item).all()
-            print(self.get_date(is_str=True))
             self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                                      advance_month)
             print(self.get_date(is_str=True))
             self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
             print(self.get_date(is_str=True))
+        self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)
+        print(self.get_date(is_str=True))
         return "修改完成"
 
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
@@ -272,8 +272,22 @@ class ChinaRepayService(BaseService):
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
 
-    def run_xxl_job(self, job_type):
-        return self.xxljob.trigger_job(job_type)
+    def run_xxl_job(self, job_type, param=None):
+        return self.xxljob.trigger_job(job_type, executor_param=param)
+
+    def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
+        msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
+                                                    SendMsg.sendmsg_status == 'open',
+                                                    SendMsg.sendmsg_type == sendmsg_type).order_by(
+            desc(SendMsg.sendmsg_create_at)).first()
+        if msg:
+            return self.run_msg_by_id(msg.sendmsg_id)
+
+    def sync_plan_to_bc(self, item_no):
+        now = self.get_date(is_str=True)
+        self.run_xxl_job('syncAssetToBiz', param={'assetItemNo': [item_no]})
+        self.run_msg_by_order_no(item_no, 'asset_change_fix_status')
+        self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)
 
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
@@ -721,7 +735,7 @@ class ChinaRepayService(BaseService):
                     break
         return req_data, self.decrease_url, repay_ret
 
-    def del_row_data(self, item_no, del_id, del_type, max_create_at):
+    def del_row_data(self, item_no, del_id, del_type, max_create_at=None):
         if del_type.startswith('biz_'):
             return self.biz_central.delete_row_data(del_id, del_type[4:])
         else:

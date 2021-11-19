@@ -18,7 +18,7 @@ class QinnongCentralAutoTest(BizCentralTest):
         config_push_end = datetime.strptime(config_push_end, "%Y-%m-%d %H:%M:%S")
         if (plan_at - config_push_begin).days < 0:
             return config_push_begin
-        elif (plan_at - config_push_end).days < 0:
+        elif (plan_at - config_push_end).days <= 0:
             return plan_at
         else:
             return self.get_date(date=config_push_begin, days=1)
@@ -50,10 +50,11 @@ class QinnongCentralAutoTest(BizCentralTest):
         # 执行notify任务
         self.central.run_central_task_by_order_no(self.item_no, task_type='GenerateCapitalNotify')
         # check capital_notify 时间，类型，期次
-        check_capital_notify = case.test_cases_check_capital_notify
-        real_plan_at = self.get_real_plan_at(check_capital_notify['plan_at'], check_capital_notify['plan_period_start'])
+        check_capital_notify = json.loads(case.test_cases_check_capital_notify)
+        real_plan_at = self.get_real_plan_at(check_capital_notify['plan_at'], check_capital_notify['period_start'])
         real_plan_at = self.modify_plan_at(real_plan_at)
-        check_capital_notify['real_plan_at'] = real_plan_at
+        check_capital_notify['plan_at'] = real_plan_at.strftime("%Y-%m-%d %H:%M:%S")
+        check_capital_notify['asset_item_no'] = self.item_no
         capital_plan_at = self.check_capital_notify(check_capital_notify, self.item_no)
         # 捞取推送
         self.central.run_capital_push(capital_plan_at)

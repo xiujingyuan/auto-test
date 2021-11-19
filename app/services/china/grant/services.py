@@ -60,19 +60,23 @@ class ChinaGrantService(BaseService):
         total_amount = principal_amount + total_interest
         return total_amount
 
-    def cmdb_standard_calc_v5(self, principal_amount, period_count, interest_rate, repay_type):
+    def cmdb_standard_calc_v5(self, principal_amount, period_count, interest_rate, repay_type,
+                              interest_year_type="360per_year", month_clear_day="D+0", clear_day="D+0", sign_date=None):
         req = {
             "type": "CalculateStandardRepayPlan",
             "key": "calculate_${key}",
             "from_system": "bc",
             "data": {
-                "sign_date": self.get_date(is_str=True),
+                "sign_date": self.get_date(fmt="%Y-%m-%d", is_str=True),
                 "principal_amount": principal_amount,
                 "period_count": period_count,
                 "period_type": "month",
                 "period_term": 1,
                 "interest_rate": interest_rate,
-                "repay_type": repay_type
+                "repay_type": repay_type,
+                "interest_year_type": interest_year_type,
+                "month_clear_day": month_clear_day,
+                "clear_day": clear_day
             }
         }
         resp = Http.http_post(self.cmdb_url, req)

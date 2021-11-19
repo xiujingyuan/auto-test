@@ -45,7 +45,7 @@ class ChinaBizCentralService(BaseService):
         return json.loads(self.nacos.get_config('{0}_config'.format(channel))['content'])
 
     @wait_timeout
-    def get_capital_notify(self, item_no):
+    def get_capital_notify_info(self, item_no):
         capital_notify = self.db_session.query(CapitalNotify).filter(
             CapitalNotify.capital_notify_asset_item_no == item_no,
             CapitalNotify.capital_notify_status == 'open').all()
@@ -291,14 +291,14 @@ class ChinaBizCentralService(BaseService):
 
     def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
-        asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
+        # asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
         capital_asset = self.db_session.query(CapitalAsset).filter(
             CapitalAsset.capital_asset_item_no == item_no).first()
-        asset_tran_list = self.db_session.query(AssetTran).filter(
-            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
+        # asset_tran_list = self.db_session.query(AssetTran).filter(
+        #     AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
-        self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
+        self.change_asset_due_at([], [], capital_asset, capital_tran_list, advance_day,
                                  advance_month)
 
     def update_central_task_next_run_at_forward_by_task_id(self, task_id, re_run):
@@ -374,6 +374,17 @@ class ChinaBizCentralService(BaseService):
         self.update_central_msg_next_run_at_forward_by_msg_id(msg_id)
         ret = Http.http_get(self.central_msg_url.format(msg_id))
         return ret
+
+    @wait_timeout
+    def run_central_msg_by_order_no(self, order_no, sendmsg_type, max_create_at=None):
+        max_create_at = self.get_date(fmt='Y-%m-%d %H:00:00', is_str=True) if max_create_at is None else max_create_at
+        msg = self.db_session.query(CentralSendMsg).filter(CentralSendMsg.sendmsg_order_no == order_no,
+                                                           CentralSendMsg.sendmsg_status == 'open',
+                                                           CentralSendMsg.sendmsg_create_at >= max_create_at,
+                                                           CentralSendMsg.sendmsg_type == sendmsg_type).all()
+        for item in msg:
+            self.run_central_msg_by_msg_id(item.sendmsg_id)
+        return msg
 
     @staticmethod
     def get_item_no(msg):

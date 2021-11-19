@@ -137,7 +137,7 @@ class BaseService(object):
         real_now = self.get_date(months=advance_month, days=advance_day).date()
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
-        if capital_asset is not None:
+        if capital_asset is not None and capital_asset:
             capital_asset.capital_asset_granted_at = real_now
 
         for asset_tran in asset_tran_list:
@@ -184,7 +184,7 @@ class BaseService(object):
                     days=cal_advance_day)
             capital_tran.capital_transaction_expect_finished_at = expect_finished_at
         self.db_session.add_all(asset_list)
-        if capital_asset is not None:
+        if capital_asset is not None and capital_asset:
             self.db_session.add_all([capital_asset])
         if capital_tran_list:
             self.db_session.add_all(capital_tran_list)
@@ -217,10 +217,6 @@ class BaseService(object):
 
     def run_msg_by_id(self, msg_id):
         ret = Http.http_get(self.run_msg_id_url.format(msg_id))
-        if not isinstance(ret, dict):
-            raise ValueError(ret)
-        elif not ret["code"] == 0:
-            raise ValueError("run msg error, {0}".format(ret['message']))
         return ret
 
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):

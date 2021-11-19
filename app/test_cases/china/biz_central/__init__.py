@@ -1,7 +1,9 @@
 import json
 import math
 from datetime import datetime
+import pandas as pd
 
+from app.common.assert_util import Assert
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.repay.services import ChinaRepayService
 from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
@@ -25,7 +27,7 @@ class BizCentralTest(BaseAutoTest):
         direct = days / math.abs(days)
         days = math.abs(days)
         while days:
-            date = cls.get_date(date, days=direct, fmt='%Y-%m-%d 00:00:00')
+            date = cls.get_date(date, days=direct, fmt='%Y-%m-%d 00:00:00', is_str=True)
             if cls.is_work_day(date):
                 days -= 1
         return date
@@ -66,7 +68,10 @@ class BizCentralTest(BaseAutoTest):
     def get_real_plan_at(self, plan_at, plan_period_start):
         ret_plan_at = ''
         plan_at_list = plan_at.split("+")
-        plan_at_base, plan_at_type, plan_at_day = plan_at_list[0], plan_at_list[1], plan_at_list[2]
+        if len(plan_at_list) < 3:
+            plan_at_base, plan_at_type, plan_at_day = plan_at_list[0], plan_at_list[1], 0
+        else:
+            plan_at_base, plan_at_type, plan_at_day = plan_at_list[0], plan_at_list[1], int(plan_at_list[2])
         if plan_at_base.lower() == 'push':
             ret_plan_at = self.get_date()
         elif plan_at_base.lower() == 'user':
@@ -78,7 +83,7 @@ class BizCentralTest(BaseAutoTest):
         if plan_at_type.upper() == "T":
             ret_plan_at = self.add_work_days(ret_plan_at, plan_at_day)
         elif plan_at_type.upper() == 'D':
-            ret_plan_at = self.get_date(date=ret_plan_at, days=plan_at_day)
+            ret_plan_at = self.get_date(date=ret_plan_at, days=plan_at_day, is_str=True)
         return ret_plan_at
 
     def check_interface(self):
@@ -91,14 +96,17 @@ class BizCentralTest(BaseAutoTest):
 
     def check_capital_notify(self, check_capital_notify, item_no):
         # 检查生成新的推送
-        # {
-        #     "plan_at": "push+D+1",
-        #     "plan_type": "normal",
-        #     "plan_period_start": 1,
-        #     "plan_period_end": 1,
-        # }
-        capital_notify = self.central.get_capital_notify(item_no)
-        pass
+        capital_notify = self.central.get_capital_notify_info(item_no)
+        if len(capital_notify) > 1:
+            raise CaseException('only one record, but found two!')
+        check_key = list(check_capital_notify.keys())
+        df_actual_capital_notify = pd.DataFrame.from_records(data=[capital_notify[0].to_spec_dict], columns=check_key)
+        df_expect_capital_notify = pd.DataFrame.from_records([check_capital_notify])
+        pd_con = df_expect_capital_notify.compare(df_actual_capital_notify,
+                                                  align_axis=0)\
+            .rename(index={'self': '期望值', 'other': '实际值'}, level=-1)
+        if not pd_con.empty:
+            raise CaseException("the notify check fail with result is: \r\n{0} ".format(pd_con))
 
     def prepare_mock(self, withhold_channel):
         pass
@@ -133,6 +141,8 @@ class BizCentralTest(BaseAutoTest):
         self.prepare_mock(withhold_channel)
         # 还款准备-kv
         self.prepare_kv(case, mock_name)
+        # 调整还款计划日期
+        self.repay.change_asset(self.item_no, '', 0, -repay_period_start)
         # 发起代扣并执行成功
         resp = getattr(self.repay, repay_type)(item_no=self.item_no, period_start=repay_period_start,
                                                period_end=repay_period_end,
