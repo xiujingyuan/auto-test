@@ -40,7 +40,7 @@ def wait_timeout(func):
             if ret:
                 break
             elif (self.get_date() - begin).seconds >= 60:
-                raise CaseException('not found the record with {0}'.format(timeout))
+                raise CaseException('not found the record with {0}， with args is :{1}'.format(timeout, kwargs))
         return ret
     return wrapper
 

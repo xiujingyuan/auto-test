@@ -89,14 +89,13 @@ class EasyMock(object):
                        "Authorization": self.token}
 
     @check_login
-    @check_project_id
-    def get_api_list(self):
-        url = self.get_api_id_url.format(BASE_URL, self.project_id)
+    def get_api_list(self, project_id):
+        url = self.get_api_id_url.format(BASE_URL, project_id)
         resp = Http.http_get(url,  headers=self.header)
         return resp
 
     def get_api_info_by_api(self, api, method):
-        api_list = self.get_api_list()
+        api_list = self.get_api_list(self.project_id)
         api_info = {}
         for mock in api_list["data"]["mocks"]:
             if mock["url"] == api and (method is None or (method is not None and mock['method'] == method)):
@@ -143,7 +142,7 @@ class EasyMock(object):
         return resp
 
     def update_by_api_id(self, api_id, api, mode, method="post"):
-        api_list = self.get_api_list()
+        api_list = self.get_api_list(self.project_id)
         api_info = {}
         for mock in api_list["data"]["mocks"]:
             if mock["_id"] == api_id and mock['method'] == method:
@@ -222,12 +221,12 @@ class EasyMock(object):
     def copy_increment_project(self, source_project_name, to_project_name):
         self.project_name = source_project_name
         self.project_id = self.get_project_id(self.project_name)
-        source_api_list = self.get_api_list()
+        source_api_list = self.get_api_list(self.project_id)
         if not source_api_list:
             raise ValueError("the source project's api list is empty with name is :{0}".format(source_project_name))
         project_name = to_project_name
         to_project_id = self.get_project_id(project_name)
-        to_api_list = self.get_api_list()
+        to_api_list = self.get_api_list(to_project_id)
         to_api_url = tuple(map(lambda x: x['url'], to_api_list["data"]["mocks"]))
         for api in source_api_list["data"]["mocks"]:
             if api['url'] not in to_api_url:
@@ -248,7 +247,7 @@ class EasyMock(object):
         """
         self.project_name = source_project_name
         self.project_id = self.get_project_id(self.project_name)
-        api_list = self.get_api_list()
+        api_list = self.get_api_list(self.project_id)
         if not api_list:
             raise ValueError("the source project's api list is empty with name is :{0}".format(source_project_name))
         new_project_id = self.get_project_id(to_project_name, group=new_group)

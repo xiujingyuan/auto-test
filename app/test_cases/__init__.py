@@ -69,7 +69,7 @@ class BaseAutoTest(object):
     def set_case_success(self):
         self.run_case_log.run_case_log_case_run_finish_at = self.get_date()
         self.run_case_log.run_case_log_case_run_result = 'success'
-        db.session.add(self)
+        db.session.add(self.run_case_log)
         db.session.flush()
 
     def set_case_fail(self, fail_type, error_message):

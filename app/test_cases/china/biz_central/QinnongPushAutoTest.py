@@ -46,19 +46,25 @@ class QinnongCentralAutoTest(BizCentralTest):
         self.central.run_central_task_by_order_no(serial_no, task_type='WithholdResultImport', status='close')
         self.central.run_central_task_by_order_no(self.item_no, task_type='UserRepay')
         # 检查capital_tran
-        self.check_settlement()
+        self.check_settlement_repay(case)
         # 执行notify任务
-        self.central.run_central_task_by_order_no(self.item_no, task_type='GenerateCapitalNotify')
+        self.run_capital_notify_task()
         # check capital_notify 时间，类型，期次
-        check_capital_notify = json.loads(case.test_cases_check_capital_notify)
-        real_plan_at = self.get_real_plan_at(check_capital_notify['plan_at'], check_capital_notify['period_start'])
+        except_capital_notify = json.loads(case.test_cases_check_capital_notify)
+        real_plan_at = self.get_real_plan_at(except_capital_notify['plan_at'], except_capital_notify['period_start'])
         real_plan_at = self.modify_plan_at(real_plan_at)
-        check_capital_notify['plan_at'] = real_plan_at.strftime("%Y-%m-%d %H:%M:%S")
-        check_capital_notify['asset_item_no'] = self.item_no
-        capital_plan_at = self.check_capital_notify(check_capital_notify, self.item_no)
+        except_capital_notify['plan_at'] = real_plan_at.strftime("%Y-%m-%d %H:%M:00")
+        except_capital_notify['asset_item_no'] = self.item_no
+        self.check_capital_notify(except_capital_notify, self.item_no)
         # 捞取推送
-        self.central.run_capital_push(capital_plan_at)
+        self.run_capital_push(real_plan_at.strftime("%Y-%m-%d"))
         self.central.run_central_task_by_order_no(self.item_no, task_type='QinnongCapitalPush')
+        # 检查资方推送
+        self.check_interface()
+        # 检查settlement状态
+        self.check_settlement(case)
+        # 检查生成新的推送
+        self.check_capital_notify_exist()
 
     def run_advance_scene(self, case):
         """提前还款场景"""

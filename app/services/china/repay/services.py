@@ -11,7 +11,7 @@ from app.model.Model import AutoAsset
 from app.services import BaseService
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.grant.services import ChinaGrantService
-from app.services.china.repay import query_withhold
+from app.services.china.repay import query_withhold, modify_return
 from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
     WithholdRequest, WithholdDetail, CardBind
@@ -102,7 +102,6 @@ class ChinaRepayService(BaseService):
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
         print(self.get_date(is_str=True))
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
-        now = self.get_date(is_str=True)
         for index, item in enumerate(item_no_tuple):
             item_no_x = self.get_no_loan(item)
             item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
@@ -120,7 +119,7 @@ class ChinaRepayService(BaseService):
             print(self.get_date(is_str=True))
             self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
             print(self.get_date(is_str=True))
-        self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)
+        self.sync_plan_to_bc(item_no)
         print(self.get_date(is_str=True))
         return "修改完成"
 
@@ -150,8 +149,6 @@ class ChinaRepayService(BaseService):
             raise ValueError('period or item_no can not be none!')
         if status not in ('finish', 'nofinish'):
             raise ValueError('status error, only finish, nofinish!')
-        if period <= 1:
-            return
         item_no_x = self.get_no_loan(item_no)
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         if item_no_x:
@@ -454,40 +451,41 @@ class ChinaRepayService(BaseService):
                 withhold_order = list(
                     filter(lambda x: x.withhold_order_request_no in request_tuple, withhold_order_list))
             else:
-                withhold_order = list(filter(lambda x: x.withhold_order_request_no == max_request_no, withhold_order_list))
+                withhold_order = list(filter(lambda x: x.withhold_order_request_no == max_request_no,
+                                             withhold_order_list))
         request_no_tuple = tuple(map(lambda x: x.withhold_order_request_no, withhold_order))
         serial_no_tuple = tuple(map(lambda x: x.withhold_order_serial_no, withhold_order))
         id_num_encrypt_tuple = (self.get_repay_card_by_item_no(item_no)['card_acc_id_num_encrypt'], )
         withhold_order = list(map(lambda x: x.to_spec_dict, withhold_order))
         return request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order
 
+    @modify_return
     def get_withhold(self, withhold_serial_no, max_create_at):
         withhold_list = self.db_session.query(Withhold).filter(
             Withhold.withhold_serial_no.in_(withhold_serial_no),
             Withhold.withhold_create_at >= max_create_at).all()
-        withhold_list = list(map(lambda x: x.to_spec_dict, withhold_list))
-        return {'withhold': withhold_list}
+        return withhold_list
 
+    @modify_return
     def get_withhold_request(self, withhold_request_no, max_create_at):
         withhold_request_list = self.db_session.query(WithholdRequest).filter(
             WithholdRequest.withhold_request_no.in_(withhold_request_no),
             WithholdRequest.withhold_request_create_at >= max_create_at).all()
-        withhold_request_list = list(map(lambda x: x.to_spec_dict, withhold_request_list))
-        return {'withhold_request': withhold_request_list}
+        return withhold_request_list
 
+    @modify_return
     def get_card_bind(self, withhold_serial_no, max_create_at):
         card_bind_list = self.db_session.query(CardBind).filter(
             CardBind.card_bind_serial_no.in_(withhold_serial_no),
             CardBind.card_bind_create_at >= max_create_at).all()
-        card_bind_list = list(map(lambda x: x.to_spec_dict, card_bind_list))
-        return {'card_bind': card_bind_list}
+        return card_bind_list
 
+    @modify_return
     def get_withhold_detail(self, withhold_serial_no, max_create_at):
         withhold_detail_list = self.db_session.query(WithholdDetail).filter(
             WithholdDetail.withhold_detail_serial_no.in_(withhold_serial_no),
             WithholdDetail.withhold_detail_create_at >= max_create_at).all()
-        withhold_detail_list = list(map(lambda x: x.to_spec_dict, withhold_detail_list))
-        return {'withhold_detail': withhold_detail_list}
+        return withhold_detail_list
 
     def get_withhold_info(self, item_no, max_create_at, request_no=None, req_key=None):
         """
@@ -563,13 +561,13 @@ class ChinaRepayService(BaseService):
         asset['item_x'] = self.get_no_loan(item_no)
         return {'asset': [asset]}
 
+    @modify_return
     def get_asset_tran(self, item_no):
         item_no_x = self.get_no_loan(item_no)
         item_tuple = (item_no, item_no_x) if item_no_x else (item_no,)
         asset_tran_list = self.db_session.query(AssetTran).filter(
             AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
-        asset_tran_list = list(map(lambda x: x.to_spec_dict, asset_tran_list))
-        return {'asset_tran': asset_tran_list}
+        return asset_tran_list
 
     def get_asset_info(self, item_no):
         asset_info = {}
@@ -624,7 +622,10 @@ class ChinaRepayService(BaseService):
         self.grant.add_msg(grant_msg)
         self.grant.asset_withdraw_success(json.loads(grant_msg['sendmsg_content'])['body'])
         self.biz_central.run_central_task_by_task_id(task_id)
-        return self.add_asset(item_no, source_type)
+        asset = self.check_item_exist(item_no)
+        if asset.asset_loan_channel != 'noloan':
+            return self.add_asset(item_no, source_type)
+        return {}
 
     def get_withdraw_success_info(self, item_no, get_type='body'):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == item_no,

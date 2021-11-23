@@ -8,8 +8,10 @@ from app.services import BaseService, wait_timeout
 from app.common.http_util import Http
 import json
 
+from app.services.china.biz_central import biz_modify_return
 from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
+from app.services.china.repay import modify_return
 from app.test_cases import CaseException
 
 
@@ -49,6 +51,12 @@ class ChinaBizCentralService(BaseService):
         capital_notify = self.db_session.query(CapitalNotify).filter(
             CapitalNotify.capital_notify_asset_item_no == item_no,
             CapitalNotify.capital_notify_status == 'open').all()
+        return capital_notify
+
+    @wait_timeout
+    def get_capital_notify_info_by_id(self, capital_notify_id):
+        capital_notify = self.db_session.query(CapitalNotify).filter(
+            CapitalNotify.capital_notify_id == capital_notify_id).first()
         return capital_notify
 
     def get_system_url(self):
@@ -248,31 +256,41 @@ class ChinaBizCentralService(BaseService):
         self.db_session.add(compensate)
         self.db_session.commit()
 
+    @biz_modify_return
     def get_capital(self, item_no):
         capital_asset = self.db_session.query(CapitalAsset).filter(
-            CapitalAsset.capital_asset_item_no == item_no).first().to_spec_dict
-        return {"biz_capital_asset": [capital_asset]}
+            CapitalAsset.capital_asset_item_no == item_no).first()
+        return capital_asset
 
+    @biz_modify_return
     def get_capital_tran(self, item_no):
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
-        capital_tran_list = list(map(lambda x: x.to_spec_dict, capital_tran_list))
-        return {"biz_capital_tran": capital_tran_list}
+        return capital_tran_list
 
+    def get_capital_tran_info(self, item_no, period_start, operation_type, status, fee_type):
+        capital_tran = self.db_session.query(CapitalTransaction).filter(
+            CapitalTransaction.capital_transaction_asset_item_no == item_no,
+            CapitalTransaction.capital_transaction_operation_type == operation_type,
+            CapitalTransaction.capital_transaction_status == status,
+            CapitalTransaction.capital_transaction_period >= period_start,
+            CapitalTransaction.capital_transaction_type.in_(fee_type)).all()
+        return capital_tran
+
+    @biz_modify_return
     def get_capital_notify(self, item_no, max_create_at):
         capital_notify_list = self.db_session.query(CapitalNotify).filter(
             CapitalNotify.capital_notify_asset_item_no == item_no,
             CapitalNotify.capital_notify_create_at >= max_create_at)\
             .order_by(desc(CapitalNotify.capital_notify_id)).all()
-        capital_notify_list = list(map(lambda x: x.to_spec_dict, capital_notify_list))
-        return {"biz_capital_notify": capital_notify_list}
+        return capital_notify_list
 
+    @biz_modify_return
     def get_capital_detail(self, channel):
         capital_detail_list = self.db_session.query(CapitalSettlementDetail).filter(
             CapitalSettlementDetail.channel == channel) \
             .order_by(desc(CapitalSettlementDetail.id)).all()
-        capital_detail_list = list(map(lambda x: x.to_spec_dict, capital_detail_list))
-        return {"biz_capital_settlement_detail": capital_detail_list}
+        return capital_detail_list
 
     def sync_withhold_to_history(self, item_no):
         withhold_results = self.db_session.query(WithholdResult).filter(
