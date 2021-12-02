@@ -4,6 +4,6 @@
 #COPY . /data/www/wwwroot/
 
 FROM auto-python
-COPY init.sh /data/www/init.sh
-CMD [ "sh", "/data/www/init.sh" ]
+COPY init.sh /data/www/
+RUN mkdir /data/www/wwwroot
 

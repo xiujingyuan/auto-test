@@ -62,3 +62,7 @@
 #中科兰州
 
 # docker run -p 6868:80 -d --name auto-test  auto-python
+
+#  docker build -t auto-python .
+
+# docker run -it auto-python /bin/bash
