@@ -13,7 +13,7 @@ import gevent.monkey
 
 gevent.monkey.patch_all()
 
-bind = '127.0.0.1:8233'
+bind = '127.0.0.1:6868'
 
 workers = multiprocessing.cpu_count() * 2 + 1
 

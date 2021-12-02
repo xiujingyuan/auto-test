@@ -16,7 +16,7 @@ WEISHEMMA_TRAIL = '''{
 
 class RepayEasyMock(EasyMock):
     def __init__(self, check_req, return_req):
-        super(RepayEasyMock, self).__init__('rbiz_auto_test', check_req, return_req)
+        super(RepayEasyMock, self).__init__('rbiz_manual_test', check_req, return_req)
 
     def update_trail_status(self, channel, value):
         super(RepayEasyMock, self).update('/weishenma_daxinganling/pre-loan/repayTrial', '', value)

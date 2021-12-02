@@ -22,10 +22,10 @@ def check_login(func):
 
 
 def check_project_id(func):
-    def wrapper(self, **kwargs):
+    def wrapper(self, *args, **kwargs):
         if self.project_id is None:
             self.project_id = self.get_project_id(self.project_name)
-        ret = func(self, **kwargs)
+        ret = func(self, *args, **kwargs)
         return ret
     return wrapper
 
@@ -94,6 +94,7 @@ class EasyMock(object):
         resp = Http.http_get(url,  headers=self.header)
         return resp
 
+    @check_project_id
     def get_api_info_by_api(self, api, method):
         api_list = self.get_api_list(self.project_id)
         api_info = {}

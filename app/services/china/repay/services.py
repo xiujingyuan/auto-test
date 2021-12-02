@@ -80,7 +80,7 @@ class ChinaRepayService(BaseService):
                 self.grant.asset_withdraw_success(withdraw_success_data_no)
                 self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
         self.add_asset(item_no, 0)
-        return item_no
+        return item_no, x_item_no
 
     def send_msg(self, serial_no):
         req_data = {
@@ -254,11 +254,11 @@ class ChinaRepayService(BaseService):
     def get_biz_capital_tran(self, item_no):
         return self.biz_central.get_capital_tran(item_no)
 
-    def get_biz_capital_notify(self, item_no, max_create_at):
-        return self.biz_central.get_capital_notify(item_no, max_create_at)
+    def get_biz_capital_notify(self, item_no):
+        return self.biz_central.get_capital_notify(item_no)
 
     def get_biz_capital_detail(self, item_no):
-        return self.biz_central.get_capital_detail(item_no)
+        return self.biz_central.get_capital_settlement_detail(item_no)
 
     def get_biz_task(self, task_order_no, channel, max_create_at):
         return self.biz_central.get_task(task_order_no, max_create_at=max_create_at, channel=channel)
@@ -370,6 +370,7 @@ class ChinaRepayService(BaseService):
             card_info = self.get_active_card_info('B2021102108114492056', 1)
         else:
             card_info = self.get_active_card_info(item_no, repay_card)
+
         key = self.__create_req_key__(item_no, prefix='Active')
         active_request_data = {
             "type": "PaydayloanUserActiveRepay",
@@ -385,6 +386,14 @@ class ChinaRepayService(BaseService):
         }
         for four_element_key, four_element_value in self.__get_four_element_key__(repay_card).items():
             active_request_data['data'][four_element_key] = card_info[four_element_value]
+            # "card_num_encrypt": "enc_03_3697830581502478336_772",
+            # "id_num_encrypt": "enc_02_3697732689936779264_273",
+            # "username_encrypt": "enc_04_3622670_423",
+            # "mobile_encrypt": "enc_01_3697732693258668032_713",
+        active_request_data['data']['card_num_encrypt'] = 'enc_03_3697830581502478336_772'
+        active_request_data['data']['card_user_id_encrypt'] = 'enc_02_3697732689936779264_273'
+        active_request_data['data']['card_user_name_encrypt'] = 'enc_04_3622670_423'
+        active_request_data['data']['card_user_phone_encrypt'] = 'enc_01_3697732693258668032_713'
         amount_info_list = [(item_no, amount, item_no_priority, None, None),
                             (item_no_rights, rights_amount, item_no_rights_priority, None, None),
                             (item_no_x, x_amount, item_no_x_priority, coupon_num, coupon_amount)]
@@ -412,13 +421,12 @@ class ChinaRepayService(BaseService):
             return card_info
         elif repay_card == 0:
             # 0-还款人身份证相同银行卡不同;
-            #card_info['card_acc_num_encrypt'] = random_card['bank_code_encrypt']
-            card_info['card_acc_num_encrypt'] = 'enc_03_3645332643065104384_199'
-            return card_info
+            card_info['card_acc_num_encrypt'] = random_card['bank_code_encrypt']
+            # card_info['card_acc_num_encrypt'] = 'enc_03_2953903355913046016_400'
             return card_info
         elif repay_card == 2:
             # 2-还款人身份证相同银行卡都不同;
-            random_card['bank_code_encrypt'] = 'enc_03_3649718305943980032_644'
+            random_card['bank_code_encrypt'] = 'enc_03_2953903355913046016_400'
             return random_card
 
     def get_repay_card_by_item_no(self, item_no):
@@ -604,7 +612,7 @@ class ChinaRepayService(BaseService):
         elif refresh_type == 'biz_capital_settlement_detail':
             ret = self.get_biz_capital_detail(channel)
         elif refresh_type == 'biz_capital_notify':
-            ret = self.get_biz_capital_notify(item_no, max_create_at)
+            ret = self.get_biz_capital_notify(item_no)
         elif refresh_type in ('auth_lock', 'detail_lock'):
             ret = self.get_lock_info(item_no)
         ret.update(asset)
@@ -738,13 +746,28 @@ class ChinaRepayService(BaseService):
 
     def del_row_data(self, item_no, del_id, del_type, max_create_at=None):
         if del_type.startswith('biz_'):
-            return self.biz_central.delete_row_data(del_id, del_type[4:])
+            self.biz_central.delete_row_data(del_id, del_type[4:])
         else:
             obj = eval(del_type.title().replace("_", ""))
             self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(del_type)) == del_id).delete()
             self.db_session.flush()
             self.db_session.commit()
         return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=del_type)
+
+    def modify_row_data(self, item_no, modify_id, modify_type, modify_data, max_create_at=None):
+        if modify_type.startswith('biz_'):
+            self.biz_central.modify_row_data(modify_id, modify_type[4:], modify_data)
+        else:
+            obj = eval(modify_type.title().replace("_", ""))
+            record = self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(modify_type)) == modify_id).first()
+            for item_key, item_value in modify_data.items():
+                if item_key == 'id':
+                    continue
+                setattr(record, '_'.join((modify_type, item_key)), item_value)
+            self.db_session.add(record)
+            self.db_session.flush()
+            self.db_session.commit()
+        return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=modify_type)
 
     def offline_recharge_repay(self, item_no, amount, serial_no, period):
         req_data, offline_recharge_url, recharge_ret = self.offline_recharge(item_no, amount, serial_no)

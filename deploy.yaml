@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    name: test-platform
+  namespace: biz
+  name: test-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-platform
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: test-platform
+        qcloud-app: test-platform
+        log-type: java
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: 10.1.5.10
+      imagePullSecrets:
+        - name: kuainiujinke-registry
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: test-platform
+          image: registry.kuainiujinke.com/cd_biz/test-platform:v1
+          imagePullPolicy: Always
+          env:
+            - name: aliyun.logs.test-platform
+              value: /data/logs/grantTEST_VERSION/*.log
+            - name: aliyun.logs.test-platform.format
+              value: json
+          volumeMounts:
+          - mountPath: "/data/logs"
+            name: logs
+          args: ["sh", "/data/www/init.sh"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 2000m
+              memory: 1500Mi
+      volumes:
+      - name: logs
+        hostPath:
+          path: /data/logs
+          type: Directory

@@ -60,3 +60,5 @@
 #支持的资金方：
 #龙江大秦
 #中科兰州
+
+# docker run -p 6868:80 -d --name auto-test  auto-python

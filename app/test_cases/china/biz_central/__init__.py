@@ -17,11 +17,13 @@ class BizCentralTest(BaseAutoTest):
         self.central = ChinaBizCentralService(env, environment)
         self.repay = ChinaRepayService(env, environment)
         self.repay_info = None
+        self.x_item_no = None
         self.capital_notify_id = None
         self.serial_no = None
         self.channel = 'qinnong'
         self.repay_period_start = None
         self.repay_period_end = None
+        self.serial_no_asset = None
 
     @classmethod
     def add_work_days(cls, date, days):
@@ -51,7 +53,7 @@ class BizCentralTest(BaseAutoTest):
 
     def prepare_asset(self, case):
         # 放款新资产
-        self.item_no = self.repay.auto_loan(**(json.loads(case.test_cases_asset_info)))
+        self.item_no, self.x_item_no = self.repay.auto_loan(**(json.loads(case.test_cases_asset_info)))
         # 存入本次使用资产
         self.run_case_log.run_case_log_case_run_item_no = self.item_no
 
@@ -109,29 +111,29 @@ class BizCentralTest(BaseAutoTest):
         # 检查资方推送
         pass
 
-    def check_settlement_repay(self):
+    def check_settlement_repay(self, except_capital_tran, serial_no):
         """
         落库时检查capital_tran
-        :param case:
+        :param except_capital_tran:
+        :param serial_no:
         :return:
         """
-        amount = self.get_real_amount('withhold')
-        except_capital_tran = []
-        withhold = self.repay.get_withhold(self.serial_no,
-                                           max_create_at=self.get_date(fmt='%Y-%m-%d', is_str=True))
-        repay_time = withhold['finish_at']
-        channel = withhold['channel']
+        withhold = self.repay.get_withhold(serial_no, record_type='obj')
+        repay_time = withhold.withhold_finish_at
+        channel = withhold.withhold_channel
         channel = channel if channel == self.channel else 'qsq'
-        for fee_type, fee_amount in amount.items():
-            except_capital_tran.append(dict(
-                zip(('amount', 'repaid_amount', 'user_repay_time', 'withhold_result_channel'),
-                    (fee_amount, fee_amount, repay_time, channel))))
-
+        amount_key = []
+        for except_item in except_capital_tran:
+            except_item['withhold_result_channel'] = channel
+            except_item['user_repay_time'] = repay_time
+            except_item['repaid_amount'] = except_item['total_repaid_amount']
+            except_item['amount'] = except_item['total_repaid_amount']
+            amount_key.append(except_item['tran_type'])
         actual_capital_tran = self.central.get_capital_tran_info(self.item_no,
                                                                  self.repay_period_start,
                                                                  'grant',
                                                                  'unfinished',
-                                                                 tuple(amount.keys()))
+                                                                 amount_key)
 
     def check_settlement(self, case):
         # 推送后检查settlement状态
@@ -261,10 +263,16 @@ class BizCentralTest(BaseAutoTest):
                                                period_end=self.repay_period_end,
                                                status=2)
         # 存入本次使用的代扣记录
-        order_no_list = []
+        order_no_list, serial_no_asset_list = [], []
         for withhold in resp['response']['data']['project_list']:
+            project_num = withhold['project_num']
             order_no_list.append(withhold['order_no'])
+            if project_num not in serial_no_asset_list:
+                serial_no_asset_list.append({project_num: withhold['order_no']})
+            else:
+                serial_no_asset_list[project_num] = ','.join((serial_no_asset_list[project_num], withhold['order_no']))
         self.serial_no = tuple(order_no_list)
+        self.serial_no_asset = serial_no_asset_list
         self.run_case_log.run_case_log_case_run_withhold_no = json.dumps(order_no_list)
 
     def run_interface_scene(self, case):

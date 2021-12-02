@@ -1,6 +1,5 @@
 import time
 from datetime import datetime
-
 from sqlalchemy import desc, or_
 
 from app.common.easy_mock_util import EasyMock
@@ -11,7 +10,6 @@ import json
 from app.services.china.biz_central import biz_modify_return
 from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
-from app.services.china.repay import modify_return
 from app.test_cases import CaseException
 
 
@@ -113,6 +111,25 @@ class ChinaBizCentralService(BaseService):
     def run_guarantor_push(self, plan_at):
         self.run_xxl_job('guarantorPushJob', plan_at)
 
+    def modify_row_data(self, modify_id, modify_type, modify_data):
+        obj = eval(modify_type.title().replace("_", ""))
+        if modify_type == 'capital_settlement_detail':
+            except_id = 'id'
+        elif modify_type == 'central_task':
+            except_id = 'task_id'
+        else:
+            except_id = '{0}_id'.format(modify_type)
+        record = self.db_session.query(obj).filter(getattr(obj, except_id) == modify_id).first()
+        for item_key, item_value in modify_data.items():
+            if item_key == 'id':
+                continue
+            attr_name = item_key if modify_type in ('central_task', 'capital_settlement_detail') \
+                else '_'.join((modify_type, item_key))
+            setattr(record, attr_name, item_value)
+        self.db_session.add(record)
+        self.db_session.flush()
+        self.db_session.commit()
+
     def delete_row_data(self, del_id, del_type):
         obj = eval(del_type.title().replace("_", ""))
         except_id = 'id' if del_type == 'capital_settlement_detail' else '{0}_id'.format(del_type)
@@ -136,7 +153,7 @@ class ChinaBizCentralService(BaseService):
 
     def run_xxl_job(self, job_type, run_date):
         param = self.xxljob.get_job_info(job_type)[0]['executorParam']
-        param = json.dumps(json.loads(param))
+        param = json.dumps(json.loads(param)) if param else param
         url = self.run_job_by_date_url.format(job_type, param, run_date)
         return Http.http_get(url)
 
@@ -181,23 +198,29 @@ class ChinaBizCentralService(BaseService):
         ret.update(msg_dict)
         return ret
 
+    @biz_modify_return
     def get_task(self, task_order_no, channel=None, max_create_at=None):
+        now = self.get_date()
+        query_task_order = []
+        for index in range(1, 8):
+            index_now = self.get_date(fmt='%Y-%m-%d', date=now, is_str=True, days=-index)
+            query_task_order.append('settle_detail_{0}_{1} 00:00:00'.format(channel, index_now))
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
-        task_order_no = tuple(list(task_order_no) + [channel] + ['settle_detail_{0}_{1} 00:00:00'.format(channel, self.get_date(fmt='%Y-%m-%d', is_str=True))]) if channel is not None else task_order_no
+        task_order_no = tuple(list(task_order_no) + [channel] + query_task_order) \
+            if channel is not None else task_order_no
         task_list = self.db_session.query(CentralTask).filter(CentralTask.task_order_no.in_(task_order_no),
                                                               CentralTask.task_create_at >= max_create_at)\
             .order_by(desc(CentralTask.task_id)).all()
-        task_list = list(map(lambda x: x.to_spec_dict, task_list))
-        return {'biz_task': task_list}
+        return task_list
 
+    @biz_modify_return
     def get_msg(self, item_no, max_create_at=None):
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
         msg_list = self.db_session.query(CentralSendMsg). \
             filter(CentralSendMsg.sendmsg_order_no.like('{0}%'.format(item_no)),
                    CentralSendMsg.sendmsg_create_at >= max_create_at) \
             .order_by(desc(CentralSendMsg.sendmsg_id)).all()
-        msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
-        return {'biz_msg': msg_list}
+        return msg_list
 
     def get_capital_info(self, item_no, channel):
         ret = {}
@@ -278,15 +301,14 @@ class ChinaBizCentralService(BaseService):
         return capital_tran
 
     @biz_modify_return
-    def get_capital_notify(self, item_no, max_create_at):
+    def get_capital_notify(self, item_no):
         capital_notify_list = self.db_session.query(CapitalNotify).filter(
-            CapitalNotify.capital_notify_asset_item_no == item_no,
-            CapitalNotify.capital_notify_create_at >= max_create_at)\
+            CapitalNotify.capital_notify_asset_item_no == item_no)\
             .order_by(desc(CapitalNotify.capital_notify_id)).all()
         return capital_notify_list
 
     @biz_modify_return
-    def get_capital_detail(self, channel):
+    def get_capital_settlement_detail(self, channel):
         capital_detail_list = self.db_session.query(CapitalSettlementDetail).filter(
             CapitalSettlementDetail.channel == channel) \
             .order_by(desc(CapitalSettlementDetail.id)).all()

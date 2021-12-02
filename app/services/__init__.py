@@ -277,13 +277,13 @@ class BaseService(object):
         return noise_data
 
     @classmethod
-    def get_bank_code(cls, bank_name="中国银行", bank_code_suffix=None):
+    def get_bank_code(cls, bank_name="工商银行", bank_code_suffix=None):
         bank_map = {"中国银行": "621394",
                     "工商银行": "621761",
                     "招商银行": "622598",
                     "建设银行": "552245",
                     "民生银行": "622618"}
-        bank_code_bin = bank_map[bank_name] if bank_name in bank_map else "621394"
+        bank_code_bin = bank_map[bank_name] if bank_name in bank_map else "621761"
         # 生成需要的银行卡并返回
         bank_code = None
         for _ in range(500):
@@ -326,7 +326,7 @@ class BaseService(object):
         return req['data'][0]['hash'] if req['code'] == 0 else req
 
     @classmethod
-    def get_four_element(cls, bank_name=None, bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
+    def get_four_element(cls, bank_name='工商银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
