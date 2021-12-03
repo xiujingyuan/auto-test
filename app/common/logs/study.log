@@ -7,3 +7,6 @@
  * Restarting with stat
  * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/gunicorn_config.py', reloading
  * Restarting with stat
+127.0.0.1 - - [03/Dec/2021 16:03:48] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 16:21:19] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 16:28:33] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -

@@ -2,14 +2,14 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    name: test-platform
+    name: auto-test
   namespace: biz
-  name: test-platform
+  name: auto-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: test-platform
+      app: auto-test
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -18,8 +18,8 @@ spec:
   template:
     metadata:
       labels:
-        app: test-platform
-        qcloud-app: test-platform
+        app: auto-test
+        qcloud-app: auto-test
         log-type: java
     spec:
       nodeSelector:
@@ -28,13 +28,13 @@ spec:
         - name: kuainiujinke-registry
       terminationGracePeriodSeconds: 45
       containers:
-        - name: test-platform
-          image: registry.kuainiujinke.com/cd_biz/test-platform:v1
+        - name: auto-test
+          image: registry.kuainiujinke.com/cd_biz/auto-test:v1
           imagePullPolicy: Always
           env:
-            - name: aliyun.logs.test-platform
+            - name: aliyun.logs.auto-test
               value: /data/logs/grantTEST_VERSION/*.log
-            - name: aliyun.logs.test-platform.format
+            - name: aliyun.logs.auto-test.format
               value: json
           volumeMounts:
           - mountPath: "/data/logs"
