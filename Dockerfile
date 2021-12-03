@@ -5,5 +5,5 @@
 
 FROM auto-python
 COPY init.sh /data/www/
-RUN mkdir /data/www/wwwroot
+RUN pip install supervisor
 

@@ -11,15 +11,15 @@ ls -al
 sleep 1
 
 echo "#########################拉取代码##########################"
-mkdir -p /data/www/wwwroot
+#mkdir -p /data/www/wwwroot
 cd /data/www/wwwroot
-git clone https://jc_mock:1LqUuzYMJXUS_io7Ab9q@git.kuainiujinke.com/cd-test/auto-test.git
-sleep 1
+#git clone https://jc_mock:1LqUuzYMJXUS_io7Ab9q@git.kuainiujinke.com/cd-test/auto-test.git
+#sleep 1
 
 echo "#########################修改一些配置##########################"
-cp -f /data/www/wwwroot/auto-test.conf /etc/supervisor/conf.d/auto_test.conf
-mkdir -p /data/www/wwwroot/logs/supervisor
-mkdir -p /data/www/wwwroot/logs/gunicon
+cp -f /data/www/wwwroot/auto-test/auto-test.conf /etc/supervisor/conf.d/auto_test.conf
+mkdir -p /data/www/wwwroot/auto-test/logs/supervisor
+mkdir -p /data/www/wwwroot/auto-test/logs/gunicon
 sleep 1
 
 echo "#########################启动web服务##########################"
@@ -29,5 +29,5 @@ ps -fe
 
 
 echo "#########################查看日志##########################"
-tail -F /data/www/wwwroot/logs/framework_test.log
+tail -F /data/www/wwwroot/auto-test/logs/framework_test.log
 
