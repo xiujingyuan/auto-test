@@ -31,10 +31,10 @@ debug = False
 
 proc_name = 'auto_test'
 
-pidfile = '/data/www/wwwroot/auto-test/gunicon/gunicorn.pid'
+pidfile = '/data/www/wwwroot/auto-test/logs/gunicon/gunicorn.pid'
 
-errorlog = '/data/www/wwwroot/auto-test/gunicon/gunicorn.log'
+errorlog = '/data/www/wwwroot/auto-test/logs/gunicon/gunicorn.log'
 
-logfile = '/data/www/wwwroot/auto-test/gunicon/info.log'
+logfile = '/data/www/wwwroot/auto-test/logs/gunicon/info.log'
 
-accesslog = '/data/www/wwwroot/auto-test/gunicon/access.log'
+accesslog = '/data/www/wwwroot/auto-test/logs/gunicon/access.log'
