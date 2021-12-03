@@ -29,12 +29,12 @@ worker_connections = 1000
 
 debug = False
 
-proc_name = 'gaea'
+proc_name = 'auto_test'
 
-pidfile = '/data1/auto-test/gunicon/logs/gunicorn.pid'
+pidfile = '/data1/auto-test/gunicon/gunicorn.pid'
 
-errorlog = '/data1/auto-test/gunicon/logs/gunicorn.log'
+errorlog = '/data1/auto-test/gunicon/gunicorn.log'
 
-logfile = '/data1/auto-test/gunicon/logs/info.log'
+logfile = '/data1/auto-test/gunicon/info.log'
 
-accesslog = '/data1/auto-test/gunicon/logs/access.log'
+accesslog = '/data1/auto-test/gunicon/access.log'

@@ -20,6 +20,7 @@ echo "#########################修改一些配置##########################"
 cp -f /data/www/wwwroot/auto-test/auto_test.conf /etc/supervisor/conf.d/auto_test.conf
 mkdir -p /data/www/wwwroot/auto-test/logs/supervisor
 mkdir -p /data/www/wwwroot/auto-test/logs/gunicon
+touch /data/www/wwwroot/auto-test/logs/supervisor/auto_test.log
 sleep 1
 
 echo "#########################启动web服务##########################"
