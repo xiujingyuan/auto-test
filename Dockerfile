@@ -5,7 +5,7 @@
 
 FROM auto-python
 #COPY init.sh /data/www/
-#RUN pip install supervisor
+RUN pip install gunicorn
 #COPY supervisord.conf /etc/supervisor/
-RUN mkdir -p /etc/supervisor/conf.d/
+#RUN mkdir -p /etc/supervisor/conf.d/
 #COPY supervisord.log /var/log/supervisor/
