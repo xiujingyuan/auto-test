@@ -159,3 +159,12 @@ rbiz_loan_tool_auto_import...env=3, channel_name=qinnong
 127.0.0.1 - - [03/Dec/2021 14:52:02] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
 127.0.0.1 - - [03/Dec/2021 14:52:06] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
 127.0.0.1 - - [03/Dec/2021 14:52:08] "POST /api/repay/repay_tools/get_asset_info HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:12:28] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:12:28] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:12:30] "POST /api/repay/repay_tools/get_asset_info HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:12:36] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:13:25] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:13:31] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:21:55] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:22:02] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [03/Dec/2021 15:30:31] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
