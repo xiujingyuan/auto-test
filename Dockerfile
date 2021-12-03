@@ -4,6 +4,7 @@
 #COPY . /data/www/wwwroot/
 
 FROM auto-python
-COPY init.sh /data/www/
-RUN pip install supervisor
+#COPY init.sh /data/www/
+#RUN pip install supervisor
+COPY supervisord.conf /etc/supervisor/
 

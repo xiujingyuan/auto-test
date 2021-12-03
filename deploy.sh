@@ -29,5 +29,5 @@ ps -fe
 
 
 echo "#########################查看日志##########################"
-tail -F /data/www/wwwroot/auto-test/logs/framework_test.log
+tail -F /data/www/wwwroot/auto-test/logs/info.log
 
