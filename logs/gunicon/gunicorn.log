@@ -1,0 +1,74 @@
+[2021-12-04 10:30:46 +0800] [23759] [INFO] Starting gunicorn 20.1.0
+[2021-12-04 10:30:46 +0800] [23759] [INFO] Listening at: http://127.0.0.1:6868 (23759)
+[2021-12-04 10:30:46 +0800] [23759] [INFO] Using worker: gevent
+[2021-12-04 10:30:46 +0800] [23765] [INFO] Booting worker with pid: 23765
+[2021-12-04 10:30:46 +0800] [23766] [INFO] Booting worker with pid: 23766
+[2021-12-04 10:30:46 +0800] [23767] [INFO] Booting worker with pid: 23767
+[2021-12-04 10:30:46 +0800] [23768] [INFO] Booting worker with pid: 23768
+[2021-12-04 10:30:46 +0800] [23769] [INFO] Booting worker with pid: 23769
+[2021-12-04 10:30:46 +0800] [23770] [INFO] Booting worker with pid: 23770
+[2021-12-04 10:30:46 +0800] [23771] [INFO] Booting worker with pid: 23771
+[2021-12-04 10:30:46 +0800] [23772] [INFO] Booting worker with pid: 23772
+[2021-12-04 10:30:46 +0800] [23773] [INFO] Booting worker with pid: 23773
+[2021-12-04 10:30:50 +0800] [23759] [INFO] Handling signal: int
+[2021-12-04 10:30:50 +0800] [23766] [INFO] Worker exiting (pid: 23766)
+[2021-12-04 10:30:50 +0800] [23769] [INFO] Worker exiting (pid: 23769)
+[2021-12-04 10:30:50 +0800] [23772] [INFO] Worker exiting (pid: 23772)
+[2021-12-04 10:30:50 +0800] [23770] [INFO] Worker exiting (pid: 23770)
+[2021-12-04 10:30:50 +0800] [23768] [INFO] Worker exiting (pid: 23768)
+[2021-12-04 10:30:50 +0800] [23765] [INFO] Worker exiting (pid: 23765)
+[2021-12-04 10:30:50 +0800] [23767] [INFO] Worker exiting (pid: 23767)
+[2021-12-04 10:30:50 +0800] [23773] [INFO] Worker exiting (pid: 23773)
+[2021-12-04 10:30:50 +0800] [23771] [INFO] Worker exiting (pid: 23771)
+[2021-12-04 10:30:52 +0800] [23759] [INFO] Shutting down: Master
+[2021-12-04 10:31:38 +0800] [23829] [INFO] Starting gunicorn 20.1.0
+[2021-12-04 10:31:38 +0800] [23829] [INFO] Listening at: http://127.0.0.1:6868 (23829)
+[2021-12-04 10:31:38 +0800] [23829] [INFO] Using worker: gevent
+[2021-12-04 10:31:38 +0800] [23837] [INFO] Booting worker with pid: 23837
+[2021-12-04 10:31:38 +0800] [23839] [INFO] Booting worker with pid: 23839
+[2021-12-04 10:31:38 +0800] [23840] [INFO] Booting worker with pid: 23840
+[2021-12-04 10:31:38 +0800] [23841] [INFO] Booting worker with pid: 23841
+[2021-12-04 10:31:38 +0800] [23842] [INFO] Booting worker with pid: 23842
+[2021-12-04 10:31:38 +0800] [23837] [INFO] Worker exiting (pid: 23837)
+[2021-12-04 10:31:38 +0800] [23840] [INFO] Worker exiting (pid: 23840)
+[2021-12-04 10:31:38 +0800] [23839] [INFO] Worker exiting (pid: 23839)
+[2021-12-04 10:31:39 +0800] [23841] [INFO] Worker exiting (pid: 23841)
+[2021-12-04 10:31:39 +0800] [23844] [INFO] Booting worker with pid: 23844
+[2021-12-04 10:31:39 +0800] [23845] [INFO] Booting worker with pid: 23845
+[2021-12-04 10:31:39 +0800] [23846] [INFO] Booting worker with pid: 23846
+[2021-12-04 10:31:39 +0800] [23847] [INFO] Booting worker with pid: 23847
+[2021-12-04 10:31:39 +0800] [23829] [INFO] Handling signal: int
+[2021-12-04 10:31:45 +0800] [23845] [INFO] Worker exiting (pid: 23845)
+[2021-12-04 10:31:45 +0800] [23846] [INFO] Worker exiting (pid: 23846)
+[2021-12-04 10:31:45 +0800] [23847] [INFO] Worker exiting (pid: 23847)
+[2021-12-04 10:31:45 +0800] [23844] [INFO] Worker exiting (pid: 23844)
+[2021-12-04 10:31:45 +0800] [23842] [INFO] Worker exiting (pid: 23842)
+[2021-12-04 10:31:45 +0800] [23829] [WARNING] Worker with pid 23847 was terminated due to signal 2
+[2021-12-04 10:31:45 +0800] [23829] [WARNING] Worker with pid 23846 was terminated due to signal 2
+[2021-12-04 10:31:45 +0800] [23829] [WARNING] Worker with pid 23842 was terminated due to signal 2
+[2021-12-04 10:31:45 +0800] [23829] [WARNING] Worker with pid 23845 was terminated due to signal 2
+[2021-12-04 10:31:45 +0800] [23829] [WARNING] Worker with pid 23844 was terminated due to signal 2
+[2021-12-04 10:31:45 +0800] [23829] [INFO] Shutting down: Master
+[2021-12-04 10:31:55 +0800] [23895] [INFO] Starting gunicorn 20.1.0
+[2021-12-04 10:31:55 +0800] [23895] [INFO] Listening at: http://127.0.0.1:6868 (23895)
+[2021-12-04 10:31:55 +0800] [23895] [INFO] Using worker: gevent
+[2021-12-04 10:31:55 +0800] [23908] [INFO] Booting worker with pid: 23908
+[2021-12-04 10:31:55 +0800] [23909] [INFO] Booting worker with pid: 23909
+[2021-12-04 10:31:55 +0800] [23911] [INFO] Booting worker with pid: 23911
+[2021-12-04 10:31:55 +0800] [23912] [INFO] Booting worker with pid: 23912
+[2021-12-04 10:31:55 +0800] [23913] [INFO] Booting worker with pid: 23913
+[2021-12-04 10:31:55 +0800] [23914] [INFO] Booting worker with pid: 23914
+[2021-12-04 10:31:55 +0800] [23915] [INFO] Booting worker with pid: 23915
+[2021-12-04 10:31:55 +0800] [23916] [INFO] Booting worker with pid: 23916
+[2021-12-04 10:31:55 +0800] [23917] [INFO] Booting worker with pid: 23917
+[2021-12-04 10:36:45 +0800] [23895] [INFO] Handling signal: int
+[2021-12-04 10:36:45 +0800] [23909] [INFO] Worker exiting (pid: 23909)
+[2021-12-04 10:36:45 +0800] [23916] [INFO] Worker exiting (pid: 23916)
+[2021-12-04 10:36:45 +0800] [23913] [INFO] Worker exiting (pid: 23913)
+[2021-12-04 10:36:45 +0800] [23908] [INFO] Worker exiting (pid: 23908)
+[2021-12-04 10:36:45 +0800] [23912] [INFO] Worker exiting (pid: 23912)
+[2021-12-04 10:36:45 +0800] [23914] [INFO] Worker exiting (pid: 23914)
+[2021-12-04 10:36:45 +0800] [23917] [INFO] Worker exiting (pid: 23917)
+[2021-12-04 10:36:45 +0800] [23911] [INFO] Worker exiting (pid: 23911)
+[2021-12-04 10:36:45 +0800] [23915] [INFO] Worker exiting (pid: 23915)
+[2021-12-04 10:36:48 +0800] [23895] [INFO] Shutting down: Master

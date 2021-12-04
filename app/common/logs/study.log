@@ -1,3 +1,10 @@
-127.0.0.1 - - [04/Dec/2021 09:33:14] "[35m[1mGET /api/backend/menu HTTP/1.1[0m" 500 -
-127.0.0.1 - - [04/Dec/2021 09:33:14] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
-127.0.0.1 - - [04/Dec/2021 09:33:14] "POST /api/repay/repay_tools/add_and_update_holiday HTTP/1.1" 200 -
+ * Restarting with stat
+ * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/resource/config.py', reloading
+ * Restarting with stat
+ * Restarting with stat
+ * Restarting with stat
+ * Restarting with stat
+ * Restarting with stat
+ * Restarting with stat
+ * Restarting with stat
+ * Restarting with stat
