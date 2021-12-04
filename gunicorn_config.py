@@ -10,6 +10,8 @@
 """
 import multiprocessing
 import gevent.monkey
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 gevent.monkey.patch_all()
 
@@ -31,10 +33,9 @@ debug = False
 
 proc_name = 'auto_test'
 
-pidfile = '/data/www/wwwroot/auto-test/logs/gunicon/gunicorn.pid'
+pidfile = os.path.join(basedir, 'logs/gunicon/gunicorn.pid')
+errorlog = os.path.join(basedir, 'logs/gunicon/gunicorn.log')
+logfile = os.path.join(basedir, 'logs/gunicon/info.log')
+accesslog = os.path.join(basedir, 'logs/gunicon/access.log')
 
-errorlog = '/data/www/wwwroot/auto-test/logs/gunicon/gunicorn.log'
 
-logfile = '/data/www/wwwroot/auto-test/logs/gunicon/info.log'
-
-accesslog = '/data/www/wwwroot/auto-test/logs/gunicon/access.log'
