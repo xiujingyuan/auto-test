@@ -619,13 +619,16 @@ class ChinaRepayService(BaseService):
         print(self.get_date(is_str=True))
         return ret
 
-    def copy_asset(self, item_no, asset_import, capital_import, withdraw_success, grant_msg, source_type):
+    def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg, source_type):
         is_run = True
         for index, task in enumerate((asset_import, capital_import, withdraw_success)):
             if index == 2:
                 is_run = False
             if task:
                 task_id = self.biz_central.add_central_task(task, is_run)
+
+        if capital_data:
+            self.grant.capital_asset_success(capital_data)
 
         self.grant.add_msg(grant_msg)
         self.grant.asset_withdraw_success(json.loads(grant_msg['sendmsg_content'])['body'])
@@ -644,9 +647,12 @@ class ChinaRepayService(BaseService):
         biz_task = self.biz_central.get_loan_asset_task(item_no)
         is_noloan = True if self.get_no_loan(item_no) else False
         grant_msg = self.grant.get_withdraw_success_info_from_db(item_no, get_type='msg')
+        capital_data = []
         if grant_msg is None:
             grant_msg = self.get_withdraw_success_info(item_no, get_type='msg')
-        return dict(zip(('biz_task', 'grant_msg', 'is_noloan'), (biz_task, grant_msg, is_noloan)))
+            capital_data = self.grant.get_capital_asset_data(item_no)
+        return dict(zip(('biz_task', 'grant_msg', 'is_noloan', 'capital_data'),
+                        (biz_task, grant_msg, is_noloan, capital_data)))
 
     def get_lock_info(self, item_no):
         item_no_x = self.get_no_loan(item_no)

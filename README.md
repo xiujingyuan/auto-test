@@ -61,8 +61,12 @@
 #龙江大秦
 #中科兰州
 
-# docker run -p 6868:80 -d --name auto-test  auto-python
+# docker run -p 6868:6868 -d --name auto-test  auto-python
 
 #  docker build -t auto-python .
 
 # docker run -it auto-python /bin/bash
+
+# docker exec -it auto-test /bin/bash
+
+# docker container start auto-test

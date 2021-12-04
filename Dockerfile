@@ -8,5 +8,6 @@ FROM auto-python
 # RUN pip install gunicorn
 #COPY supervisord.conf /etc/supervisor/
 #RUN mkdir -p /etc/supervisor/conf.d/
-RUN rm -rf /usr/local/lib/python3.7/site-packages/flask_script/__init__.py
-COPY __init__.py /usr/local/lib/python3.7/site-packages/flask_script/
+#RUN rm -rf /usr/local/lib/python3.7/site-packages/flask_script/__init__.py
+#COPY __init__.py /usr/local/lib/python3.7/site-packages/flask_script/
+CMD [ "sh", "/data/www/init.sh" ]

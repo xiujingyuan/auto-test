@@ -1,12 +1,3 @@
- * Restarting with stat
-127.0.0.1 - - [03/Dec/2021 15:48:29] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
- * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/gunicorn_config.py', reloading
- * Restarting with stat
-127.0.0.1 - - [03/Dec/2021 15:55:13] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
- * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/gunicorn_config.py', reloading
- * Restarting with stat
- * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/gunicorn_config.py', reloading
- * Restarting with stat
-127.0.0.1 - - [03/Dec/2021 16:03:48] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
-127.0.0.1 - - [03/Dec/2021 16:21:19] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
-127.0.0.1 - - [03/Dec/2021 16:28:33] "POST /api/repay/repay_tools/run_biz_task HTTP/1.1" 200 -
+127.0.0.1 - - [04/Dec/2021 09:33:14] "[35m[1mGET /api/backend/menu HTTP/1.1[0m" 500 -
+127.0.0.1 - - [04/Dec/2021 09:33:14] "POST /api/repay/repay_tools/get_auto_asset HTTP/1.1" 200 -
+127.0.0.1 - - [04/Dec/2021 09:33:14] "POST /api/repay/repay_tools/add_and_update_holiday HTTP/1.1" 200 -
