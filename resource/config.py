@@ -11,17 +11,18 @@ class AutoTestConfig:
     SSL_DISABLE = False
     DOMAIN = "http://127.0.0.1:6868"
     DB_IP = None
-    if os.environ['environment'] == 'test':
+    environment = os.environ.get("environment", 'dev')
+    if environment == 'test':
         DB_IP = '10.1.0.15'
         DEBUG = False
-    elif os.environ['environment'] == 'dev':
+    elif environment == 'dev':
         DB_IP = '127.0.0.1'
         DEBUG = True
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/auto-test?charset=utf8'
     SQLALCHEMY_DICT = {
-        'china': {"repay": f"mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/rbiz{0}",
-                  "grant": f"mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/gbiz{0}",
-                  "biz_central": f"mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/biz{0}"}
+        'china': {"repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/rbiz{0}",
+                  "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/gbiz{0}",
+                  "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}"}
     }
     # SQLALCHEMY设置配置
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False

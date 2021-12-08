@@ -63,8 +63,8 @@
 
 # docker run -p 6868:6868 -d --name auto-test  auto-python
 
-#  docker build -t auto-python .
-
+# docker build -t auto-python .
+# cp mystifying_archimedes:/etc/nginx/nginx.conf .
 # docker run -it auto-python /bin/bash
 
 # docker exec -it auto-test /bin/bash

@@ -25,6 +25,7 @@ conf/*.conf
 
 # 项目文件
 *.xml
+*.log
 
 # 忽略测试Controller文件
 controller/Test*

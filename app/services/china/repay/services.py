@@ -281,7 +281,7 @@ class ChinaRepayService(BaseService):
             return self.run_msg_by_id(msg.sendmsg_id)
 
     def sync_plan_to_bc(self, item_no):
-        now = self.get_date(is_str=True)
+        now = self.get_date(is_str=True, fmt='%Y-%m-%d')
         self.run_xxl_job('syncAssetToBiz', param={'assetItemNo': [item_no]})
         self.run_msg_by_order_no(item_no, 'asset_change_fix_status')
         self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)

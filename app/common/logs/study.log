@@ -1,148 +1,141 @@
- * Restarting with stat
- * Detected change in '/Users/kuainiu/PycharmProjects/auto-test/resource/config.py', reloading
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
- * Restarting with stat
-Exception on /api/backend/menu [GET]
-Traceback (most recent call last):
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/pymysql/connections.py", line 614, in connect
-    (self.host, self.port), self.connect_timeout, **kwargs
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/gevent/socket.py", line 101, in create_connection
-    sock.connect(sa)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/gevent/_socketcommon.py", line 613, in connect
-    self._wait(self._write_event)
-  File "src/gevent/_hub_primitives.py", line 317, in gevent._gevent_c_hub_primitives.wait_on_socket
-  File "src/gevent/_hub_primitives.py", line 322, in gevent._gevent_c_hub_primitives.wait_on_socket
-  File "src/gevent/_hub_primitives.py", line 313, in gevent._gevent_c_hub_primitives._primitive_wait
-  File "src/gevent/_hub_primitives.py", line 314, in gevent._gevent_c_hub_primitives._primitive_wait
-  File "src/gevent/_hub_primitives.py", line 46, in gevent._gevent_c_hub_primitives.WaitOperationsGreenlet.wait
-  File "src/gevent/_hub_primitives.py", line 46, in gevent._gevent_c_hub_primitives.WaitOperationsGreenlet.wait
-  File "src/gevent/_hub_primitives.py", line 55, in gevent._gevent_c_hub_primitives.WaitOperationsGreenlet.wait
-  File "src/gevent/_waiter.py", line 154, in gevent._gevent_c_waiter.Waiter.get
-  File "src/gevent/_greenlet_primitives.py", line 61, in gevent._gevent_c_greenlet_primitives.SwitchOutGreenletWithLoop.switch
-  File "src/gevent/_greenlet_primitives.py", line 61, in gevent._gevent_c_greenlet_primitives.SwitchOutGreenletWithLoop.switch
-  File "src/gevent/_greenlet_primitives.py", line 65, in gevent._gevent_c_greenlet_primitives.SwitchOutGreenletWithLoop.switch
-  File "src/gevent/_gevent_c_greenlet_primitives.pxd", line 35, in gevent._gevent_c_greenlet_primitives._greenlet_switch
-socket.timeout: timed out
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 3211, in _wrap_pool_connect
-    return fn()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 307, in connect
-    return _ConnectionFairy._checkout(self)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 767, in _checkout
-    fairy = _ConnectionRecord.checkout(pool)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 425, in checkout
-    rec = pool._do_get()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/impl.py", line 146, in _do_get
-    self._dec_overflow()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/langhelpers.py", line 72, in __exit__
-    with_traceback=exc_tb,
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/compat.py", line 207, in raise_
-    raise exception
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/impl.py", line 143, in _do_get
-    return self._create_connection()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 253, in _create_connection
-    return _ConnectionRecord(self)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 368, in __init__
-    self.__connect()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 611, in __connect
-    pool.logger.debug("Error on connect(): %s", e)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/langhelpers.py", line 72, in __exit__
-    with_traceback=exc_tb,
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/compat.py", line 207, in raise_
-    raise exception
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 605, in __connect
-    connection = pool._invoke_creator(self)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/create.py", line 578, in connect
-    return dialect.connect(*cargs, **cparams)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/default.py", line 584, in connect
-    return self.dbapi.connect(*cargs, **cparams)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/pymysql/connections.py", line 353, in __init__
-    self.connect()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/pymysql/connections.py", line 664, in connect
-    raise exc
-pymysql.err.OperationalError: (2003, "Can't connect to MySQL server on '10.1.0.15' (timed out)")
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/flask/app.py", line 2070, in wsgi_app
-    response = self.full_dispatch_request()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/flask/app.py", line 1515, in full_dispatch_request
-    rv = self.handle_user_exception(e)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/flask/app.py", line 1513, in full_dispatch_request
-    rv = self.dispatch_request()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/flask/app.py", line 1499, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**req.view_args)
-  File "/Users/kuainiu/PycharmProjects/auto-test/app/api/web/__init__.py", line 23, in get_menu
-    menu_list = Menu.query.filter(Menu.menu_parent_id == 0).order_by(Menu.menu_order).all()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/orm/query.py", line 2699, in all
-    return self._iter().all()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/orm/query.py", line 2837, in _iter
-    execution_options={"_sa_orm_load_options": self.load_options},
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/orm/session.py", line 1683, in execute
-    conn = self._connection_for_bind(bind, close_with_result=True)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/orm/session.py", line 1535, in _connection_for_bind
-    conn = engine.connect(**kw)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 3165, in connect
-    return self._connection_cls(self, close_with_result=close_with_result)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 96, in __init__
-    else engine.raw_connection()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 3244, in raw_connection
-    return self._wrap_pool_connect(self.pool.connect, _connection)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 3215, in _wrap_pool_connect
-    e, dialect, self
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 2069, in _handle_dbapi_exception_noconnection
-    sqlalchemy_exception, with_traceback=exc_info[2], from_=e
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/compat.py", line 207, in raise_
-    raise exception
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/base.py", line 3211, in _wrap_pool_connect
-    return fn()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 307, in connect
-    return _ConnectionFairy._checkout(self)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 767, in _checkout
-    fairy = _ConnectionRecord.checkout(pool)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 425, in checkout
-    rec = pool._do_get()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/impl.py", line 146, in _do_get
-    self._dec_overflow()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/langhelpers.py", line 72, in __exit__
-    with_traceback=exc_tb,
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/compat.py", line 207, in raise_
-    raise exception
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/impl.py", line 143, in _do_get
-    return self._create_connection()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 253, in _create_connection
-    return _ConnectionRecord(self)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 368, in __init__
-    self.__connect()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 611, in __connect
-    pool.logger.debug("Error on connect(): %s", e)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/langhelpers.py", line 72, in __exit__
-    with_traceback=exc_tb,
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/util/compat.py", line 207, in raise_
-    raise exception
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/pool/base.py", line 605, in __connect
-    connection = pool._invoke_creator(self)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/create.py", line 578, in connect
-    return dialect.connect(*cargs, **cparams)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/sqlalchemy/engine/default.py", line 584, in connect
-    return self.dbapi.connect(*cargs, **cparams)
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/pymysql/connections.py", line 353, in __init__
-    self.connect()
-  File "/Users/kuainiu/PycharmProjects/auto-test/venv/lib/python3.7/site-packages/pymysql/connections.py", line 664, in connect
-    raise exc
-sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on '10.1.0.15' (timed out)")
-(Background on this error at: http://sqlalche.me/e/14/e3q8)
- * Restarting with stat
+127.0.0.1 - - [08/Dec/2021 09:32:57] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:34:12] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:34:27] "POST /api/repay/repay_tools/change_asset HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:34:47] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:34:51] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:34:58] "POST /api/repay/repay_tools/change_asset HTTP/1.1" 200 -
+{'url': 'http://biz-central-3.k8s-ingress-nginx.kuainiujinke.com/job/sendMsgById?id=34413', 'method': 'post', 'request': 'success', 'response': {'code': 0, 'message': '成功', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 09:35:41] "POST /api/repay/repay_tools/change_asset HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:36:40] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:36:46] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:36:56] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:38:25] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:38:31] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:38:40] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:38:51] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:38:52] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://biz-central-3.k8s-ingress-nginx.kuainiujinke.com/job/sendMsgById?id=34414', 'method': 'post', 'request': 'success', 'response': {'code': 0, 'message': '成功', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 09:39:21] "POST /api/repay/repay_tools/change_asset HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:39:29] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:39:51] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217611969483700'}], 'response': {'code': 0, 'data': [{'plain_text': '62176119****3700', 'hash': 'enc_03_3707595264308545536_622'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '510113199311261100'}], 'response': {'code': 0, 'data': [{'plain_text': '51****19931126110*', 'hash': 'enc_02_3707595265935935488_790'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '刘宁'}], 'response': {'code': 0, 'data': [{'plain_text': '*宁', 'hash': 'enc_04_822540_527'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '13781313961'}], 'response': {'code': 0, 'data': [{'plain_text': '137****3961', 'hash': 'enc_01_3707595269224269824_779'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638927599', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 0, 'message': '交易处理中', 'data': {'type': 'BIND_SMS', 'project_list': [{'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162_noloan', 'order_no': 'AUTO_C512085780579996028', 'error_code': 'E20017'}, {'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162', 'order_no': 'AUTO_C512085781981869651', 'error_code': 'E20017'}]}}}
+127.0.0.1 - - [08/Dec/2021 09:40:00] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 09:40:00] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 10:42:34] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 10:42:54] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paysvr/callback', 'method': 'post', 'request': {'merchant_key': 'AUTO_C512085781981869651', 'channel_name': 'baofu_4_baidu', 'channel_key': 'AUTO_C512085781981869651', 'finished_at': '2021-12-08 10:42:59', 'transaction_status': 3, 'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'from_system': 'paysvr', 'channel_message': '交易失败'}, 'response': {'code': 0, 'message': '接收成功', 'request': {'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'merchant_key': 'AUTO_C512085781981869651', 'transaction_status': '3', 'finished_at': '2021-12-08 10:42:59', 'channel_key': 'AUTO_C512085781981869651', 'channel_name': 'baofu_4_baidu', 'from_system': 'paysvr', 'channel_message': '交易失败'}}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283876', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '回调结果处理成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283877', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '同步代扣结果数据成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283874', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '代扣已完成', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/msg/run?msgId=138342', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '[ "Rbiz3-WithholdResultImport_242772906192107151588505784" ]', 'data': None}]}
+127.0.0.1 - - [08/Dec/2021 10:43:02] "POST /api/repay/repay_tools/repay_callback HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217616637993915'}], 'response': {'code': 0, 'data': [{'plain_text': '62176166****3915', 'hash': 'enc_03_3707668168761149440_261'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '21010219870626554X'}], 'response': {'code': 0, 'data': [{'plain_text': '21****19870626554*', 'hash': 'enc_02_3707668170438871040_234'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '熊红梅'}], 'response': {'code': 0, 'data': [{'plain_text': '熊*梅', 'hash': 'enc_04_5980100_659'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '14569009156'}], 'response': {'code': 0, 'data': [{'plain_text': '145****9156', 'hash': 'enc_01_3707668173660096512_012'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638931944', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 1, 'message': '资产S20211638870162还款类型不允许提前还款', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 10:52:25] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 10:52:31] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://biz-central-3.k8s-ingress-nginx.kuainiujinke.com/job/sendMsgById?id=34415', 'method': 'post', 'request': 'success', 'response': {'code': 0, 'message': '成功', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 10:53:21] "POST /api/repay/repay_tools/change_asset HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217612949885238'}], 'response': {'code': 0, 'data': [{'plain_text': '62176129****5238', 'hash': 'enc_03_3707669234231805952_348'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '341203197801244242'}], 'response': {'code': 0, 'data': [{'plain_text': '34****19780124424*', 'hash': 'enc_02_3707669235775309824_770'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '汪莉'}], 'response': {'code': 0, 'data': [{'plain_text': '*莉', 'hash': 'enc_04_10455430_767'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '18167845326'}], 'response': {'code': 0, 'data': [{'plain_text': '181****5326', 'hash': 'enc_01_3707669239181084672_153'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932007', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 1, 'message': '资产S20211638870162还款类型不允许提前还款', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 10:53:28] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217611685548836'}], 'response': {'code': 0, 'data': [{'plain_text': '62176116****8836', 'hash': 'enc_03_3707669382643058688_760'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '530125199012106142'}], 'response': {'code': 0, 'data': [{'plain_text': '53****19901210614*', 'hash': 'enc_02_3707669384236894208_802'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '裴勇'}], 'response': {'code': 0, 'data': [{'plain_text': '*勇', 'hash': 'enc_04_2755694823666616320_059'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '15353686832'}], 'response': {'code': 0, 'data': [{'plain_text': '153****6832', 'hash': 'enc_01_3707669387323901952_478'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932016', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 1, 'message': '资产S20211638870162还款类型不允许提前还款', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 10:53:37] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+{'url': 'http://biz-central-3.k8s-ingress-nginx.kuainiujinke.com/job/sendMsgById?id=34416', 'method': 'post', 'request': 'success', 'response': {'code': 0, 'message': '成功', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 10:54:01] "POST /api/repay/repay_tools/change_asset HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217614701294179'}], 'response': {'code': 0, 'data': [{'plain_text': '62176147****4179', 'hash': 'enc_03_3707679198421714944_981'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '220501197906283104'}], 'response': {'code': 0, 'data': [{'plain_text': '22****19790628310*', 'hash': 'enc_02_3707679203941419008_467'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '张桂花'}], 'response': {'code': 0, 'data': [{'plain_text': '张*花', 'hash': 'enc_04_5872220_512'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '15944884046'}], 'response': {'code': 0, 'data': [{'plain_text': '159****4046', 'hash': 'enc_01_3707679207749847040_107'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932602', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 0, 'message': '交易处理中', 'data': {'type': 'BIND_SMS', 'project_list': [{'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162_noloan', 'order_no': 'AUTO_C512086971617255439', 'error_code': 'E20017'}, {'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162', 'order_no': 'AUTO_C512086972058113826', 'error_code': 'E20017'}]}}}
+127.0.0.1 - - [08/Dec/2021 11:03:23] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:03:31] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:03:33] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paysvr/callback', 'method': 'post', 'request': {'merchant_key': 'AUTO_C512086972058113826', 'channel_name': 'baofu_4_baidu', 'channel_key': 'AUTO_C512086972058113826', 'finished_at': '2021-12-08 11:03:37', 'transaction_status': 3, 'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'from_system': 'paysvr', 'channel_message': '交易失败'}, 'response': {'code': 0, 'message': '接收成功', 'request': {'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'merchant_key': 'AUTO_C512086972058113826', 'transaction_status': '3', 'finished_at': '2021-12-08 11:03:37', 'channel_key': 'AUTO_C512086972058113826', 'channel_name': 'baofu_4_baidu', 'from_system': 'paysvr', 'channel_message': '交易失败'}}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283880', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '回调结果处理成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283881', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '同步代扣结果数据成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283878', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '代扣已完成', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/msg/run?msgId=138347', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '[ "Rbiz3-WithholdResultImport_24278528892519107469444148" ]', 'data': None}]}
+127.0.0.1 - - [08/Dec/2021 11:03:40] "POST /api/repay/repay_tools/repay_callback HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217613318270044'}], 'response': {'code': 0, 'data': [{'plain_text': '62176133****0044', 'hash': 'enc_03_3707679900548204544_712'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '210811199405058001'}], 'response': {'code': 0, 'data': [{'plain_text': '21****19940505800*', 'hash': 'enc_02_3707679902242703360_983'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '唐利'}], 'response': {'code': 0, 'data': [{'plain_text': '*利', 'hash': 'enc_04_5574230_866'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '15876699767'}], 'response': {'code': 0, 'data': [{'plain_text': '158****9767', 'hash': 'enc_01_3707679905262602240_578'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932643', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 0, 'message': '交易处理中', 'data': {'type': 'BIND_SMS', 'project_list': [{'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162', 'order_no': 'ZK_HG512082180372520052', 'error_code': 'E20017'}, {'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162_noloan', 'order_no': 'AUTO_C512082190205626622', 'error_code': 'E20017'}]}}}
+127.0.0.1 - - [08/Dec/2021 11:04:04] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:05:36] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paysvr/callback', 'method': 'post', 'request': {'merchant_key': 'ZK_HG512082180372520052', 'channel_name': 'zhongke_hegang', 'channel_key': 'ZK_HG512082180372520052', 'finished_at': '2021-12-08 11:06:03', 'transaction_status': 3, 'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'from_system': 'paysvr', 'channel_message': '交易失败'}, 'response': {'code': 0, 'message': '接收成功', 'request': {'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'merchant_key': 'ZK_HG512082180372520052', 'transaction_status': '3', 'finished_at': '2021-12-08 11:06:03', 'channel_key': 'ZK_HG512082180372520052', 'channel_name': 'zhongke_hegang', 'from_system': 'paysvr', 'channel_message': '交易失败'}}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283884', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '回调结果处理成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283885', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '同步代扣结果数据成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283882', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '代扣已完成', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/msg/run?msgId=138350', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '[ "Rbiz3-WithholdResultImport_24278675665820345581030803" ]', 'data': None}]}
+127.0.0.1 - - [08/Dec/2021 11:06:07] "POST /api/repay/repay_tools/repay_callback HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217610354393052'}], 'response': {'code': 0, 'data': [{'plain_text': '62176103****3052', 'hash': 'enc_03_3707682217230075904_044'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '440306198506307724'}], 'response': {'code': 0, 'data': [{'plain_text': '44****19850630772*', 'hash': 'enc_02_3707682218924574720_763'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '顾淑兰'}], 'response': {'code': 0, 'data': [{'plain_text': '顾*兰', 'hash': 'enc_04_3298650197160626176_709'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '15910727988'}], 'response': {'code': 0, 'data': [{'plain_text': '159****7988', 'hash': 'enc_01_3707682222347126784_618'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932781', 'from_system': 'DSQ', 'data': {'total_amount': 748000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 663047, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 84953, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 0, 'message': '交易处理中', 'data': {'type': 'BIND_SMS', 'project_list': [{'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162', 'order_no': 'ZK_HG512083161529209724', 'error_code': 'E20017'}, {'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162_noloan', 'order_no': 'AUTO_C512083171810328168', 'error_code': 'E20017'}]}}}
+127.0.0.1 - - [08/Dec/2021 11:06:22] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:06:28] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:06:37] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:06:38] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:06:45] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:07:14] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:07:51] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paysvr/callback', 'method': 'post', 'request': {'merchant_key': 'AUTO_C512083171810328168', 'channel_name': 'baofu_4_baidu', 'channel_key': 'AUTO_C512083171810328168', 'finished_at': '2021-12-08 11:07:55', 'transaction_status': 3, 'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'from_system': 'paysvr', 'channel_message': '交易失败'}, 'response': {'code': 0, 'message': '接收成功', 'request': {'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'merchant_key': 'AUTO_C512083171810328168', 'transaction_status': '3', 'finished_at': '2021-12-08 11:07:55', 'channel_key': 'AUTO_C512083171810328168', 'channel_name': 'baofu_4_baidu', 'from_system': 'paysvr', 'channel_message': '交易失败'}}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283888', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '回调结果处理成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283889', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '同步代扣结果数据成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283886', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '代扣已完成', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/msg/run?msgId=138353', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '[ "Rbiz3-WithholdResultImport_24278787897754624628336367" ]', 'data': None}]}
+127.0.0.1 - - [08/Dec/2021 11:07:59] "POST /api/repay/repay_tools/repay_callback HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217619293877414'}], 'response': {'code': 0, 'data': [{'plain_text': '62176192****7414', 'hash': 'enc_03_3707683990430812160_567'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '130923198907155668'}], 'response': {'code': 0, 'data': [{'plain_text': '13****19890715566*', 'hash': 'enc_02_3707683995749189632_923'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '范鑫'}], 'response': {'code': 0, 'data': [{'plain_text': '*鑫', 'hash': 'enc_04_1104640_928'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '15071884942'}], 'response': {'code': 0, 'data': [{'plain_text': '150****4942', 'hash': 'enc_01_3707683999373068288_725'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932887', 'from_system': 'DSQ', 'data': {'total_amount': 748000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 663047, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 84953, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 1, 'message': '资产S20211638870162不允许提前结清还款', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 11:08:08] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:08:15] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:08:20] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217615506654236'}], 'response': {'code': 0, 'data': [{'plain_text': '62176155****4236', 'hash': 'enc_03_3707684387664955392_536'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '340201197905273984'}], 'response': {'code': 0, 'data': [{'plain_text': '34****19790527398*', 'hash': 'enc_02_3707684390047320064_484'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '苏娜'}], 'response': {'code': 0, 'data': [{'plain_text': '*娜', 'hash': 'enc_04_5846380_230'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '13971916942'}], 'response': {'code': 0, 'data': [{'plain_text': '139****6942', 'hash': 'enc_01_3707684393201436672_365'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932911', 'from_system': 'DSQ', 'data': {'total_amount': 408000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 361662, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 46338, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 1, 'message': '资产S20211638870162不允许多期还款', 'data': None}}
+127.0.0.1 - - [08/Dec/2021 11:08:32] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217619088365690'}], 'response': {'code': 0, 'data': [{'plain_text': '62176190****5690', 'hash': 'enc_03_3707684532251002880_241'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '433124199505231243'}], 'response': {'code': 0, 'data': [{'plain_text': '43****19950523124*', 'hash': 'enc_02_3707684533928724480_254'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '丁婷婷'}], 'response': {'code': 0, 'data': [{'plain_text': '丁*婷', 'hash': 'enc_04_2482840502324955137_015'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '15351407676'}], 'response': {'code': 0, 'data': [{'plain_text': '153****7676', 'hash': 'enc_01_3707684541428140032_429'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932920', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 0, 'message': '交易处理中', 'data': {'type': 'BIND_SMS', 'project_list': [{'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162', 'order_no': 'ZK_HG512085340677552684', 'error_code': 'E20017'}, {'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162_noloan', 'order_no': 'AUTO_C512085341927279481', 'error_code': 'E20017'}]}}}
+127.0.0.1 - - [08/Dec/2021 11:08:41] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:08:45] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paysvr/callback', 'method': 'post', 'request': {'merchant_key': 'ZK_HG512085340677552684', 'channel_name': 'zhongke_hegang', 'channel_key': 'ZK_HG512085340677552684', 'finished_at': '2021-12-08 11:09:03', 'transaction_status': 3, 'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'from_system': 'paysvr', 'channel_message': '交易失败'}, 'response': {'code': 0, 'message': '接收成功', 'request': {'sign': '6401cd046b5ae44ef208b8ea82d398ab', 'merchant_key': 'ZK_HG512085340677552684', 'transaction_status': '3', 'finished_at': '2021-12-08 11:09:03', 'channel_key': 'ZK_HG512085340677552684', 'channel_name': 'zhongke_hegang', 'from_system': 'paysvr', 'channel_message': '交易失败'}}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283892', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '回调结果处理成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283893', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '同步代扣结果数据成功', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/task/run?taskId=283890', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '代扣已完成', 'data': None}]}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/msg/run?msgId=138356', 'method': 'post', 'request': 'success', 'response': [{'code': 0, 'message': '[ "Rbiz3-WithholdResultImport_242788549231568061587448972" ]', 'data': None}]}
+127.0.0.1 - - [08/Dec/2021 11:09:06] "POST /api/repay/repay_tools/repay_callback HTTP/1.1" 200 -
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 3, 'plain': '6217617691855578'}], 'response': {'code': 0, 'data': [{'plain_text': '62176176****5578', 'hash': 'enc_03_3707685646593689600_250'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 2, 'plain': '341023198411217387'}], 'response': {'code': 0, 'data': [{'plain_text': '34****19841121738*', 'hash': 'enc_02_3707685648288188416_671'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 4, 'plain': '马荣'}], 'response': {'code': 0, 'data': [{'plain_text': '*荣', 'hash': 'enc_04_2481473062433196032_272'}], 'message': 'success'}}
+{'url': 'http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/', 'method': 'post', 'request': [{'type': 1, 'plain': '18865927202'}], 'response': {'code': 0, 'data': [{'plain_text': '188****7202', 'hash': 'enc_01_3707685651794626560_882'}], 'message': 'success'}}
+{'url': 'http://repay3.k8s-ingress-nginx.kuainiujinke.com/paydayloan/repay/combo-active-encrypt', 'method': 'post', 'request': {'type': 'PaydayloanUserActiveRepay', 'key': 'ActiveS20211638870162_1638932986', 'from_system': 'DSQ', 'data': {'total_amount': 68000, 'project_list': [{'project_num': 'S20211638870162', 'amount': 60277, 'priority': 12, 'coupon_num': None, 'coupon_amount': None}, {'project_num': 'S20211638870162_noloan', 'amount': 7723, 'priority': 1, 'coupon_num': None, 'coupon_amount': None}], 'order_no': '', 'verify_code': '134679', 'verify_seq': None, 'card_num_encrypt': 'enc_03_3697830581502478336_772', 'card_user_id_encrypt': 'enc_02_3697732689936779264_273', 'card_user_name_encrypt': 'enc_04_3622670_423', 'card_user_phone_encrypt': 'enc_01_3697732693258668032_713'}}, 'response': {'code': 0, 'message': '交易处理中', 'data': {'type': 'BIND_SMS', 'project_list': [{'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162_noloan', 'order_no': 'AUTO_C512087090678394722', 'error_code': 'E20017'}, {'status': 2, 'memo': '处理中', 'project_num': 'S20211638870162', 'order_no': 'AUTO_C512087091647117126', 'error_code': 'E20017'}]}}}
+127.0.0.1 - - [08/Dec/2021 11:09:47] "POST /api/repay/repay_tools/active_repay HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:10:26] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 11:17:34] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 14:34:33] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 15:01:34] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
+127.0.0.1 - - [08/Dec/2021 15:13:30] "POST /api/repay/repay_tools/info_refresh HTTP/1.1" 200 -
