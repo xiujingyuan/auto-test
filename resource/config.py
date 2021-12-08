@@ -12,6 +12,7 @@ class AutoTestConfig:
     DOMAIN = "http://127.0.0.1:6868"
     DB_IP = None
     environment = os.environ.get("environment", 'dev')
+    logging.info('environment', environment)
     if environment == 'test':
         DB_IP = '10.1.0.15'
         DEBUG = False
