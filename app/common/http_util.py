@@ -31,8 +31,9 @@ def modify_resp(func):
         elif 'kong-api-test.kuainiujinke.com' in url:
             return content
         elif not content['code'] in (0, 200):
-            raise ValueError('request run content code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
-                content['message'], url, json.dumps(req_data, ensure_ascii=False)))
+            if not '任务正在执行，请稍后重试' == content['message']:
+                raise ValueError('request run content code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+                    content['message'], url, json.dumps(req_data, ensure_ascii=False)))
         return content if resp is not None else resp
 
     return wrapper
