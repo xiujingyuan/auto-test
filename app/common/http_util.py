@@ -16,7 +16,7 @@ def modify_resp(func):
     def wrapper(*args, **kwargs):
         url, req_data, resp = func(*args, **kwargs)
         if resp.status_code not in (200, 201, 400):
-            raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+            raise ValueError('request run status_code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
                 resp.status_code, url, json.dumps(req_data, ensure_ascii=False)))
         content = json.loads(resp.content)
         log_info = dict(zip(('url', 'method', 'request', 'response'),
@@ -26,12 +26,12 @@ def modify_resp(func):
         if url.endswith("nacos/v1/cs/configs"):
             return content
         if 'code' not in content:
-            raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+            raise ValueError('request run code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
                 content, url, json.dumps(req_data, ensure_ascii=False)))
         elif 'kong-api-test.kuainiujinke.com' in url:
             return content
         elif not content['code'] in (0, 200):
-            raise ValueError('request run  error: {0} #==# with url: {1} #==# req_data: {2}'.format(
+            raise ValueError('request run content code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
                 content['message'], url, json.dumps(req_data, ensure_ascii=False)))
         return content if resp is not None else resp
 

@@ -588,7 +588,7 @@ class ChinaRepayService(BaseService):
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
         print(self.get_date(is_str=True))
         asset = self.get_asset(item_no)
-        max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
+        max_create_at = self.get_date(is_str=True, days=-1)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
             self.get_withhold_key_info(item_no, max_create_at=max_create_at)
         channel = asset['asset'][0]['loan_channel']
