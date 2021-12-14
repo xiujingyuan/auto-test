@@ -442,7 +442,8 @@ class ChinaRepayService(BaseService):
         item_no_tuple = tuple(filter(lambda x: x, (item_no, item_no_x)))
         withhold_order_list = self.db_session.query(WithholdOrder).filter(
             WithholdOrder.withhold_order_reference_no.in_(item_no_tuple),
-            WithholdOrder.withhold_order_create_at >= max_create_at).all()
+            WithholdOrder.withhold_order_create_at >= max_create_at).\
+            order_by(WithholdOrder.withhold_order_create_at).all()
         withhold_order = []
         if request_no is not None:
             withhold_order = list(filter(lambda x: x.withhold_order_request_no in request_no, withhold_order_list))
