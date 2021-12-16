@@ -24,7 +24,8 @@ class ChinaGrantService(BaseService):
         self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
         self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
-        self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/standard-calculate'
+        # self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/standard-calculate'
+        self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate'
 
     def add_msg(self, msg):
         new_msg = Sendmsg()
