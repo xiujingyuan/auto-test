@@ -36,5 +36,5 @@ echo "#########################启动nginx务##########################"
 nginx
 
 echo "#########################查看日志##########################"
-tail -F /data/www/wwwroot/auto-test/logs/info.log
+tail -F /data/www/wwwroot/auto-test/logs/supervisor/auto_test.log
 
