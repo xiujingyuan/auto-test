@@ -110,7 +110,7 @@ class XxlJob(object):
     def trigger_job(self, executor_handler, executor_param=None):
         job_info = self.get_job_info(executor_handler)
         if not job_info:
-            raise Exception("没有查询到对应的executorHandler")
+            raise Exception("没有查询到对应的executorHandler ", executor_handler)
         for job in job_info:
             if executor_param is not None and executor_param:
                 job["executorParam"] = executor_param if isinstance(executor_param, str) \
