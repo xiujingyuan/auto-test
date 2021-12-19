@@ -24,8 +24,9 @@ class ChinaGrantService(BaseService):
         self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
         self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
-        self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/standard-calculate'
-        #self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate'
+        # self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/standard-calculate'
+        self.cmdb_url = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
+        # self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate'
 
     def add_msg(self, msg):
         new_msg = Sendmsg()
@@ -175,26 +176,16 @@ class ChinaGrantService(BaseService):
         self.db_session.add(router_record)
         self.db_session.commit()
 
-    def get_asset_info_from_db(self, loan=False):
-        if loan:
-            asset_import_sync_task = self.db_session.query(Synctask)\
-                .join(Sendmsg, Sendmsg.sendmsg_order_no == Synctask.synctask_order_no)\
-                .join(Asset, Asset.asset_item_no == Synctask.synctask_order_no).filter(
-                Asset.asset_loan_channel == 'noloan',
-                Asset.asset_status.in_(('repay', 'payoff')),
-                Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
-                Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
-                .order_by(desc(Synctask.synctask_create_at)).first()
-        else:
-            asset_import_sync_task = self.db_session.query(Synctask) \
-                .join(Sendmsg, Sendmsg.sendmsg_order_no == Synctask.synctask_order_no) \
-                .join(Asset, Asset.asset_item_no == Synctask.synctask_order_no).filter(
-                Asset.asset_loan_channel != 'noloan',
-                Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
-                Asset.asset_from_system != 'pitaya',
-                Asset.asset_status.in_(('repay', 'payoff')),
-                Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
-                .order_by(desc(Synctask.synctask_create_at)).first()
+    def get_asset_info_from_db(self, channel='noloan'):
+        asset_import_sync_task = self.db_session.query(Synctask) \
+            .join(Sendmsg, Sendmsg.sendmsg_order_no == Synctask.synctask_order_no) \
+            .join(Asset, Asset.asset_item_no == Synctask.synctask_order_no).filter(
+            Asset.asset_loan_channel == channel,
+            Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
+            Asset.asset_from_system != 'pitaya',
+            Asset.asset_status.in_(('repay', 'payoff')),
+            Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
+            .order_by(desc(Synctask.synctask_create_at)).first()
         if not asset_import_sync_task:
             print('not fount the asset import task')
         return json.loads(asset_import_sync_task.synctask_request_data), asset_import_sync_task.synctask_order_no
@@ -296,7 +287,7 @@ class ChinaGrantService(BaseService):
     def asset_import(self, item_no, channel, element, count, amount, source_type, from_system_name, from_system,
                      ref_order_no, borrower_extend_district=None, sub_order_type='', route_uuid=None,
                      insert_router_record=True):
-        asset_info, old_asset = self.get_asset_info_from_db()
+        asset_info, old_asset = self.get_asset_info_from_db(channel)
         asset_info['key'] = "_".join((item_no, channel))
         asset_info['from_system'] = from_system
         asset_info['data']['route_uuid'] = route_uuid
@@ -314,7 +305,7 @@ class ChinaGrantService(BaseService):
         return asset_info, old_asset
 
     def asset_no_loan_import(self, asset_info, import_asset_info, item_no, x_item_no, source_type):
-        _, no_old_asset = self.get_asset_info_from_db(loan=True)
+        _, no_old_asset = self.get_asset_info_from_db()
         no_asset_info = deepcopy(asset_info)
         asset_extend = self.db_session.query(AssetExtend).filter(
             AssetExtend.asset_extend_asset_item_no == item_no).first()
