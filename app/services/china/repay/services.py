@@ -880,6 +880,7 @@ class ChinaRepayService(BaseService):
         if repay_status == 2:
             # 跑充值还款任务
             self.run_task_by_type_and_order_no('assetWithholdOrderRecharge', serial_no)
+            self.run_task_by_type_and_order_no('AssetAccountChangeNotify', withhold_order.withhold_order_reference_no)
             self.run_msg_by_type_and_order_no(id_num_encrypt, 'account_change_tran_repay')
         self.run_task_by_type_and_order_no('withhold_order_sync', serial_no)
         self.run_task_by_type_and_order_no('execute_combine_withhold', request_no)
