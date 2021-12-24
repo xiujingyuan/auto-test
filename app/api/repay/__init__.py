@@ -4,6 +4,7 @@ from copy import deepcopy
 from flask import Blueprint, request, jsonify
 from flask import current_app
 from app.common import RET, RepayServiceFactory
+from app.common.log_util import LogUtil
 
 api_repay = Blueprint('api_repay', __name__)
 
@@ -12,6 +13,7 @@ api_repay = Blueprint('api_repay', __name__)
 def hello_world():
     current_app.logger.info('hello repay api!')
     return 'hello repay api'
+
 
 
 @api_repay.route('/repay_tools/<string:tool>', methods=["POST"])
@@ -47,6 +49,6 @@ def repay_tools(tool):
             ret['data'] = getattr(repay, tool)(**req)
     except Exception as e:
         ret['code'] = 1
-        print(traceback.format_exc())
+        LogUtil.log_info(traceback.format_exc())
         ret['message'] = str(e)
     return jsonify(ret)

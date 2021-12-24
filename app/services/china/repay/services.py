@@ -100,7 +100,6 @@ class ChinaRepayService(BaseService):
         return verify_seq
 
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
-        print("1", self.get_date(is_str=True))
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
         for index, item in enumerate(item_no_tuple):
             item_no_x = self.get_no_loan(item)
@@ -116,11 +115,9 @@ class ChinaRepayService(BaseService):
                 CapitalTransaction.capital_transaction_item_no == item).all()
             self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                                      advance_month)
-            print("2", self.get_date(is_str=True))
             self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
-            print("3", self.get_date(is_str=True))
+
         self.sync_plan_to_bc(item_no)
-        print("4", self.get_date(is_str=True))
         return "修改完成"
 
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
@@ -280,6 +277,7 @@ class ChinaRepayService(BaseService):
         if msg:
             return self.run_msg_by_id(msg.sendmsg_id)
 
+    @time_print
     def sync_plan_to_bc(self, item_no):
         now = self.get_date(is_str=True, fmt='%Y-%m-%d')
         self.run_xxl_job('syncAssetToBiz', param={'assetItemNo': [item_no]})

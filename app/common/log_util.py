@@ -4,9 +4,9 @@ import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-LOG_PATH = os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + '/logs')
-
-LOGGING_FILENAME = "study.log"
+LOG_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))) +\
+           '/logs/supervisor/'
+LOGGING_FILENAME = "auto_test.log"
 LOGGING_SUFFIX = "%Y%m%d"
 LOGGING_WHEN = "midnight"
 LOGGING_LEVEL = "INFO"

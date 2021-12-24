@@ -16,6 +16,7 @@ from app.common.db_util import DataBase
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
+from app.services.china.repay import time_print
 from app.services.china.repay.Model import Task
 from app.test_cases import CaseException
 from resource.config import AutoTestConfig
@@ -132,6 +133,7 @@ class BaseService(object):
             hold_months = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
         return int(math.modf(hold_months + decimal_month)[-1])
 
+    @time_print
     def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                             advance_month):
         real_now = self.get_date(months=advance_month, days=advance_day).date()

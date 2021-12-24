@@ -3,7 +3,8 @@ from datetime import datetime
 from sqlalchemy import desc, or_
 
 from app.common.easy_mock_util import EasyMock
-from app.services import BaseService, wait_timeout
+from app.common.log_util import LogUtil
+from app.services import BaseService, wait_timeout, time_print
 from app.common.http_util import Http
 import json
 
@@ -329,6 +330,7 @@ class ChinaBizCentralService(BaseService):
         self.db_session.commit()
         return 'success'
 
+    @time_print
     def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
         item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
         # asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
@@ -353,7 +355,7 @@ class ChinaBizCentralService(BaseService):
             return True
         if central_task.task_status == 'close':
             if json.loads(central_task.task_response_data)['code'] == 0:
-                print('task is run with success')
+                LogUtil.log_info('task is run with success')
                 return None
             else:
                 raise ValueError("task is run but not success, with response is :{0}".format(
@@ -466,10 +468,10 @@ class ChinaBizCentralService(BaseService):
             if msg_key in old_data:
                 item_info = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
                 if item_info:
-                    print(msg_key, item_info.asset_loan_channel,
-                          self.compare_data(123, json.loads(old_data[msg.sendmsg_order_no]),
-                                            json.loads(msg.sendmsg_content), [], 0))
+                    LogUtil.log_info(msg_key, item_info.asset_loan_channel,
+                                     self.compare_data(123, json.loads(old_data[msg.sendmsg_order_no]),
+                                                       json.loads(msg.sendmsg_content), [], 0))
                 else:
-                    print('not fount the item {0}'.format(item_no))
+                    LogUtil.log_info('not fount the item {0}'.format(item_no))
             else:
-                print('not fount the order no {0}'.format(msg['sendmsg_order_no']))
+                LogUtil.log_info('not fount the order no {0}'.format(msg['sendmsg_order_no']))

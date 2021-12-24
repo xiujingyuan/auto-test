@@ -6,6 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import desc
 
+from app.common.log_util import LogUtil
 from app.services import BaseService
 from app.common.http_util import Http
 from app.services.china.biz_central.services import ChinaBizCentralService
@@ -187,7 +188,7 @@ class ChinaGrantService(BaseService):
             Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
             .order_by(desc(Synctask.synctask_create_at)).first()
         if not asset_import_sync_task:
-            print('not fount the asset import task')
+            LogUtil.log_info('not fount the asset import task')
         return json.loads(asset_import_sync_task.synctask_request_data), asset_import_sync_task.synctask_order_no
 
     def get_no_loan(self, item_no):
@@ -249,7 +250,7 @@ class ChinaGrantService(BaseService):
 
     @staticmethod
     def set_withdraw_success_loan_record(withdraw_success_data, asset, now):
-        print(withdraw_success_data["data"]['loan_record'])
+        LogUtil.log_info(withdraw_success_data["data"]['loan_record'])
         if withdraw_success_data["data"]['loan_record'] is not None:
             withdraw_success_data["data"]['loan_record']['grant_at'] = now
             withdraw_success_data["data"]['loan_record']['push_at'] = now

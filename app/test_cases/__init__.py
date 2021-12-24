@@ -5,6 +5,7 @@ import traceback
 from dateutil.relativedelta import relativedelta
 
 from app import db
+from app.common.log_util import LogUtil
 from app.model.Model import TestCase, RunCaseLog
 
 
@@ -19,7 +20,7 @@ def run_case_prepare(func):
         except CaseException as e:
             self.set_case_fail('case', str(e))
         except Exception as e:
-            print(e)
+            LogUtil.log_info(e)
             self.set_case_fail('system', str(traceback.format_exc()))
         else:
             self.set_case_success()
@@ -63,7 +64,7 @@ class BaseAutoTest(object):
             try:
                 self.run_single_case(case)
             except Exception as e:
-                print(e)
+                LogUtil.log_info(e)
                 continue
 
     def set_case_success(self):
