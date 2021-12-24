@@ -62,9 +62,9 @@ def modify_return(func):
 
 def time_print(func):
     def wrapper(self, *args, **kwargs):
-        LogUtil.log_info("".join((func.__name__, ' begin: ', self.get_date(is_str=True))))
+        LogUtil.log_info(func.__name__ + ' begin: ')
         ret = func(self, *args, **kwargs)
-        LogUtil.log_info("".join((func.__name__, ' end: ', self.get_date(is_str=True))))
+        LogUtil.log_info(func.__name__ + ' end: ')
         return ret
     return wrapper
 

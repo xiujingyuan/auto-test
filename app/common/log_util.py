@@ -13,8 +13,8 @@ LOGGING_LEVEL = "INFO"
 LOGGING_INTERVAL = 1
 LOGGING_BACKUPCOUNT = 7
 LOGGING_DATEFMT = "%Y-%m-%d %H:%M:%S"
-# LOGGING_FMT = "%(message)s %(asctime)s %(levelname)s %(funcName)s"
-LOGGING_FMT = "%(message)s"
+LOGGING_FMT = "%(message)s %(asctime)s %(levelname)s %(funcName)s"
+#LOGGING_FMT = "%(message)s"
 
 
 # 初始化日志对象

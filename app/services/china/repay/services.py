@@ -99,6 +99,7 @@ class ChinaRepayService(BaseService):
         verify_seq = ret['data']['verify_seq']
         return verify_seq
 
+    @time_print
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
         for index, item in enumerate(item_no_tuple):
@@ -219,6 +220,7 @@ class ChinaRepayService(BaseService):
     def _sum_amount_(amount_type, amount_list):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
 
+    @time_print
     def get_task(self, task_order_no, max_create_at):
         task_list = self.db_session.query(Task).filter(
             Task.task_order_no.in_(task_order_no),
@@ -226,6 +228,7 @@ class ChinaRepayService(BaseService):
         task_list = list(map(lambda x: x.to_spec_dict, task_list))
         return {'task': task_list}
 
+    @time_print
     def get_msg(self, task_order_no, max_create_at):
         msg_list = self.db_session.query(SendMsg).filter(
             SendMsg.sendmsg_order_no.in_(task_order_no),
@@ -233,35 +236,17 @@ class ChinaRepayService(BaseService):
         msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
         return {'msg': msg_list}
 
-    def get_biz_capital_info(self, item_no):
-        ret = {}
-        biz_capital_detail = self.biz_central.get_capital_detail(item_no)
-        biz_capital = self.biz_central.get_capital(item_no)
-        biz_capital_tran = self.biz_central.get_capital_tran(item_no)
-        biz_capital_notify = self.biz_central.get_capital_notify(item_no)
-        ret.update(biz_capital_detail)
-        ret.update(biz_capital)
-        ret.update(biz_capital_tran)
-        ret.update(biz_capital_notify)
-        return ret
-
-    def get_biz_capital(self, item_no):
-        return self.biz_central.get_capital(item_no)
-
-    def get_biz_capital_tran(self, item_no):
-        return self.biz_central.get_capital_tran(item_no)
-
-    def get_biz_capital_notify(self, item_no):
-        return self.biz_central.get_capital_notify(item_no)
-
-    def get_biz_capital_detail(self, item_no):
-        return self.biz_central.get_capital_settlement_detail(item_no)
-
-    def get_biz_task(self, task_order_no, channel, max_create_at):
-        return self.biz_central.get_task(task_order_no, max_create_at=max_create_at, channel=channel)
-
-    def get_biz_msg(self, task_order_no, max_create_at):
-        return self.biz_central.get_msg(task_order_no, max_create_at)
+    # def get_biz_capital_info(self, item_no):
+    #     ret = {}
+    #     biz_capital_detail = self.biz_central.get_capital_detail(item_no)
+    #     biz_capital = self.biz_central.get_capital(item_no)
+    #     biz_capital_tran = self.biz_central.get_capital_tran(item_no)
+    #     biz_capital_notify = self.biz_central.get_capital_notify(item_no)
+    #     ret.update(biz_capital_detail)
+    #     ret.update(biz_capital)
+    #     ret.update(biz_capital_tran)
+    #     ret.update(biz_capital_notify)
+    #     return ret
 
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
@@ -269,6 +254,7 @@ class ChinaRepayService(BaseService):
     def run_xxl_job(self, job_type, param=None):
         return self.xxljob.trigger_job(job_type, executor_param=param)
 
+    @time_print
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
                                                     SendMsg.sendmsg_status == 'open',
@@ -597,21 +583,21 @@ class ChinaRepayService(BaseService):
         if refresh_type in ('task', 'msg'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at)
         elif refresh_type == 'biz_task':
-            ret = self.get_biz_task(task_order_no, channel, max_create_at)
+            ret = self.biz_central.get_task(task_order_no, channel, max_create_at)
         elif refresh_type == 'biz_msg':
-            ret = self.get_biz_msg(item_no, max_create_at)
+            ret = self.biz_central.get_msg(item_no, max_create_at)
         elif refresh_type in ('withhold', 'withhold_detail', 'card_bind'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(serial_no, max_create_at)
         elif refresh_type == 'withhold_order':
             ret = {'withhold_order': withhold_order}
         elif refresh_type == 'withhold_request':
             ret = self.get_withhold_request(request_no, max_create_at)
-        elif refresh_type in ('asset_tran', 'biz_capital', 'biz_capital_tran'):
+        elif refresh_type == 'asset_tran':
             ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
+        elif refresh_type in ('biz_capital', 'biz_capital_tran', 'biz_capital_notify'):
+            ret = getattr(self.biz_central, 'get_{0}'.format(refresh_type[4:]))(item_no)
         elif refresh_type == 'biz_capital_settlement_detail':
-            ret = self.get_biz_capital_detail(channel)
-        elif refresh_type == 'biz_capital_notify':
-            ret = self.get_biz_capital_notify(item_no)
+            ret = self.biz_central.get_capital_settlement_detail(channel)
         elif refresh_type in ('auth_lock', 'detail_lock'):
             ret = self.get_lock_info(item_no)
         ret.update(asset)
