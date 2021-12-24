@@ -152,6 +152,7 @@ class ChinaBizCentralService(BaseService):
             ret = self.run_central_task_by_task_id(new_task.task_id)
         return new_task.task_id
 
+    @time_print
     def run_xxl_job(self, job_type, run_date):
         param = self.xxljob.get_job_info(job_type)[0]['executorParam']
         param = json.dumps(json.loads(param)) if param else param
@@ -373,6 +374,7 @@ class ChinaBizCentralService(BaseService):
         self.db_session.add(central_msg)
         self.db_session.commit()
 
+    @time_print
     def run_central_task_by_task_id(self, task_id, run_date=None, re_run=False):
         task = self.update_central_task_next_run_at_forward_by_task_id(task_id, re_run)
         if task is None:
@@ -384,6 +386,7 @@ class ChinaBizCentralService(BaseService):
         ret = Http.http_get(url)
         return ret
 
+    @time_print
     def run_central_task_by_order_no(self, order_no, task_type, status='open', timeout=60):
         begin = datetime.now()
         while True:
@@ -412,6 +415,7 @@ class ChinaBizCentralService(BaseService):
             raise ValueError("not found the asset info in biz")
         return asset
 
+    @time_print
     def run_central_msg_by_msg_id(self, msg_id):
         self.update_central_msg_next_run_at_forward_by_msg_id(msg_id)
         ret = Http.http_get(self.central_msg_url.format(msg_id))
