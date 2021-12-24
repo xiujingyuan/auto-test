@@ -11,7 +11,7 @@ from app.model.Model import AutoAsset
 from app.services import BaseService
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.grant.services import ChinaGrantService
-from app.services.china.repay import query_withhold, modify_return
+from app.services.china.repay import query_withhold, modify_return, time_print
 from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
     WithholdRequest, WithholdDetail, CardBind
@@ -100,7 +100,7 @@ class ChinaRepayService(BaseService):
         return verify_seq
 
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
-        print(self.get_date(is_str=True))
+        print("1", self.get_date(is_str=True))
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
         for index, item in enumerate(item_no_tuple):
             item_no_x = self.get_no_loan(item)
@@ -116,11 +116,11 @@ class ChinaRepayService(BaseService):
                 CapitalTransaction.capital_transaction_item_no == item).all()
             self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
                                      advance_month)
-            print(self.get_date(is_str=True))
+            print("2", self.get_date(is_str=True))
             self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
-            print(self.get_date(is_str=True))
+            print("3", self.get_date(is_str=True))
         self.sync_plan_to_bc(item_no)
-        print(self.get_date(is_str=True))
+        print("4", self.get_date(is_str=True))
         return "修改完成"
 
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
@@ -586,8 +586,8 @@ class ChinaRepayService(BaseService):
         asset_info.update(asset_tran)
         return asset_info
 
+    @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
-        print(self.get_date(is_str=True))
         asset = self.get_asset(item_no)
         max_create_at = self.get_date(is_str=True, days=-3)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
@@ -617,7 +617,6 @@ class ChinaRepayService(BaseService):
         elif refresh_type in ('auth_lock', 'detail_lock'):
             ret = self.get_lock_info(item_no)
         ret.update(asset)
-        print(self.get_date(is_str=True))
         return ret
 
     def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg, source_type):

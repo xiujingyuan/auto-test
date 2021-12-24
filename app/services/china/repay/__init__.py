@@ -1,6 +1,7 @@
 import json
 from copy import deepcopy
 
+from app.common.log_util import LogUtil
 from app.services.china.repay.Model import WithholdOrder
 
 
@@ -56,6 +57,15 @@ def modify_return(func):
         elif record_type in ('to_spec_dict', 'to_dict'):
             ret = list(map(lambda x: getattr(x, record_type), ret))
             return {func_name[4:]: ret}
+    return wrapper
+
+
+def time_print(func):
+    def wrapper(self, *args, **kwargs):
+        LogUtil.log_info(func.__name__, ' begin: ', self.get_date(is_str=True))
+        ret = func(self, *args, **kwargs)
+        LogUtil.log_info(func.__name__, ' end: ', self.get_date(is_str=True))
+        return ret
     return wrapper
 
 

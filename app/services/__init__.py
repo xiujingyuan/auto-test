@@ -147,7 +147,6 @@ class BaseService(object):
                 cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                 asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
                                                                 days=cal_advance_day)
-                print(cal_advance_day, cal_advance_month, asset_tran.asset_tran_finish_at)
             asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
