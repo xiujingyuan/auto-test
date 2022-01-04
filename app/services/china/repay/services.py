@@ -374,10 +374,10 @@ class ChinaRepayService(BaseService):
             # "id_num_encrypt": "enc_02_3697732689936779264_273",
             # "username_encrypt": "enc_04_3622670_423",
             # "mobile_encrypt": "enc_01_3697732693258668032_713",
-        active_request_data['data']['card_num_encrypt'] = 'enc_03_3697830581502478336_772'
-        active_request_data['data']['card_user_id_encrypt'] = 'enc_02_3697732689936779264_273'
-        active_request_data['data']['card_user_name_encrypt'] = 'enc_04_3622670_423'
-        active_request_data['data']['card_user_phone_encrypt'] = 'enc_01_3697732693258668032_713'
+        # active_request_data['data']['card_num_encrypt'] = 'enc_03_3697830581502478336_772'
+        # active_request_data['data']['card_user_id_encrypt'] = 'enc_02_3697732689936779264_273'
+        # active_request_data['data']['card_user_name_encrypt'] = 'enc_04_3622670_423'
+        # active_request_data['data']['card_user_phone_encrypt'] = 'enc_01_3697732693258668032_713'
         amount_info_list = [(item_no, amount, item_no_priority, None, None),
                             (item_no_rights, rights_amount, item_no_rights_priority, None, None),
                             (item_no_x, x_amount, item_no_x_priority, coupon_num, coupon_amount)]
