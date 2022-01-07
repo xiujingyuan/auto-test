@@ -667,6 +667,8 @@ class ChinaRepayService(BaseService):
             request_x_data['key'] = self.__create_req_key__(asset_x, prefix='Refresh')
             request_x_data['data']['asset_item_no'] = asset_x
             resp_x = Http.http_post(self.refresh_url, request_x_data)
+            self.run_task_by_type_and_order_no('AssetAccountChangeNotify', asset_x)
+        self.run_task_by_type_and_order_no('AssetAccountChangeNotify', item_no)
         return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
             if asset_x else [resp]
 
