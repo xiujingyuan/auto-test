@@ -261,6 +261,9 @@ class ChinaGrantService(BaseService):
             withdraw_success_data["data"]['loan_record']['identifier'] = asset.asset_item_no
             withdraw_success_data["data"]['loan_record']['trade_no'] = 'TN' + asset.asset_item_no
             withdraw_success_data["data"]['loan_record']['due_bill_no'] = 'DN' + asset.asset_item_no
+            if asset.asset_loan_channel == 'zhongke_hegang':
+                withdraw_success_data["data"]['loan_record']['product_code'] = \
+                    random.choice(('KN0-CL', 'KN1-CL-HLJ', 'KN1-CL-NOT-HLJ'))
 
     def get_withdraw_success_info_from_db(self, old_asset, get_type='body'):
         send_msg = self.db_session.query(Sendmsg).filter(
