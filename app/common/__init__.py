@@ -8,15 +8,10 @@
  @site:
  @email:
 """
-from app.services.china.biz_central.nacos import ChinaBizCentralNacos
+import importlib
+
 from app.services.china.biz_central.services import ChinaBizCentralService
-from app.services.china.biz_central.xxljob import ChinaBizCentralXxlJob
-from app.services.china.repay.easy_mock import RepayEasyMock
-from app.services.china.repay.nacos import ChinaRepayNacos
 from app.services.china.repay.services import ChinaRepayService
-from app.services.china.repay.xxljob import ChinaRepayXxlJob
-from app.services.india.repay.service import IndiaRepayService
-from app.services.india.repay.xxljob import IndiaRepayXxlJob
 
 RET = {
         "code": 0,
@@ -28,32 +23,25 @@ RET = {
 class EasyMockFactory(object):
     @classmethod
     def get_easy_mock(cls, country, program, check_req, return_req):
-        if country == 'china' and program == 'repay':
-            return RepayEasyMock(check_req, return_req)
-        elif country == 'china' and program == 'biz_central':
-            return RepayEasyMock(check_req, return_req)
+        meta_class = importlib.import_module('app.services.{0}.{1}.easy_mock'.format(country, program))
+        return getattr(meta_class, country.title() + program.title().replace("_", "") + "EasyMock")(check_req,
+                                                                                                    return_req)
 
 
 class NacosFactory(object):
 
     @classmethod
     def get_nacos(cls, country, program, env):
-        if country == 'china' and program == 'repay':
-            return ChinaRepayNacos(env)
-        elif country == 'china' and program == 'biz_central':
-            return ChinaBizCentralNacos(env)
+        meta_class = importlib.import_module('app.services.{0}.{1}.nacos'.format(country, program))
+        return getattr(meta_class, country.title() + program.title().replace("_", "") + "Nacos")(env)
 
 
 class XxlJobFactory(object):
 
     @classmethod
     def get_xxljob(cls, country, program, env):
-        if country == 'china' and program == 'repay':
-            return ChinaRepayXxlJob(env)
-        elif country == 'china' and program == 'biz_central':
-            return ChinaBizCentralXxlJob(env)
-        elif country == 'india' and program == 'repay':
-            return IndiaRepayXxlJob(env)
+        meta_class = importlib.import_module('app.services.{0}.{1}.xxljob'.format(country, program))
+        return getattr(meta_class, country.title() + program.title().replace("_", "") + "XxlJob")(env)
 
 
 class AutoFactory(object):
@@ -67,10 +55,8 @@ class AutoFactory(object):
 class RepayServiceFactory(object):
     @classmethod
     def get_repay(cls, country, env, environment):
-        if country == 'china':
-            return ChinaRepayService(env, environment)
-        elif country == 'india':
-            return IndiaRepayService(env, environment)
+        meta_class = importlib.import_module('app.services.{0}.repay.service'.format(country))
+        return getattr(meta_class, country.title() + "RepayService")(env, environment)
 
 
 class BizCentralServiceFactory(object):

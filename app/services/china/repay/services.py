@@ -590,30 +590,6 @@ class ChinaRepayService(RepayBaseService):
         detail_lock = list(map(lambda x: x.to_spec_dict, detail_lock))
         return dict(zip(('auth_lock', 'detail_lock'), (auth_lock, detail_lock)))
 
-    def refresh_late_fee(self, item_no):
-        request_data = {
-            "from_system": "Biz",
-            "type": "RbizRefreshLateInterest",
-            "key": self.__create_req_key__(item_no, prefix='Refresh'),
-            "data": {
-                "asset_item_no": item_no
-            }
-        }
-        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
-        if not asset:
-            raise ValueError("not found the asset, check env!")
-        resp = Http.http_post(self.refresh_url, request_data)
-        asset_x = self.get_no_loan(item_no)
-        if asset_x:
-            request_x_data = copy.deepcopy(request_data)
-            request_x_data['key'] = self.__create_req_key__(asset_x, prefix='Refresh')
-            request_x_data['data']['asset_item_no'] = asset_x
-            resp_x = Http.http_post(self.refresh_url, request_x_data)
-            self.run_task_by_type_and_order_no('AssetAccountChangeNotify', asset_x)
-        self.run_task_by_type_and_order_no('AssetAccountChangeNotify', item_no)
-        return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
-            if asset_x else [resp]
-
     def reverse_item_no(self, item_no, serial_no, max_create_at=None):
         req_data = {
             "from_system": "Biz",
@@ -812,13 +788,6 @@ class ChinaRepayService(RepayBaseService):
         self.run_task_by_type_and_order_no('withhold_order_sync', serial_no)
         self.run_task_by_type_and_order_no('execute_combine_withhold', request_no)
         self.run_msg_by_type_and_order_no(serial_no, 'WithholdResultImport')
-
-    def run_task_by_type_and_order_no(self, task_type, order_no):
-        task_list = self.db_session.query(Task).filter(Task.task_type == task_type,
-                                                       Task.task_order_no == order_no,
-                                                       Task.task_status == 'open').all()
-        for task in task_list:
-            self.run_task_by_id(task.task_id)
 
     def run_msg_by_type_and_order_no(self, order_no, sendmsg_type, timeout=5):
         num = 0

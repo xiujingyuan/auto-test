@@ -334,12 +334,8 @@ class ChinaBizCentralService(BaseService):
 
     @time_print
     def change_asset(self, item_no, item_no_x, item_no_rights, advance_day, advance_month):
-        item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
-        # asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
         capital_asset = self.db_session.query(CapitalAsset).filter(
             CapitalAsset.capital_asset_item_no == item_no).first()
-        # asset_tran_list = self.db_session.query(AssetTran).filter(
-        #     AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
         self.change_asset_due_at([], [], capital_asset, capital_tran_list, advance_day,

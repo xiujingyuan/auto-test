@@ -1,5 +1,6 @@
 # 业务逻辑
 import calendar as c
+import copy
 import datetime
 import math
 import os
@@ -74,13 +75,13 @@ class BaseService(object):
         else:
             ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
             self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            ssh_pkey = os.path.join(self.dir, ssh_config["sshprivatekey"])
+            ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
             port = self.get_port()
             self.server = SSHTunnelForwarder(
-                        (ssh_config["sshproxyhost"], 22),
-                        ssh_username=ssh_config["sshusername"],
+                        (ssh_config["ssh_proxy_host"], 22),
+                        ssh_username=ssh_config["ssh_user_name"],
                         ssh_pkey=ssh_pkey,
-                        remote_bind_address=(ssh_config["sshremotehost"], 3306),
+                        remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
                         local_bind_address=('127.0.0.1', port))
             self.server.start()
             self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False)
@@ -435,6 +436,39 @@ class RepayBaseService(BaseService):
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
         self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
 
+    def refresh_late_fee(self, item_no):
+        if not item_no:
+            return
+        request_data = {
+            "from_system": "Biz",
+            "type": "RbizRefreshLateInterest",
+            "key": self.__create_req_key__(item_no, prefix='Refresh'),
+            "data": {
+                "asset_item_no": item_no
+            }
+        }
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        if not asset:
+            raise ValueError("not found the asset, check env!")
+        resp = Http.http_post(self.refresh_url, request_data)
+        asset_x = self.get_no_loan(item_no)
+        if asset_x:
+            request_x_data = copy.deepcopy(request_data)
+            request_x_data['key'] = self.__create_req_key__(asset_x, prefix='Refresh')
+            request_x_data['data']['asset_item_no'] = asset_x
+            resp_x = Http.http_post(self.refresh_url, request_x_data)
+            self.run_task_by_type_and_order_no('AssetAccountChangeNotify', asset_x)
+        self.run_task_by_type_and_order_no('AssetAccountChangeNotify', item_no)
+        return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
+            if asset_x else [resp]
+
+    def run_task_by_type_and_order_no(self, task_type, order_no):
+        task_list = self.db_session.query(Task).filter(Task.task_type == task_type,
+                                                       Task.task_order_no == order_no,
+                                                       Task.task_status == 'open').all()
+        for task in task_list:
+            self.run_task_by_id(task.task_id)
+
     @time_print
     def sync_plan_to_bc(self, item_no):
         now = self.get_date(is_str=True, fmt='%Y-%m-%d')
@@ -476,7 +510,8 @@ class RepayBaseService(BaseService):
                                      advance_month, interval_day)
             if self.country == 'china':
                 self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
-
+        self.refresh_late_fee(item_no)
+        self.refresh_late_fee(item_no_rights)
         self.sync_plan_to_bc(item_no)
         return "修改完成"
 

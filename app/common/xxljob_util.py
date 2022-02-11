@@ -54,6 +54,14 @@ XXL_JOB_DICT = {
         'repay': {
             "1": 4
         }
+    },
+    "mexico": {
+        'url': 'http://biz-job-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'username': 'admin',
+        'password': '123456',
+        'repay': {
+            "1": 4
+        }
     }
 }
 

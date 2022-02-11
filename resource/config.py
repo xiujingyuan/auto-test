@@ -30,11 +30,44 @@ class AutoTestConfig:
                 "repay": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/global_rbiz{0}",
                 "grant": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{2}/global_gbiz{0}",
                 "ssh": {
-                    "sshproxyhost": "47.116.2.104",
-                    "sshremotehost": "rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com",
-                    "sshusername": "ssh-proxy",
-                    "sshprivatekey": "./resource/dx_ssh_proxy",
-                    "sshbindport": 3331
+                    "ssh_proxy_host": "47.116.2.104",
+                    "ssh_remote_host": "rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com",
+                    "ssh_user_name": "ssh-proxy",
+                    "ssh_private_key": "./resource/dx_ssh_proxy",
+                    "ssh_bind_port": 3331
+                }
+            },
+            'philippines': {
+                "repay": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/phl_rbiz{0}",
+                "grant": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{2}/phl_gbiz{0}",
+                "ssh": {
+                    "ssh_proxy_host": "47.116.2.104",
+                    "ssh_remote_host": "rm-uf6589ct883rjc052.mysql.rds.aliyuncs.com",
+                    "ssh_user_name": "ssh-proxy",
+                    "ssh_private_key": "./resource/dx_ssh_proxy",
+                    "ssh_bind_port": 3511
+                }
+            },
+            'mexico': {
+                "repay": "mysql+pymysql://root:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/mex_rbiz{0}",
+                "grant": "mysql+pymysql://root:QZOzz46rUjs$$PIKL8@127.0.0.1:{2}/mex_gbiz{0}",
+                "ssh": {
+                    "ssh_proxy_host": "47.116.2.104",
+                    "ssh_remote_host": "rm-uf6z2o8w9rure4as4.mysql.rds.aliyuncs.com",
+                    "ssh_user_name": "ssh-proxy",
+                    "ssh_private_key": "./resource/dx_ssh_proxy",
+                    "ssh_bind_port": 3521
+                }
+            },
+            'thailand': {
+                "repay": "mysql+pymysql://root:0Q^0bBURuSvS3#PB@127.0.0.1:{1}/tha_rbiz{0}",
+                "grant": "mysql+pymysql://root:0Q^0bBURuSvS3#PB@127.0.0.1:{2}/tha_gbiz{0}",
+                "ssh": {
+                    "ssh_proxy_host": "47.116.2.104",
+                    "ssh_remote_host": "rm-uf6seazei9e71x831.mysql.rds.aliyuncs.com",
+                    "ssh_user_name": "ssh-proxy",
+                    "ssh_private_key": "./resource/dx_ssh_proxy",
+                    "ssh_bind_port": 3511
                 }
             }
         }

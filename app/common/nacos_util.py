@@ -9,7 +9,8 @@ NACOS_DOMAIN_DICT = {
     "china": "nacos.k8s-ingress-nginx.kuainiujinke.com",
     "tha": "biz-nacos-tha.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
     "phl": "nacos-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
-    "mexico": "nacos-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com"
+    "mexico": "nacos-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
+    "philippines": "nacos-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/"
 }
 
 
