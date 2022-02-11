@@ -409,9 +409,6 @@ class BaseService(object):
 class GrantBaseService(BaseService):
     def __init__(self, country, env, run_env, check_req, return_req):
         super(GrantBaseService, self).__init__(country, 'grant', env, run_env, check_req, return_req)
-        self.cmdb_host = None
-        self.grant_host = None
-        self.repay_host = None
         self.asset_import_url = self.grant_host + '/paydayloan/asset-sync-new'
         self.repay_capital_asset_import_url = self.repay_host + '/capital-asset/grant'
         self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"

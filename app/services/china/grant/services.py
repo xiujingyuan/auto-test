@@ -17,9 +17,11 @@ from app.services.china.grant.Model import Asset, Task, Synctask, Sendmsg, Route
 
 class ChinaGrantService(GrantBaseService):
     def __init__(self, env, run_env, check_req=False, return_req=False):
-        super(ChinaGrantService, self).__init__('china', 'grant', env, run_env, check_req, return_req)
-        self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
+        self.grant_host = "http://grant{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.cmdb_host = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
+        super(ChinaGrantService, self).__init__('china', env, run_env, check_req, return_req)
+        self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
 
     def add_msg(self, msg):
         new_msg = Sendmsg()

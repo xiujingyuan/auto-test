@@ -18,6 +18,7 @@ class ChinaBizCentralService(BaseService):
 
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaBizCentralService, self).__init__('china', 'biz_central', env, run_env, check_req, return_req)
+        self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.central_task_url = self.biz_host + "/job/runTaskById?id={0}"
         self.central_msg_url = self.biz_host + "/job/sendMsgById?id={0}"
         self.asset_import_url = self.biz_host + "/asset/import"
