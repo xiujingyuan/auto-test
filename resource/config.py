@@ -21,10 +21,23 @@ class AutoTestConfig:
         DEBUG = True
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/auto-test?charset=utf8'
     SQLALCHEMY_DICT = {
-        'china': {"repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/rbiz{0}",
-                  "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/gbiz{0}",
-                  "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}"}
-    }
+            'china': {
+                "repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/rbiz{0}",
+                "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/gbiz{0}",
+                "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}"
+            },
+            'india': {
+                "repay": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/global_rbiz{0}",
+                "grant": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{2}/global_gbiz{0}",
+                "ssh": {
+                    "sshproxyhost": "47.116.2.104",
+                    "sshremotehost": "rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com",
+                    "sshusername": "ssh-proxy",
+                    "sshprivatekey": "./resource/dx_ssh_proxy",
+                    "sshbindport": 3331
+                }
+            }
+        }
     # SQLALCHEMY设置配置
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False

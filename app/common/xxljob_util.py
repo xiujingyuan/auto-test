@@ -32,9 +32,9 @@ XXL_JOB_DICT = {
         }
     },
     "india": {
-        'url': 'http://biz-xxl-job-admin.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'url': 'http://biz-job-ind.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
         'username': 'admin',
-        'password': 'MTIzNDU2',
+        'password': '123456',
         'repay': {
             "1": 2
         }

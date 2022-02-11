@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy import desc
 
 from app.common.log_util import LogUtil
-from app.services import BaseService
+from app.services import GrantBaseService
 from app.common.http_util import Http
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.grant import GRANT_ASSET_IMPORT_URL, FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
@@ -15,19 +15,11 @@ from app.services.china.grant.Model import Asset, Task, Synctask, Sendmsg, Route
     AssetTran, AssetCard, CapitalAsset
 
 
-class ChinaGrantService(BaseService):
+class ChinaGrantService(GrantBaseService):
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaGrantService, self).__init__('china', 'grant', env, run_env, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
-        self.asset_import_url = self.grant_host + '/paydayloan/asset-sync-new'
-        self.repay_capital_asset_import_url = self.repay_host + '/capital-asset/grant'
-        self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
-        self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
-        self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
-        self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
-        # self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/standard-calculate'
-        self.cmdb_url = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
-        # self.cmdb_url = 'http://kong-api-test.kuainiujinke.com/cmdb1/v6/rate/repay/calculate'
+        self.cmdb_host = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
 
     def add_msg(self, msg):
         new_msg = Sendmsg()
@@ -82,7 +74,7 @@ class ChinaGrantService(BaseService):
                 "clear_day": clear_day
             }
         }
-        resp = Http.http_post(self.cmdb_url, req)
+        resp = Http.http_post(self.cmdb_host, req)
         return resp
 
     def calc_noloan_amount(self, loan_asset_info, noloan_source_type):

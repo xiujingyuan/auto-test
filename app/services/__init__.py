@@ -2,14 +2,17 @@
 import calendar as c
 import datetime
 import math
+import os
 import random
 import time
+import socket
 
 from dateutil.relativedelta import relativedelta
 from faker import Faker
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sshtunnel import SSHTunnelForwarder
 
 import app.common as common
 from app.common.db_util import DataBase
@@ -17,19 +20,20 @@ from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
 from app.services.china.repay import time_print
-from app.services.china.repay.Model import Task
+from app.services.china.repay.Model import SendMsg
+from app.services.india.repay.Model import Task, CapitalTransaction, CapitalAsset, AssetTran, Asset, AssetExtend
 from app.test_cases import CaseException
 from resource.config import AutoTestConfig
 
 ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
 ENCRYPT_DICT = {
-            "idnum": 2,
-            "mobile": 1,
-            "card_number": 3,
-            "name": 4,
-            "email": 5,
-            "address": 6
-        }
+    "idnum": 2,
+    "mobile": 1,
+    "card_number": 3,
+    "name": 4,
+    "email": 5,
+    "address": 6
+}
 
 
 def wait_timeout(func):
@@ -43,6 +47,7 @@ def wait_timeout(func):
             elif (self.get_date() - begin).seconds >= 60:
                 raise CaseException('not found the record with {0}， with args is :{1}'.format(timeout, kwargs))
         return ret
+
     return wrapper
 
 
@@ -58,20 +63,57 @@ class BaseService(object):
     def __init__(self, country, program, env, run_env, check_req, return_req):
         self.env = env
         self.run_env = run_env
+        self.country = country
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
-        self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False)
-        self.grant_host = "http://grant{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.db_session = MyScopedSession(sessionmaker())
-        self.db_session.configure(bind=self.engine)
+        if country == 'china':
+            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False)
+            self.db_session = MyScopedSession(sessionmaker())
+            self.db_session.configure(bind=self.engine)
+        else:
+            ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
+            self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            ssh_pkey = os.path.join(self.dir, ssh_config["sshprivatekey"])
+            port = self.get_port()
+            self.server = SSHTunnelForwarder(
+                        (ssh_config["sshproxyhost"], 22),
+                        ssh_username=ssh_config["sshusername"],
+                        ssh_pkey=ssh_pkey,
+                        remote_bind_address=(ssh_config["sshremotehost"], 3306),
+                        local_bind_address=('127.0.0.1', port))
+            self.server.start()
+            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False)
+            self.db_session = MyScopedSession(sessionmaker())
+            self.db_session.configure(bind=self.engine)
         self.log = LogUtil()
+
+    @staticmethod
+    def get_port():
+        port = 0
+        for i in range(10):
+            ip = '127.0.0.1'
+            port = random.randint(20000, 31000)
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = s.connect_ex((ip, port))
+            s.close()
+            if result == 0:
+                LogUtil.log_info("port:%s already been used" % port)
+            else:
+                LogUtil.log_info("port:%s already been choiced" % port)
+                break
+            if i == 9:
+                raise Exception("未选到合适的端口")
+        return port
+
+    def run_xxl_job(self, job_type, param=None):
+        return self.xxljob.trigger_job(job_type, executor_param=param)
 
     def __del__(self):
         if hasattr(self, 'db_session'):
             self.db_session.close()
+        if hasattr(self, 'server'):
+            self.server.close()
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
@@ -105,7 +147,8 @@ class BaseService(object):
                     pre_month_date = datetime.date(end_date.year, end_date.month - 1, start_date.day)
                 except:
                     pre_month_date = datetime.date(end_date.year, end_date.month - 1, c.monthrange(end_date.year,
-                                                                                               end_date.month - 1)[1])
+                                                                                                   end_date.month - 1)[
+                        1])
             else:
                 try:
                     pre_month_date = datetime.date(end_date.year - 1, 12, start_date.day)
@@ -120,7 +163,8 @@ class BaseService(object):
                     next_month_date = datetime.date(end_date.year, end_date.month + 1, start_date.day)
                 except:
                     next_month_date = datetime.date(end_date.year, end_date.month + 1, c.monthrange(end_date.year,
-                                                                                                end_date.month + 1)[1])
+                                                                                                    end_date.month + 1)[
+                        1])
             else:
                 try:
                     next_month_date = datetime.date(end_date.year + 1, 1, start_date.day)
@@ -135,7 +179,7 @@ class BaseService(object):
 
     @time_print
     def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                            advance_month):
+                            advance_month, interval_day):
         real_now = self.get_date(months=advance_month, days=advance_day).date()
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
@@ -143,7 +187,10 @@ class BaseService(object):
             capital_asset.capital_asset_granted_at = real_now
 
         for asset_tran in asset_tran_list:
-            asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
+            if interval_day in (7, 14):
+                asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
+            else:
+                asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
             if asset_tran.asset_tran_finish_at.year != 1000:
                 cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                 cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
@@ -152,7 +199,11 @@ class BaseService(object):
             asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
-            expect_finished_at = self.get_date(date=real_now, months=capital_tran.capital_transaction_period)
+            if interval_day in (7, 14):
+                expect_finished_at = self.get_date(date=real_now,
+                                                   days=capital_tran.capital_transaction_period * interval_day)
+            else:
+                expect_finished_at = self.get_date(date=real_now, months=capital_tran.capital_transaction_period)
             if capital_tran.capital_transaction_user_repay_at.year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_user_repay_at)
@@ -194,8 +245,10 @@ class BaseService(object):
         self.db_session.commit()
 
     def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
-        task_id = self.get(order_no, task_type, status=status)[0]['task_id']
-        return self.run_task_by_id(task_id, excepts=excepts)
+        task = self.db_session.query(Task).filter(Task.task_order_no == order_no,
+                                                  Task.task_type == task_type,
+                                                  Task.task_status == status).first()
+        return self.run_task_by_id(task.task_id, excepts=excepts)
 
     def update_task_next_run_at_forward_by_task_id(self, task_id):
         task = self.db_session.query(Task).filter(Task.task_id == task_id).first()
@@ -206,7 +259,7 @@ class BaseService(object):
         self.db_session.commit()
 
     def run_task_by_id(self, task_id, excepts={'code': 0}):
-        self.update_task_next_run_at_forward_by_task_id(task_id)
+        # self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = Http.http_get(self.run_task_id_url.format(task_id))
         ret = ret[0] if isinstance(ret, list) else ret
         if not isinstance(ret, dict):
@@ -221,11 +274,12 @@ class BaseService(object):
         ret = Http.http_get(self.run_msg_id_url.format(msg_id))
         return ret
 
-    def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
-        msg_id = self.db.get_sendmsg_info(order_no, sendmsg_type)[0]['sendmsg_id']
-        return self.run_msg_by_id(msg_id, excepts=excepts)
+    def run_msg_by_order_no(self, order_no, sendmsg_type):
+        msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
+                                                    SendMsg.sendmsg_type == sendmsg_type).first()
+        return self.run_msg_by_id(msg.sendmsg_id)
 
-    def run_task_for_count(self, task_type, order_no,  excepts={'code': 0}, count=1):
+    def run_task_for_count(self, task_type, order_no, excepts={'code': 0}, count=1):
         task_id = self.get_task_id_by_task_type(task_type, order_no)
         self.db.update_task_next_run_at_forward_by_task_id(task_id)
         for _ in range(count):
@@ -350,3 +404,97 @@ class BaseService(object):
             }
         }
         return response
+
+
+class GrantBaseService(BaseService):
+    def __init__(self, country, env, run_env, check_req, return_req):
+        super(GrantBaseService, self).__init__(country, 'grant', env, run_env, check_req, return_req)
+        self.cmdb_host = None
+        self.grant_host = None
+        self.repay_host = None
+        self.asset_import_url = self.grant_host + '/paydayloan/asset-sync-new'
+        self.repay_capital_asset_import_url = self.repay_host + '/capital-asset/grant'
+        self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
+        self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
+        self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
+        self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
+
+
+class RepayBaseService(BaseService):
+    def __init__(self, country, env, run_env, check_req, return_req):
+        super(RepayBaseService, self).__init__(country, 'repay', env, run_env, check_req, return_req)
+        self.decrease_url = self.repay_host + "/asset/bill/decrease"
+        self.offline_recharge_url = self.repay_host + "/account/recharge-encrypt"
+        self.offline_repay_url = self.repay_host + "/asset/repayPeriod"
+        self.active_repay_url = self.repay_host + "/paydayloan/repay/combo-active-encrypt"
+        self.fox_repay_url = self.repay_host + "/fox/manual-withhold-encrypt"
+        self.refresh_url = self.repay_host + "/asset/refreshLateFee"
+        self.send_msg_url = self.repay_host + "/paydayloan/repay/bindSms"
+        self.pay_svr_callback_url = self.repay_host + "/paysvr/callback"
+        self.reverse_url = self.repay_host + "/asset/repayReverse"
+        self.withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
+        self.run_task_id_url = self.repay_host + '/task/run?taskId={0}'
+        self.run_msg_id_url = self.repay_host + '/msg/run?msgId={0}'
+        self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
+        self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
+
+    @time_print
+    def sync_plan_to_bc(self, item_no):
+        now = self.get_date(is_str=True, fmt='%Y-%m-%d')
+        self.run_xxl_job('syncAssetToBiz', param={'assetItemNo': [item_no]})
+        self.run_msg_by_order_no(item_no, 'asset_change_fix_status')
+        self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)
+
+    def get_no_loan(self, item_no):
+        item_no_x = ''
+        asset_extend = self.db_session.query(AssetExtend).filter(
+            AssetExtend.asset_extend_asset_item_no == item_no,
+            AssetExtend.asset_extend_type == 'ref_order_no'
+        ).first()
+        if asset_extend:
+            ref_order_type = self.db_session.query(AssetExtend).filter(
+                AssetExtend.asset_extend_asset_item_no == item_no,
+                AssetExtend.asset_extend_type == 'ref_order_type'
+            ).first()
+            item_no_x = asset_extend.asset_extend_val if ref_order_type and \
+                                                         ref_order_type.asset_extend_val != 'lieyin' else ''
+        return item_no_x
+
+    @time_print
+    def change_asset(self, item_no, item_no_rights, advance_day, advance_month, interval_day=30):
+        item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no,)
+        for index, item in enumerate(item_no_tuple):
+            item_no_x = self.get_no_loan(item)
+            item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
+            asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
+            if not asset_list:
+                raise ValueError('not found the asset, check the env!')
+            asset_tran_list = self.db_session.query(AssetTran).filter(
+                AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
+            capital_asset = self.db_session.query(CapitalAsset).filter(
+                CapitalAsset.capital_asset_item_no == item).first()
+            capital_tran_list = self.db_session.query(CapitalTransaction).filter(
+                CapitalTransaction.capital_transaction_item_no == item).all()
+            self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
+                                     advance_month, interval_day)
+            if self.country == 'china':
+                self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
+
+        self.sync_plan_to_bc(item_no)
+        return "修改完成"
+
+
+class OverseaGrantService(GrantBaseService):
+    def __init__(self, country, env, run_env, check_req=False, return_req=False):
+        super(OverseaGrantService, self).__init__(country, env, run_env, check_req, return_req)
+
+
+class OverseaRepayService(RepayBaseService):
+    def __init__(self, country, env, run_env, check_req=False, return_req=False):
+        super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
+
+    @time_print
+    def sync_plan_to_bc(self, item_no):
+        self.run_xxl_job('manualSyncAsset', param={'assetItemNo': [item_no]})
+        self.run_task_by_order_no(item_no, 'AssetAccountChangeNotify')
+        self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')

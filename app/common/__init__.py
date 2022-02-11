@@ -15,6 +15,8 @@ from app.services.china.repay.easy_mock import RepayEasyMock
 from app.services.china.repay.nacos import ChinaRepayNacos
 from app.services.china.repay.services import ChinaRepayService
 from app.services.china.repay.xxljob import ChinaRepayXxlJob
+from app.services.india.repay.service import IndiaRepayService
+from app.services.india.repay.xxljob import IndiaRepayXxlJob
 
 RET = {
         "code": 0,
@@ -48,8 +50,10 @@ class XxlJobFactory(object):
     def get_xxljob(cls, country, program, env):
         if country == 'china' and program == 'repay':
             return ChinaRepayXxlJob(env)
-        if country == 'china' and program == 'biz_central':
+        elif country == 'china' and program == 'biz_central':
             return ChinaBizCentralXxlJob(env)
+        elif country == 'india' and program == 'repay':
+            return IndiaRepayXxlJob(env)
 
 
 class AutoFactory(object):
@@ -65,6 +69,8 @@ class RepayServiceFactory(object):
     def get_repay(cls, country, env, environment):
         if country == 'china':
             return ChinaRepayService(env, environment)
+        elif country == 'india':
+            return IndiaRepayService(env, environment)
 
 
 class BizCentralServiceFactory(object):

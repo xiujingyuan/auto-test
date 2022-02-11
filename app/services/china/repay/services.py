@@ -8,7 +8,7 @@ from app import db
 from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
 from app.model.Model import AutoAsset
-from app.services import BaseService
+from app.services import RepayBaseService
 from app.services.china.biz_central.services import ChinaBizCentralService
 from app.services.china.grant.services import ChinaGrantService
 from app.services.china.repay import query_withhold, modify_return, time_print
@@ -17,25 +17,14 @@ from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrd
     WithholdRequest, WithholdDetail, CardBind
 
 
-class ChinaRepayService(BaseService):
+class ChinaRepayService(RepayBaseService):
     def __init__(self, env, run_env, check_req=False, return_req=False):
         super(ChinaRepayService, self).__init__('china', 'repay', env, run_env, check_req, return_req)
+        self.grant_host = "http://grant{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.grant = ChinaGrantService(env, run_env, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
-        self.decrease_url = self.repay_host + "/asset/bill/decrease"
-        self.offline_recharge_url = self.repay_host + "/account/recharge-encrypt"
-        self.offline_repay_url = self.repay_host + "/asset/repayPeriod"
-        self.active_repay_url = self.repay_host + "/paydayloan/repay/combo-active-encrypt"
-        self.fox_repay_url = self.repay_host + "/fox/manual-withhold-encrypt"
-        self.refresh_url = self.repay_host + "/asset/refreshLateFee"
-        self.send_msg_url = self.repay_host + "/paydayloan/repay/bindSms"
-        self.pay_svr_callback_url = self.repay_host + "/paysvr/callback"
-        self.reverse_url = self.repay_host + "/asset/repayReverse"
-        self.withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
-        self.run_task_id_url = self.repay_host + '/task/run?taskId={0}'
-        self.run_msg_id_url = self.repay_host + '/msg/run?msgId={0}'
-        self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
-        self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
 
     def calc_qinnong_early_settlement(self, item_no):
         param = {
@@ -99,48 +88,11 @@ class ChinaRepayService(BaseService):
         verify_seq = ret['data']['verify_seq']
         return verify_seq
 
-    @time_print
-    def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
-        item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no, )
-        for index, item in enumerate(item_no_tuple):
-            item_no_x = self.get_no_loan(item)
-            item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
-            asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
-            if not asset_list:
-                raise ValueError('not found the asset, check the env!')
-            asset_tran_list = self.db_session.query(AssetTran).filter(
-                AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
-            capital_asset = self.db_session.query(CapitalAsset).filter(
-                CapitalAsset.capital_asset_item_no == item).first()
-            capital_tran_list = self.db_session.query(CapitalTransaction).filter(
-                CapitalTransaction.capital_transaction_item_no == item).all()
-            self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                                     advance_month)
-            self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
-
-        self.sync_plan_to_bc(item_no)
-        return "修改完成"
-
     def get_asset_tran_balance_amount_by_period(self, item_no, period_start, period_end):
         asset_tran_list = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no,
                                                                   AssetTran.asset_tran_period >= period_start,
                                                                   AssetTran.asset_tran_period <= period_end).all()
         return reduce(lambda x, y: x + y.asset_tran_balance_amount, asset_tran_list, 0)
-
-    def get_no_loan(self, item_no):
-        item_no_x = ''
-        asset_extend = self.db_session.query(AssetExtend).filter(
-            AssetExtend.asset_extend_asset_item_no == item_no,
-            AssetExtend.asset_extend_type == 'ref_order_no'
-        ).first()
-        if asset_extend:
-            ref_order_type = self.db_session.query(AssetExtend).filter(
-                AssetExtend.asset_extend_asset_item_no == item_no,
-                AssetExtend.asset_extend_type == 'ref_order_type'
-            ).first()
-            item_no_x = asset_extend.asset_extend_val if ref_order_type and \
-                                                         ref_order_type.asset_extend_val != 'lieyin' else ''
-        return item_no_x
 
     def set_asset_tran_status(self, period, item_no, status='finish'):
         if not period or not item_no:
@@ -251,9 +203,6 @@ class ChinaRepayService(BaseService):
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
 
-    def run_xxl_job(self, job_type, param=None):
-        return self.xxljob.trigger_job(job_type, executor_param=param)
-
     @time_print
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
@@ -262,13 +211,6 @@ class ChinaRepayService(BaseService):
             desc(SendMsg.sendmsg_create_at)).first()
         if msg:
             return self.run_msg_by_id(msg.sendmsg_id)
-
-    @time_print
-    def sync_plan_to_bc(self, item_no):
-        now = self.get_date(is_str=True, fmt='%Y-%m-%d')
-        self.run_xxl_job('syncAssetToBiz', param={'assetItemNo': [item_no]})
-        self.run_msg_by_order_no(item_no, 'asset_change_fix_status')
-        self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)
 
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
@@ -296,6 +238,7 @@ class ChinaRepayService(BaseService):
         request_data = self.__get_active_request_data__(item_no, item_no_x, item_no_rights, amount, x_amount,
                                                         rights_amount, repay_card, verify_code=verify_code,
                                                         verify_seq=verify_seq)
+        print(json.dumps(request_data))
         resp = Http.http_post(self.active_repay_url, request_data)
         if resp['code'] == 0 and agree:
             # 协议支付 发短信
@@ -306,7 +249,8 @@ class ChinaRepayService(BaseService):
             agree_request_data['key'] = self.__create_req_key__(item_no, prefix='Agree')
             agree_request_data['data']['order_no'] = first_serial_no
             agree_request_data['data']['verify_code'] = verify_code
-            agree_request_data['data']['verify_seq'] = verify_seq if protocol else 'error_test'
+            # agree_request_data['data']['verify_seq'] = verify_seq if protocol else 'error_test'
+            agree_request_data['data']['verify_seq'] = 'error_test'
             agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
             # 执行协议签约任务
             request_data = [request_data, agree_request_data]

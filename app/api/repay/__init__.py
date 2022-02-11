@@ -15,7 +15,6 @@ def hello_world():
     return 'hello repay api'
 
 
-
 @api_repay.route('/repay_tools/<string:tool>', methods=["POST"])
 def repay_tools(tool):
     ret = deepcopy(RET)
@@ -23,7 +22,6 @@ def repay_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-
     try:
         if tool == 'copy_asset':
             to_env = req.pop('to_env', None)
