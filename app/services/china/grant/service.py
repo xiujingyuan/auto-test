@@ -9,7 +9,7 @@ from sqlalchemy import desc
 from app.common.log_util import LogUtil
 from app.services import GrantBaseService
 from app.common.http_util import Http
-from app.services.china.biz_central.services import ChinaBizCentralService
+from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import GRANT_ASSET_IMPORT_URL, FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.services.china.grant.Model import Asset, Task, Synctask, Sendmsg, RouterLoadRecord, AssetExtend, \
     AssetTran, AssetCard, CapitalAsset

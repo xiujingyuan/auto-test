@@ -10,8 +10,8 @@
 """
 import importlib
 
-from app.services.china.biz_central.services import ChinaBizCentralService
-from app.services.china.repay.services import ChinaRepayService
+from app.services.china.biz_central.service import ChinaBizCentralService
+from app.services.china.repay.service import ChinaRepayService
 
 RET = {
         "code": 0,

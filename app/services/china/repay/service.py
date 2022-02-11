@@ -9,8 +9,8 @@ from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
 from app.model.Model import AutoAsset
 from app.services import RepayBaseService
-from app.services.china.biz_central.services import ChinaBizCentralService
-from app.services.china.grant.services import ChinaGrantService
+from app.services.china.biz_central.service import ChinaBizCentralService
+from app.services.china.grant.service import ChinaGrantService
 from app.services.china.repay import query_withhold, modify_return, time_print
 from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \

@@ -14,12 +14,12 @@ WEISHEMMA_TRAIL = '''{
 }'''
 
 
-class RepayEasyMock(EasyMock):
+class ChinaRepayEasyMock(EasyMock):
     def __init__(self, check_req, return_req):
-        super(RepayEasyMock, self).__init__('rbiz_manual_test', check_req, return_req)
+        super(ChinaRepayEasyMock, self).__init__('rbiz_manual_test', check_req, return_req)
 
     def update_trail_status(self, channel, value):
-        super(RepayEasyMock, self).update('/weishenma_daxinganling/pre-loan/repayTrial', '', value)
+        super(ChinaRepayEasyMock, self).update('/weishenma_daxinganling/pre-loan/repayTrial', '', value)
 
     def update_trail_amount(self, channel, principal, interest, status):
         if channel == 'weishenma_daxinganling':
@@ -35,4 +35,4 @@ class RepayEasyMock(EasyMock):
             value = dict(zip(('$.data.assets[0].principal', '$.data.assets[0].interest', '$.data.assets[0].total_amount'),
                              (principal, interest, principal + interest)))
             trail_url = '/qinnong/std/repayment/calculate'
-        return super(RepayEasyMock, self).update_by_json_path(trail_url, value, method='post')
+        return super(ChinaRepayEasyMock, self).update_by_json_path(trail_url, value, method='post')

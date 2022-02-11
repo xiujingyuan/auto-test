@@ -5,8 +5,8 @@ import pandas as pd
 
 from app.common.assert_util import Assert
 from app.services import wait_timeout
-from app.services.china.biz_central.services import ChinaBizCentralService
-from app.services.china.repay.services import ChinaRepayService
+from app.services.china.biz_central.service import ChinaBizCentralService
+from app.services.china.repay.service import ChinaRepayService
 from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
 
 
