@@ -9,4 +9,5 @@ class PhilippinesRepayService(OverseaRepayService):
     @time_print
     def sync_plan_to_bc(self, item_no):
         self.run_xxl_job('manualSyncAsset', param={'assetItemNo': [item_no]})
+        self.run_task_by_order_no(item_no, 'AssetAccountChangeNotify')
         self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')

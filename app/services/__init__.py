@@ -180,7 +180,7 @@ class BaseService(object):
 
     @time_print
     def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                            advance_month, interval_day):
+                            advance_month, interval_day=30):
         real_now = self.get_date(months=advance_month, days=advance_day).date()
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now

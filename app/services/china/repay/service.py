@@ -101,6 +101,8 @@ class ChinaRepayService(RepayBaseService):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         if item_no_x:
             asset_x = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no_x).first()
+            asset_x.asset_status = 'repay'
+            asset_x.asset_actual_grant_at = '1000-01-01 00:00:00'
             asset_x.asset_balance_amount = asset_x.asset_repaid_amount = 0
         item_tuple = tuple(filter(lambda x: x, [item_no, item_no_x]))
         asset_tran_list = self.db_session.query(AssetTran).filter(
@@ -131,6 +133,8 @@ class ChinaRepayService(RepayBaseService):
 
         self.db_session.add_all(asset_tran_list)
         self.db_session.add(asset)
+        if item_no_x:
+            self.db_session.add(asset_x)
         self.db_session.commit()
 
     def set_trail_mock(self, item_no, period_start, period_end, channel, status, principal_over=False,
@@ -763,7 +767,7 @@ class ChinaRepayService(RepayBaseService):
             "transaction_status": status,
             "sign": "6401cd046b5ae44ef208b8ea82d398ab",
             "from_system": "paysvr",
-            "channel_message": "交易成功" if status == 2 else '交易失败'
+            "channel_message": "交易成功" if status == 2 else '余额不足'
         }
         resp = Http.http_post(self.pay_svr_callback_url, req_data)
         if resp['code'] != 0:
