@@ -1,3 +1,4 @@
+import json
 from copy import deepcopy
 
 from flask import Blueprint, request, jsonify
@@ -23,6 +24,53 @@ def get_menu():
     menu_list = Menu.query.filter(Menu.menu_parent_id == 0).order_by(Menu.menu_order).all()
     ret = deepcopy(RET)
     ret['data'] = get_all_menu(menu_list)
+    print(json.dumps(ret['data'], ensure_ascii=False))
+    return jsonify(ret)
+
+
+@api_web.route('/table', methods=["GET"])
+def get_table():
+    ret = deepcopy(RET)
+    ret['data'] = {
+        "list": [{
+                "id": 1,
+                "name": "张三",
+                "money": 123,
+                "address": "广东省东莞市长安镇",
+                "state": "成功",
+                "date": "2019-11-1",
+                "thumb": "https://lin-xin.gitee.io/images/post/wms.png"
+            },
+            {
+                "id": 2,
+                "name": "李四",
+                "money": 456,
+                "address": "广东省广州市白云区",
+                "state": "成功",
+                "date": "2019-10-11",
+                "thumb": "https://lin-xin.gitee.io/images/post/node3.png"
+            },
+            {
+                "id": 3,
+                "name": "王五",
+                "money": 789,
+                "address": "湖南省长沙市",
+                "state": "失败",
+                "date": "2019-11-11",
+                "thumb": "https://lin-xin.gitee.io/images/post/parcel.png"
+            },
+            {
+                "id": 4,
+                "name": "赵六",
+                "money": 1011,
+                "address": "福建省厦门市鼓浪屿",
+                "state": "成功",
+                "date": "2019-10-20",
+                "thumb": "https://lin-xin.gitee.io/images/post/notice.png"
+            }
+        ],
+        "pageTotal": 4
+    }
     return jsonify(ret)
 
 
@@ -85,9 +133,25 @@ def get_all_menu(menu_list):
         menu_dict = menu.to_spec_dict
         sub_menu = Menu.query.filter(Menu.menu_parent_id == menu.menu_id).all()
         if sub_menu:
-            menu_dict['subs'] = get_all_menu(sub_menu)
+            menu_dict['subs'] = get_all_menu(sub_menu)['menu']
         ret_menu.append(menu_dict)
+
+    ret_menu = change_menu(ret_menu)
+
     return {'menu': ret_menu}
+
+
+def change_menu(menu, include=['icon', 'index', 'title']):
+    ret = []
+    for item in menu:
+        menu_dict = {}
+        for key in item:
+            if key in include:
+                menu_dict[key] = item[key]
+            elif key == 'subs':
+                menu_dict[key] = change_menu(item[key])
+        ret.append(menu_dict)
+    return ret
 
 
 

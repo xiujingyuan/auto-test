@@ -2,6 +2,7 @@
 import calendar as c
 import copy
 import datetime
+import json
 import math
 import os
 import random
@@ -11,7 +12,7 @@ import socket
 from dateutil.relativedelta import relativedelta
 from faker import Faker
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sshtunnel import SSHTunnelForwarder
 
@@ -65,6 +66,8 @@ class BaseService(object):
         self.env = env
         self.run_env = run_env
         self.country = country
+        self.job_url = getattr(self, 'biz_host' if program ==
+                                                   'biz_central' else '{0}_host'.format(program)) + "/job/run"
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
@@ -89,6 +92,9 @@ class BaseService(object):
             self.db_session.configure(bind=self.engine)
         self.log = LogUtil()
 
+    def run_job_by_api(self, job_type, job_params):
+        return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, job_params))
+
     @staticmethod
     def get_port():
         port = 0
@@ -107,8 +113,11 @@ class BaseService(object):
                 raise Exception("未选到合适的端口")
         return port
 
-    def run_xxl_job(self, job_type, param=None):
-        return self.xxljob.trigger_job(job_type, executor_param=param)
+    def run_xxl_job(self, job_type, param=None, invoke_type='api'):
+        if invoke_type == 'api':
+            return self.run_job_by_api(job_type, param)
+        else:
+            return self.xxljob.trigger_job(job_type, executor_param=param)
 
     def __del__(self):
         if hasattr(self, 'db_session'):
@@ -277,8 +286,10 @@ class BaseService(object):
 
     def run_msg_by_order_no(self, order_no, sendmsg_type):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
-                                                    SendMsg.sendmsg_type == sendmsg_type).first()
-        return self.run_msg_by_id(msg.sendmsg_id)
+                                                    SendMsg.sendmsg_type == sendmsg_type,
+                                                    SendMsg.sendmsg_status == 'open').order_by(desc(SendMsg.sendmsg_id)).all()
+        for item in msg:
+            self.run_msg_by_id(item.sendmsg_id)
 
     def run_task_for_count(self, task_type, order_no, excepts={'code': 0}, count=1):
         task_id = self.get_task_id_by_task_type(task_type, order_no)
@@ -458,7 +469,11 @@ class RepayBaseService(BaseService):
             request_x_data['data']['asset_item_no'] = asset_x
             resp_x = Http.http_post(self.refresh_url, request_x_data)
             self.run_task_by_type_and_order_no('AssetAccountChangeNotify', asset_x)
+            self.run_msg_by_order_no(asset_x, 'AssetChangeNotifyMQ')
+            self.run_msg_by_order_no(asset_x, 'assetFoxSync')
         self.run_task_by_type_and_order_no('AssetAccountChangeNotify', item_no)
+        self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')
+        self.run_msg_by_order_no(item_no, 'assetFoxSync')
         return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
             if asset_x else [resp]
 
@@ -495,13 +510,21 @@ class RepayBaseService(BaseService):
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month, interval_day=30):
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no,)
         for index, item in enumerate(item_no_tuple):
+
             item_no_x = self.get_no_loan(item)
             item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
             asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
             if not asset_list:
                 raise ValueError('not found the asset, check the env!')
             asset_tran_list = self.db_session.query(AssetTran).filter(
-                AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
+                AssetTran.asset_tran_asset_item_no.in_(item_tuple),
+                AssetTran.asset_tran_type != 'lateinterest').order_by(AssetTran.asset_tran_period).all()
+
+            self.db_session.query(AssetTran).filter(
+                AssetTran.asset_tran_asset_item_no.in_(item_tuple),
+                AssetTran.asset_tran_type == 'lateinterest').delete()
+            self.db_session.commit()
+
             capital_asset = self.db_session.query(CapitalAsset).filter(
                 CapitalAsset.capital_asset_item_no == item).first()
             capital_tran_list = self.db_session.query(CapitalTransaction).filter(
@@ -527,6 +550,6 @@ class OverseaRepayService(RepayBaseService):
 
     @time_print
     def sync_plan_to_bc(self, item_no):
-        self.run_xxl_job('manualSyncAsset', param={'assetItemNo': [item_no]})
+        self.run_xxl_job('manualSyncAsset', param={"assetItemNo": [item_no]})
         self.run_task_by_order_no(item_no, 'AssetAccountChangeNotify')
         self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')
