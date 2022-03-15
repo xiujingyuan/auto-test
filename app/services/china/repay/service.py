@@ -767,7 +767,7 @@ class ChinaRepayService(RepayBaseService):
             "transaction_status": status,
             "sign": "6401cd046b5ae44ef208b8ea82d398ab",
             "from_system": "paysvr",
-            "channel_message": "交易成功" if status == 2 else '余额不足'
+            "channel_message": "交易成功" if status == 2 else '交易失败'
         }
         resp = Http.http_post(self.pay_svr_callback_url, req_data)
         if resp['code'] != 0:

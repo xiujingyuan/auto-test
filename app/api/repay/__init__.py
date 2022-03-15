@@ -44,7 +44,12 @@ def repay_tools(tool):
                     ret['data'].append({e: getattr(repay, tool)(**req)})
         else:
             repay = RepayServiceFactory.get_repay(country, env, environment)
-            ret['data'] = getattr(repay, tool)(**req)
+            if not hasattr(repay, tool):
+                ret['message'] = 'success'
+                ret['code'] = 0
+                ret['data'] = []
+            else:
+                ret['data'] = getattr(repay, tool)(**req)
     except Exception as e:
         ret['code'] = 1
         LogUtil.log_info(traceback.format_exc())

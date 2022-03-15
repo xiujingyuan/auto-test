@@ -23,7 +23,7 @@ from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
 from app.services.china.repay import time_print
 from app.services.china.repay.Model import SendMsg
-from app.services.india.repay.Model import Task, CapitalTransaction, CapitalAsset, AssetTran, Asset, AssetExtend
+from app.services.ind.repay.Model import Task, CapitalTransaction, CapitalAsset, AssetTran, Asset, AssetExtend
 from app.test_cases import CaseException
 from resource.config import AutoTestConfig
 
@@ -204,6 +204,8 @@ class BaseService(object):
             if asset_tran.asset_tran_finish_at.year != 1000:
                 cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                 cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                if cal_advance_day == 0 and cal_advance_month == 0:
+                    continue
                 asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
                                                                 days=cal_advance_day)
             asset_tran.asset_tran_due_at = asset_tran_due_at
@@ -518,12 +520,7 @@ class RepayBaseService(BaseService):
                 raise ValueError('not found the asset, check the env!')
             asset_tran_list = self.db_session.query(AssetTran).filter(
                 AssetTran.asset_tran_asset_item_no.in_(item_tuple),
-                AssetTran.asset_tran_type != 'lateinterest').order_by(AssetTran.asset_tran_period).all()
-
-            self.db_session.query(AssetTran).filter(
-                AssetTran.asset_tran_asset_item_no.in_(item_tuple),
-                AssetTran.asset_tran_type == 'lateinterest').delete()
-            self.db_session.commit()
+                AssetTran.asset_tran_type).order_by(AssetTran.asset_tran_period).all()
 
             capital_asset = self.db_session.query(CapitalAsset).filter(
                 CapitalAsset.capital_asset_item_no == item).first()

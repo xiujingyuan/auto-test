@@ -38,7 +38,7 @@ XXL_JOB_DICT = {
             "9": 134,
         }
     },
-    "india": {
+    "ind": {
         'url': 'http://biz-job-ind.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
         'username': 'admin',
         'password': '123456',
@@ -62,7 +62,7 @@ XXL_JOB_DICT = {
             "1": 4
         }
     },
-    "mexico": {
+    "mex": {
         'url': 'http://biz-job-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
         'username': 'admin',
         'password': '123456',

@@ -26,7 +26,7 @@ class AutoTestConfig:
                 "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/gbiz{0}",
                 "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}"
             },
-            'india': {
+            'ind': {
                 "repay": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/global_rbiz{0}",
                 "grant": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{2}/global_gbiz{0}",
                 "ssh": {
@@ -37,7 +37,7 @@ class AutoTestConfig:
                     "ssh_bind_port": 3331
                 }
             },
-            'philippines': {
+            'phl': {
                 "repay": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/phl_rbiz{0}",
                 "grant": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{2}/phl_gbiz{0}",
                 "ssh": {
@@ -48,7 +48,7 @@ class AutoTestConfig:
                     "ssh_bind_port": 3511
                 }
             },
-            'mexico': {
+            'mex': {
                 "repay": "mysql+pymysql://root:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/mex_rbiz{0}",
                 "grant": "mysql+pymysql://root:QZOzz46rUjs$$PIKL8@127.0.0.1:{2}/mex_gbiz{0}",
                 "ssh": {
@@ -59,7 +59,7 @@ class AutoTestConfig:
                     "ssh_bind_port": 3521
                 }
             },
-            'thailand': {
+            'tha': {
                 "repay": "mysql+pymysql://root:0Q^0bBURuSvS3#PB@127.0.0.1:{1}/tha_rbiz{0}",
                 "grant": "mysql+pymysql://root:0Q^0bBURuSvS3#PB@127.0.0.1:{2}/tha_gbiz{0}",
                 "ssh": {
