@@ -134,7 +134,7 @@ class Nacos(object):
         self.update_config(config_name, content, group)
 
     def update_config_by_json_path(self, config_name, json_path_dict, group='KV'):
-        config = self.get_config(group, config_name)
+        config = self.get_config(config_name, group)
         if not config['type'] == "json":
             raise TypeError("need type = json, but {0} type found".format(config['type']))
         if not isinstance(json_path_dict, dict):
@@ -154,5 +154,5 @@ class Nacos(object):
         content = json.dumps(content)
         LogUtil.log_info(content)
         LogUtil.log_info(self.old_value)
-        self.update_configs(config_name, content, group)
+        self.update_config(config_name, content, group)
 

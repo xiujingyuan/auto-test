@@ -4,16 +4,14 @@ import time
 
 from functools import reduce
 from sqlalchemy import desc
-from app import db
 from app.common.http_util import Http, FORM_HEADER
 from app.common.tools import get_date
-from app.model.Model import AutoAsset
-from app.services import RepayBaseService
+from app.services.repay import RepayBaseService
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant.service import ChinaGrantService
 from app.services.china.repay import query_withhold, modify_return, time_print
 from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
-    SendMsg, Withhold, CapitalAsset, CapitalTransaction, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
+    SendMsg, Withhold, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
     WithholdRequest, WithholdDetail, CardBind
 
 
@@ -38,7 +36,7 @@ class ChinaRepayService(RepayBaseService):
                 decrease_amount += value['advance_repay_decrease_amount']
         return total_amount - decrease_amount - repaid_amount
 
-    def auto_loan(self, channel, count, amount, source_type, from_system_name='香蕉'):
+    def auto_loan(self, channel, period, amount, source_type, from_system_name='香蕉', days=0):
         self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, channel))
         element = self.get_four_element()
         # item_no 大单, x_item_no 小单, x_rights 权益单
@@ -46,7 +44,7 @@ class ChinaRepayService(RepayBaseService):
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
             self.grant.get_asset_item_info(channel, source_type, from_system_name)
         # 大单
-        asset_info, old_asset = self.grant.asset_import(item_no, channel, element, count, amount, source_type,
+        asset_info, old_asset = self.grant.asset_import(item_no, channel, element, period, amount, source_type,
                                                         from_system_name, from_system, x_item_no)
         import_asset_info = self.grant.asset_import_success(asset_info)
         withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info)
@@ -449,42 +447,6 @@ class ChinaRepayService(RepayBaseService):
     def check_item_exist(self, item_no):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         return asset
-
-    def add_asset(self, name, source_type):
-        grant_asset = self.grant.check_item_exist(name)
-        repay_asset = self.check_item_exist(name)
-        if grant_asset is None and repay_asset is None:
-            return '没有该资产'
-        exist_asset = AutoAsset.query.filter(AutoAsset.asset_name == name, AutoAsset.asset_env == self.env).first()
-        if exist_asset:
-            return '该资产已经存在'
-        asset = AutoAsset()
-        asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
-        asset.asset_channel = repay_asset.asset_loan_channel if repay_asset is not None else\
-            grant_asset.asset_loan_channel
-        asset.asset_descript = ''
-        asset.asset_name = name
-        asset.asset_period = repay_asset.asset_period_count if repay_asset is not None else \
-            grant_asset.asset_loan_channel
-        asset.asset_env = self.env
-        asset.asset_type = source_type
-        asset.asset_source_type = 1
-        db.session.add(asset)
-        db.session.flush()
-        return self.get_auto_asset(repay_asset.asset_loan_channel, repay_asset.asset_period_count)
-
-    def get_auto_asset(self, channel, period):
-        asset_list = AutoAsset.query.filter(AutoAsset.asset_period == period,
-                                            AutoAsset.asset_channel == channel,
-                                            AutoAsset.asset_env == self.env,
-                                            AutoAsset.asset_create_at >= self.get_date(is_str=True, days=-7)) \
-            .order_by(desc(AutoAsset.asset_id)).all()
-        asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
-        ret = {'assets': asset_list}
-        if asset_list:
-            ret_info = self.get_asset_info(asset_list[0]['name'])
-            ret.update(ret_info)
-        return ret
 
     def get_asset(self, item_no):
         asset = self.check_item_exist(item_no)

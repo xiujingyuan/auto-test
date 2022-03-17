@@ -1,4 +1,4 @@
-from app.services import OverseaRepayService
+from app.services.repay import OverseaRepayService
 
 
 class MexRepayService(OverseaRepayService):

@@ -1,0 +1,357 @@
+import copy
+import json
+import random
+import time
+
+from sqlalchemy import desc
+
+from app.common.http_util import Http
+from app.common.log_util import LogUtil
+from app.services import BaseService
+from app.services.phl.grant.Model import RouterLoadRecord, Sendmsg, Task, Synctask
+from app.services.phl.grant.Model import Asset
+
+
+class GrantBaseService(BaseService):
+    def __init__(self, country, env, run_env, check_req, return_req):
+        super(GrantBaseService, self).__init__(country, 'grant', env, run_env, check_req, return_req)
+        self.asset_import_url = self.grant_host + '/paydayloan/asset-sync-new'
+        self.repay_capital_asset_import_url = self.repay_host + '/capital-asset/grant'
+        self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
+        self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
+        self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
+        self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
+
+    def set_withdraw_success_asset(self, withdraw_success_data, asset, x_item_no):
+        biz_asset = self.biz_central.get_asset_info(asset.asset_item_no)
+        asset.asset_status = 'repay'
+        asset.asset_version = biz_asset.asset_version + 10
+        asset.asset_interest_rate = 5
+        asset.asset_item_no = asset.asset_item_no
+        asset.asset_actual_grant_at = self.get_date()
+        asset.asset_granted_principal_amount = asset.asset_principal_amount
+        asset.ref_order_no = x_item_no
+        for data_key in withdraw_success_data['data']['asset']:
+            new_key = 'asset_' + data_key
+            if hasattr(asset, new_key):
+                withdraw_success_data['data']['asset'][data_key] = asset.to_dict[new_key]
+            if hasattr(asset, data_key):
+                withdraw_success_data['data']['asset'][data_key] = getattr(asset, data_key)
+
+    def set_withdraw_success_card_info(self, withdraw_success_data, asset_info):
+        for card_key in withdraw_success_data['data']['cards_info']:
+            withdraw_success_data['data']['cards_info'][card_key] = asset_info['data'][card_key]
+
+    @staticmethod
+    def set_withdraw_success_loan_record(withdraw_success_data, asset, now):
+        LogUtil.log_info(withdraw_success_data["data"]['loan_record'])
+        if withdraw_success_data["data"]['loan_record'] is not None:
+            withdraw_success_data["data"]['loan_record']['grant_at'] = now
+            withdraw_success_data["data"]['loan_record']['push_at'] = now
+            withdraw_success_data["data"]['loan_record']['finish_at'] = now
+            withdraw_success_data["data"]['loan_record']['channel'] = asset.asset_loan_channel
+            withdraw_success_data["data"]['loan_record']['amount'] = asset.asset_granted_principal_amount
+            withdraw_success_data["data"]['loan_record']['asset_item_no'] = asset.asset_item_no
+            withdraw_success_data["data"]['loan_record']['identifier'] = asset.asset_item_no
+            withdraw_success_data["data"]['loan_record']['trade_no'] = 'TN' + asset.asset_item_no
+            withdraw_success_data["data"]['loan_record']['due_bill_no'] = 'DN' + asset.asset_item_no
+            if asset.asset_loan_channel == 'zhongke_hegang':
+                withdraw_success_data["data"]['loan_record']['product_code'] = \
+                    random.choice(('KN0-CL', 'KN1-CL-HLJ', 'KN1-CL-NOT-HLJ'))
+
+    def get_withdraw_success_info_from_db(self, old_asset, get_type='body'):
+        send_msg = self.db_session.query(Sendmsg).filter(
+            Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
+            Sendmsg.sendmsg_order_no == old_asset).first()
+        if not send_msg:
+            # raise ValueError('not fount the asset withdraw success msg!')
+            return None
+        return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
+
+    def asset_import_success(self, asset_info):
+        resp = Http.http_post(self.asset_import_url, asset_info)
+        item_no = asset_info['data']['asset']['item_no']
+        if not isinstance(resp, dict):
+            raise ValueError('资产导入失败, {0}'.format(resp))
+        elif not resp['code'] == 0:
+            raise ValueError('资产导入失败, {0}'.format(resp['message']))
+        import_task = self.db_session.query(Task).filter(Task.task_order_no == item_no,
+                                                         Task.task_type == 'AssetImport').first()
+        if not import_task:
+            raise ValueError('not found import task!')
+        self.run_task_by_id(import_task.task_id)
+
+        import_msg = self.db_session.query(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no,
+                                                           Sendmsg.sendmsg_type == 'AssetImportSync').first()
+        if not import_msg:
+            raise ValueError("not found the import send msg!")
+        asset_info = json.loads(import_msg.sendmsg_content)['body']
+        if self.country == 'china':
+            self.biz_central.asset_import(asset_info)
+        return asset_info
+
+    def asset_withdraw_success(self, withdraw_success_data):
+        resp = Http.http_post(self.repay_asset_withdraw_success_url, withdraw_success_data)
+        if not resp['code'] == 0:
+            raise ValueError("withdraw task error, {0}".format(resp['message']))
+
+    def insert_router_record(self, item_no, channel, amount, count, element, asset_info, sub_order_type=None, days=0,
+                             types='month'):
+        # 进件前，在路由表插入一条记录
+        router_record = RouterLoadRecord()
+        router_record.router_load_record_key = item_no + channel
+        router_record.router_load_record_rule_code = (channel + "_" + str(count) + "month") if \
+            types == 'month' else channel + "_" + str(count) + "_" + str(days) + types[:1]
+        router_record.router_load_record_principal_amount = amount * 100 if self.country == 'china' else amount
+        router_record.router_load_record_status = 'routed'
+        router_record.router_load_record_channel = channel
+        router_record.router_load_record_sub_type = 'multiple'
+        router_record.router_load_record_period_count = count
+        router_record.router_load_record_period_type = types
+        router_record.router_load_record_period_days = days
+        if sub_order_type is not None:
+            router_record.router_load_record_sub_order_type = sub_order_type
+        router_record.router_load_record_route_day = self.get_date(fmt="%Y-%m-%d")
+        router_record.router_load_record_idnum = element['data']['id_number_encrypt']
+        router_record.router_load_record_from_system = asset_info['from_system']
+        self.db_session.add(router_record)
+        self.db_session.commit()
+
+    def create_item_no(self):
+        return "{0}{1}{2}".format(random.choice(('B', 'S')), self.get_date().year, int(time.time()))
+
+    def get_asset_info_from_db(self, channel='noloan'):
+        asset_import_sync_task = self.db_session.query(Synctask) \
+            .join(Sendmsg, Sendmsg.sendmsg_order_no == Synctask.synctask_order_no) \
+            .join(Asset, Asset.asset_item_no == Synctask.synctask_order_no).filter(
+            Asset.asset_loan_channel == channel,
+            Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
+            Asset.asset_from_system != 'pitaya',
+            Asset.asset_status.in_(('repay', 'payoff')),
+            Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
+            .order_by(desc(Synctask.synctask_create_at)).first()
+        if not asset_import_sync_task:
+            LogUtil.log_info('not fount the asset import task')
+        return json.loads(asset_import_sync_task.synctask_request_data), asset_import_sync_task.synctask_order_no
+
+
+ChangeCapital = [
+                {
+                    "action": {
+                        "policy": "autoRun"
+                    },
+                    "matches": [
+                        {
+                            "code": "4",
+                            "messages": [
+                                "进件,路由系统返回空"
+                            ]
+                        },
+                        {
+                            "code": "1",
+                            "messages": [
+                                "\\[E20001\\]4",
+                                "\\[E20010\\]KN_TIMEOUT_CLOSE_ORDER",
+                                "\\[E20001\\]Unpredictable exception occur\\.",
+                                "\\[E20001\\]Wallet balance limit exceeded",
+                                "\\[E20001\\]Target Account is not registered",
+                                "\\[E20001\\]InquirySuccess",
+                                "\\[E20001\\]Failed to transfer funds"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "action": {
+                        "policy": "autoRollBackToCanLoan",
+                        "next_run_at": "delayDays(1,\"04:00:00\")"
+                    },
+                    "matches": [
+                        {
+                            "code": "4",
+                            "messages": [
+                                ".*校验资金量失败.*"
+                            ]
+                        }
+                    ]
+                }
+            ]
+
+AssetVoid = [
+                {
+                    "action": {
+                        "policy": "autoRollBackToChangeCapital",
+                        "circuit_break_name": "Manual_Job_Autorun_Circuit_Break"
+                    },
+                    "matches": [
+                        {
+                            "code": "14",
+                            "messages": [
+                                "发生冲正,作废资产"
+                            ]
+                        },
+                        {
+                            "code": "12",
+                            "messages": [
+                                ".*切资方,路由系统返回空.*"
+                            ]
+                        }
+                    ]
+                }
+            ]
+
+GbizManualTaskAutoProcessConfig = {
+    "ChangeCapital": {},
+    "AssetVoid": {},
+    "CapitalAssetReverse": {},
+    "BlacklistCollect": {}}
+
+
+class OverseaGrantService(GrantBaseService):
+    def __init__(self, country, env, run_env, check_req=False, return_req=False):
+        super(OverseaGrantService, self).__init__(country, env, run_env, check_req, return_req)
+        self.asset_import_url = self.grant_host + '/paydayloan/asset-sync'
+
+    def set_withdraw_success_asset(self, withdraw_success_data, asset, x_item_no):
+        biz_asset = self.biz_central.get_asset_info(asset.asset_item_no)
+        asset.asset_status = 'repay'
+        asset.asset_version = biz_asset.asset_version + 10
+        asset.asset_interest_rate = 5
+        asset.asset_item_no = asset.asset_item_no
+        asset.asset_actual_grant_at = self.get_date()
+        asset.asset_granted_principal_amount = asset.asset_principal_amount
+        asset.ref_order_no = x_item_no
+        for data_key in withdraw_success_data['data']['asset']:
+            new_key = 'asset_' + data_key
+            if hasattr(asset, new_key):
+                withdraw_success_data['data']['asset'][data_key] = asset.to_dict[new_key]
+            if hasattr(asset, data_key):
+                withdraw_success_data['data']['asset'][data_key] = getattr(asset, data_key)
+
+    def set_withdraw_success_card_info(self, withdraw_success_data, asset_info):
+        for card_key in withdraw_success_data['data']['cards_info']:
+            withdraw_success_data['data']['cards_info'][card_key] = asset_info['data'][card_key]
+
+    @staticmethod
+    def set_withdraw_success_loan_record(withdraw_success_data, asset, now):
+        LogUtil.log_info(withdraw_success_data["data"]['loan_record'])
+        if withdraw_success_data["data"]['loan_record'] is not None:
+            withdraw_success_data["data"]['loan_record']['grant_at'] = now
+            withdraw_success_data["data"]['loan_record']['push_at'] = now
+            withdraw_success_data["data"]['loan_record']['finish_at'] = now
+            withdraw_success_data["data"]['loan_record']['channel'] = asset.asset_loan_channel
+            withdraw_success_data["data"]['loan_record']['amount'] = asset.asset_granted_principal_amount
+            withdraw_success_data["data"]['loan_record']['asset_item_no'] = asset.asset_item_no
+            withdraw_success_data["data"]['loan_record']['identifier'] = asset.asset_item_no
+            withdraw_success_data["data"]['loan_record']['trade_no'] = 'TN' + asset.asset_item_no
+            withdraw_success_data["data"]['loan_record']['due_bill_no'] = 'DN' + asset.asset_item_no
+            if asset.asset_loan_channel == 'zhongke_hegang':
+                withdraw_success_data["data"]['loan_record']['product_code'] = \
+                    random.choice(('KN0-CL', 'KN1-CL-HLJ', 'KN1-CL-NOT-HLJ'))
+
+    def get_withdraw_success_data(self, item_no, old_asset, x_item_no, asset_info):
+        now = self.get_date(is_str=True)
+        withdraw_success_data = self.get_withdraw_success_info_from_db(old_asset)
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        withdraw_success_data['key'] = self.__create_req_key__(item_no, prefix='GrantSuccess')
+        self.set_withdraw_success_asset(withdraw_success_data, asset, x_item_no)
+        self.set_withdraw_success_card_info(withdraw_success_data, asset_info)
+        self.set_withdraw_success_loan_record(withdraw_success_data, asset, now)
+        return withdraw_success_data
+
+    def set_asset_asset_info(self, asset_info, item_no, count, channel, amount, source_type, types, days,
+                             from_app, from_system):
+        asset_info['data']['asset']['item_no'] = item_no
+        asset_info['data']['asset']['period_type'] = types
+        asset_info['data']['asset']['period_count'] = count
+        asset_info['data']['asset']['period_day'] = days
+        asset_info['data']['asset']['amount'] = amount
+        asset_info['data']['asset']['grant_at'] = self.get_date(is_str=True)
+        asset_info['data']['asset']['loan_channel'] = channel
+        asset_info['data']['asset']['source_type'] = source_type
+        asset_info['data']['asset']['from_app'] = from_app
+        asset_info['data']['asset']['source_number'] = item_no + "_no_loan" if '_bill' in source_type else ''
+        asset_info['data']['asset']['from_system'] = from_system
+
+    @staticmethod
+    def set_asset_borrower(asset_info, element, withdraw_type=''):
+        asset_info['data']['borrower']['id_num'] = element["data"]["id_number_encrypt"]
+        asset_info['data']['borrower']['borrower_uuid'] = element["data"]["id_number"] + "0"
+        asset_info['data']['borrower']['borrower_card_uuid'] = element["data"]["card_num"]
+        asset_info['data']['borrower']['mobile'] = element["data"]["mobile_encrypt"]
+        asset_info['data']['borrower']['individual_uuid'] = element["data"]["id_number"] + "1"
+        if withdraw_type:
+            asset_info['data']['borrower']['withdraw_type'] = withdraw_type
+
+    @staticmethod
+    def get_config_data(config_name, channel):
+        json_path_dict = copy.deepcopy(eval(config_name.title().replace('_', '')))
+        json_path_dict['ChangeCapital'][channel] = ChangeCapital
+        json_path_dict['AssetVoid'][channel] = AssetVoid
+        return json_path_dict
+
+    def get_four_element(self):
+        four_element = super(GrantBaseService, self).get_four_element()
+        response = {
+            "code": 0,
+            "message": "success",
+            "data": {
+                "bank_account": four_element["data"]["bank_code"],
+                "card_num": four_element["data"]["bank_code"],
+                "mobile": four_element["data"]["phone_number"],
+                "user_name": "Craltonliu",
+                "id_number": four_element["data"]["id_number"],
+                "address": "Floor 8 TaiPingYang Building TianFuSanGai Chengdu,Sichuan,China",
+                "email": four_element["data"]["phone_number"] + "@qq.com",
+                "upi": four_element["data"]["phone_number"] + "@upi"
+            }
+        }
+        data = [{"type": 1, "plain": response["data"]["mobile"]},
+                {"type": 2, "plain": response["data"]["id_number"]},
+                {"type": 3, "plain": response["data"]["card_num"]},
+                {"type": 3, "plain": response["data"]["upi"]},
+                {"type": 4, "plain": response["data"]["user_name"]},
+                {"type": 5, "plain": response["data"]["email"]},
+                {"type": 6, "plain": response["data"]["address"]}]
+        resp = Http.http_post(url=self.encrypt_url, req_data=data)
+        response["data"]["mobile_encrypt"] = resp["data"][0]["hash"]
+        response["data"]["id_number_encrypt"] = resp["data"][1]["hash"]
+        response["data"]["card_num_encrypt"] = resp["data"][2]["hash"]
+        response["data"]["upi_encrypt"] = resp["data"][3]["hash"]
+        response["data"]["user_name_encrypt"] = resp["data"][4]["hash"]
+        response["data"]["email_encrypt"] = resp["data"][5]["hash"]
+        response["data"]["address_encrypt"] = resp["data"][6]["hash"]
+        response["data"]["bank_account_encrypt"] = resp["data"][2]["hash"]
+        return response
+
+    def asset_import(self, channel, count, day, types, amount, from_system, from_app,
+                     source_type, element, withdraw_type, route_uuid='', insert_router_record=True):
+        json_path_dict = self.get_config_data('gbiz_manual_task_auto_process_config', channel)
+        self.nacos.update_config_by_json_path('gbiz_manual_task_auto_process_config', json_path_dict)
+        asset_info, old_asset = self.get_asset_info_from_db(channel)
+        item_no = self.create_item_no()
+        asset_info['key'] = "_".join((item_no, channel))
+        asset_info['from_system'] = from_system
+        if route_uuid:
+            asset_info['data']['route_uuid'] = route_uuid
+        self.set_asset_asset_info(asset_info, item_no, count, channel, amount, source_type, types, day,
+                                  from_app, from_system)
+        self.set_asset_borrower(asset_info, element, withdraw_type)
+        if insert_router_record:
+            self.insert_router_record(item_no, channel, amount, count, element, asset_info, days=day, types=types)
+        return asset_info, old_asset, item_no
+
+    def loan_to_success(self):
+        pass
+
+    def check_asset_data(self):
+        pass
+
+    def asset_import_noloan(self):
+        pass
+
+    def noloan_to_success(self):
+        pass
+
+    def asset_import_noloan(self):
+        pass

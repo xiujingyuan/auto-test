@@ -60,6 +60,9 @@ XXL_JOB_DICT = {
         'password': '123456',
         'repay': {
             "1": 4
+        },
+        'grant': {
+            "1": 4
         }
     },
     "mex": {

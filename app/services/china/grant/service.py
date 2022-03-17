@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy import desc
 
 from app.common.log_util import LogUtil
-from app.services import GrantBaseService
+from app.services.grant import GrantBaseService
 from app.common.http_util import Http
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import GRANT_ASSET_IMPORT_URL, FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
@@ -100,9 +100,6 @@ class ChinaGrantService(GrantBaseService):
         return noloan_amount_dict[noloan_source_type] / 100 \
             if noloan_source_type in noloan_amount_dict else loan_principal_amount / 8000
 
-    def create_item_no(self):
-        return "{0}{1}{2}".format(random.choice(('B', 'S')), self.get_date().year, int(time.time()))
-
     @staticmethod
     def get_from_system_and_ref(from_system_name, source_type):
         from_system = FROM_SYSTEM_DICT[from_system_name] if from_system_name in FROM_SYSTEM_DICT else "dsq"
@@ -151,39 +148,6 @@ class ChinaGrantService(GrantBaseService):
         asset_info['data']['repayer']['name_encrypt'] = element['data']['user_name_encrypt']
         asset_info['data']['repayer']['tel_encrypt'] = element['data']['phone_number_encrypt']
         asset_info['data']['repayer']['idnum_encrypt'] = element['data']['id_number_encrypt']
-
-    def insert_router_record(self, item_no, channel, amount, count, sub_order_type, element, asset_info):
-        # 进件前，在路由表插入一条记录
-        router_record = RouterLoadRecord()
-        router_record.router_load_record_key = item_no + channel
-        router_record.router_load_record_rule_code = channel + "_" + str(count) + "month"
-        router_record.router_load_record_principal_amount = amount * 100
-        router_record.router_load_record_status = 'routed'
-        router_record.router_load_record_channel = channel
-        router_record.router_load_record_sub_type = 'multiple'
-        router_record.router_load_record_period_count = count
-        router_record.router_load_record_period_type = 'month'
-        router_record.router_load_record_period_days = '0'
-        router_record.router_load_record_sub_order_type = sub_order_type
-        router_record.router_load_record_route_day = self.get_date(fmt="%Y-%m-%d")
-        router_record.router_load_record_idnum = element['data']['id_number_encrypt']
-        router_record.router_load_record_from_system = asset_info['from_system']
-        self.db_session.add(router_record)
-        self.db_session.commit()
-
-    def get_asset_info_from_db(self, channel='noloan'):
-        asset_import_sync_task = self.db_session.query(Synctask) \
-            .join(Sendmsg, Sendmsg.sendmsg_order_no == Synctask.synctask_order_no) \
-            .join(Asset, Asset.asset_item_no == Synctask.synctask_order_no).filter(
-            Asset.asset_loan_channel == channel,
-            Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
-            Asset.asset_from_system != 'pitaya',
-            Asset.asset_status.in_(('repay', 'payoff')),
-            Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport')))\
-            .order_by(desc(Synctask.synctask_create_at)).first()
-        if not asset_import_sync_task:
-            LogUtil.log_info('not fount the asset import task')
-        return json.loads(asset_import_sync_task.synctask_request_data), asset_import_sync_task.synctask_order_no
 
     def get_no_loan(self, item_no):
         asset_extend = self.db_session.query(AssetExtend).filter(
@@ -259,15 +223,6 @@ class ChinaGrantService(GrantBaseService):
                 withdraw_success_data["data"]['loan_record']['product_code'] = \
                     random.choice(('KN0-CL', 'KN1-CL-HLJ', 'KN1-CL-NOT-HLJ'))
 
-    def get_withdraw_success_info_from_db(self, old_asset, get_type='body'):
-        send_msg = self.db_session.query(Sendmsg).filter(
-            Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
-            Sendmsg.sendmsg_order_no == old_asset).first()
-        if not send_msg:
-            # raise ValueError('not fount the asset withdraw success msg!')
-            return None
-        return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
-
     def get_asset_item_info(self, channel, source_type, from_system_name, item_no=None):
         item_no = item_no if item_no else self.create_item_no()
         source_type_list = CHANNEL_SOURCE_TYPE_DICT[channel]
@@ -299,7 +254,8 @@ class ChinaGrantService(GrantBaseService):
         self.set_asset_repayer(asset_info, element)
 
         if insert_router_record:
-            self.insert_router_record(item_no, channel, amount, count, sub_order_type, element, asset_info)
+            self.insert_router_record(item_no, channel, amount, count, element, asset_info,
+                                      sub_order_type=sub_order_type)
         return asset_info, old_asset
 
     def asset_no_loan_import(self, asset_info, import_asset_info, item_no, x_item_no, source_type):
@@ -318,32 +274,6 @@ class ChinaGrantService(GrantBaseService):
         no_asset_info['data']['asset']['loan_channel'] = 'noloan'
         no_asset_info['data']['asset']['sub_order_type'] = asset_extend.asset_extend_sub_order_type
         return no_asset_info, no_old_asset
-
-    def asset_import_success(self, asset_info):
-        resp = Http.http_post(self.asset_import_url, asset_info)
-        item_no = asset_info['data']['asset']['item_no']
-        if not isinstance(resp, dict):
-            raise ValueError('资产导入失败, {0}'.format(resp))
-        elif not resp['code'] == 0:
-            raise ValueError('资产导入失败, {0}'.format(resp['message']))
-        import_task = self.db_session.query(Task).filter(Task.task_order_no == item_no,
-                                                         Task.task_type == 'AssetImport').first()
-        if not import_task:
-            raise ValueError('not found import task!')
-        self.run_task_by_id(import_task.task_id)
-
-        import_msg = self.db_session.query(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no,
-                                                           Sendmsg.sendmsg_type == 'AssetImportSync').first()
-        if not import_msg:
-            raise ValueError("not found the import send msg!")
-        asset_info = json.loads(import_msg.sendmsg_content)['body']
-        self.biz_central.asset_import(asset_info)
-        return asset_info
-
-    def asset_withdraw_success(self, withdraw_success_data):
-        resp = Http.http_post(self.repay_asset_withdraw_success_url, withdraw_success_data)
-        if not resp['code'] == 0:
-            raise ValueError("withdraw task error, {0}".format(resp['message']))
 
     def get_capital_asset_data(self, item_no):
         capital_asset = self.db_session.query(CapitalAsset).order_by(desc(CapitalAsset.capital_asset_create_at)).first()

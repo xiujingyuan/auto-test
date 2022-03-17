@@ -1,4 +1,4 @@
-from app.services import OverseaGrantService
+from app.services.grant import OverseaGrantService
 
 
 class MexGrantService(OverseaGrantService):
