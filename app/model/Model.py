@@ -10,6 +10,7 @@ class AutoAsset(db.Model, BaseToDict):
     asset_name = db.Column(db.String(30), info='资产编号')
     asset_period = db.Column(db.String(2, 'utf8_bin'), info='资产期次')
     asset_channel = db.Column(db.String(50), info='放款通道')
+    asset_country = db.Column(db.String(11), info='所属国家')
     asset_env = db.Column(db.String(10), nullable=False, server_default=db.FetchedValue(), info='所属环境')
     asset_descript = db.Column(db.String(50), info='资产描述')
     asset_create_owner = db.Column(db.String(11), nullable=False, server_default=db.FetchedValue(), info='资产创建人')

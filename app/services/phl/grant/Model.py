@@ -11,7 +11,6 @@ class Asset(db.Model, BaseToDict):
     __tablename__ = 'asset'
 
     asset_id = db.Column(db.Integer, primary_key=True, info='资产行号，单表主键')
-    asset_no = db.Column(db.String(20), nullable=False, server_default=db.FetchedValue(), info='资产主键no')
     asset_item_no = db.Column(db.String(48), nullable=False, unique=True, info='项目编号，有一系列规则，用来标识某个项目，可以从项目编号里看到很多信息')
     asset_type = db.Column(db.String(32), nullable=False, info='资产类型')
     asset_sub_type = db.Column(db.String(32), nullable=False)
@@ -310,6 +309,21 @@ class AssetRouteLog(db.Model, BaseToDict):
     asset_route_log_route_type = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='1:一次路由;2:二次路由')
     asset_route_log_period_count = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='request路由期数如1，3，6')
 
+
+class AssetBorrower(db.Model, BaseToDict):
+    __tablename__ = 'asset_borrower'
+    asset_borrower_id = db.Column(db.Integer, primary_key=True)
+    asset_borrower_item_no = db.Column(db.String(64), index=True, info='资产编号')
+    asset_borrower_card_uuid = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue(), info='资产类型')
+    asset_borrower_uuid = db.Column(db.String(64), index=True, info='借款人身份证号')
+    asset_borrower_id_num = db.Column(db.String(50), nullable=False, info='借款人姓名')
+    asset_borrower_mobile = db.Column(db.String(32), nullable=False, server_default=db.FetchedValue(), info='放款渠道')
+    asset_borrower_loan_usage = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='消息')
+    asset_borrower_risk_level = db.Column(db.String(10), nullable=False, server_default=db.FetchedValue(), info='消息')
+    asset_borrower_extend_info = db.Column(db.String(1024), nullable=False, server_default=db.FetchedValue(), info='消息')
+    asset_borrower_individual_uuid = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue(), info='消息')
+    asset_borrower_create_at = db.Column(db.DateTime, nullable=False, index=True)
+    asset_borrower_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
 
 
 class AssetTran(db.Model, BaseToDict):

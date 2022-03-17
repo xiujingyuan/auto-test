@@ -2,9 +2,11 @@ import copy
 
 from sqlalchemy import desc
 
+from app import db
 from app.common.http_util import Http
 from app.model.Model import AutoAsset
 from app.services import BaseService, Asset, Task, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
+from app.services.china.repay import modify_return
 
 
 class RepayBaseService(BaseService):
@@ -25,11 +27,53 @@ class RepayBaseService(BaseService):
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
         self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
 
+    def get_repay_card_by_item_no(self, item_no):
+        sql = "select card_acc_id_num_encrypt, card_acc_num_encrypt, card_acc_tel_encrypt, card_acc_name_encrypt " \
+              "from card join card_asset on card_no = card_asset_card_no where " \
+              "card_asset_asset_item_no='{0}'and card_asset_type = 'repay'".format(item_no)
+        id_num_info = self.db_session.execute(sql)
+        return id_num_info[0] if id_num_info else ''
+
+    def get_asset(self, item_no):
+        asset = self.check_item_exist(item_no)
+        if asset is None:
+            return {'asset': []}
+        asset = asset.to_spec_dict
+        extend_list = self.db_session.query(AssetExtend).filter(AssetExtend.asset_extend_asset_item_no == item_no).all()
+        for extend in extend_list:
+            asset[extend.asset_extend_type] = extend.asset_extend_val
+        four_ele = self.get_repay_card_by_item_no(item_no)
+        asset['id_num'] = four_ele['card_acc_id_num_encrypt']
+        asset['repay_card'] = four_ele['card_acc_num_encrypt']
+        asset['item_x'] = self.get_no_loan(item_no)
+        return {'asset': [asset]}
+
+    @modify_return
+    def get_asset_tran(self, item_no):
+        item_no_x = self.get_no_loan(item_no)
+        item_tuple = (item_no, item_no_x) if item_no_x else (item_no,)
+        asset_tran_list = self.db_session.query(AssetTran).filter(
+            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
+        return asset_tran_list
+
+    def get_asset_info(self, item_no):
+        asset_info = {}
+        asset = self.get_asset(item_no)
+        asset_tran = self.get_asset_tran(item_no)
+        asset_info.update(asset)
+        asset_info.update(asset_tran)
+        return asset_info
+
+    def check_item_exist(self, item_no):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        return asset
+
     def get_auto_asset(self, channel, period, days=0):
         asset_list = AutoAsset.query.filter(AutoAsset.asset_period == period,
                                             AutoAsset.asset_channel == channel,
                                             AutoAsset.asset_days == days,
                                             AutoAsset.asset_env == self.env,
+                                            AutoAsset.asset_country == self.country,
                                             AutoAsset.asset_create_at >= self.get_date(is_str=True, days=-7)) \
             .order_by(desc(AutoAsset.asset_id)).all()
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
@@ -57,6 +101,7 @@ class RepayBaseService(BaseService):
             grant_asset.asset_loan_channel
         asset.asset_env = self.env
         asset.asset_type = source_type
+        asset.asset_country = self.country
         asset.asset_source_type = 1
         asset.asset_days = int(repay_asset.asset_product_category)
         db.session.add(asset)
@@ -152,58 +197,72 @@ class RepayBaseService(BaseService):
 
 
 class OverseaRepayService(RepayBaseService):
-        def __init__(self, country, env, run_env, check_req=False, return_req=False):
-            super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
-            self.encrypt_url = 'http://47.101.30.198:8081/encrypt/'
+    def __init__(self, country, env, run_env, check_req=False, return_req=False):
+        super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
+        self.encrypt_url = 'http://47.101.30.198:8081/encrypt/'
+        self.capital_asset_success_url = self.repay_host + '/capital-asset/grant'
 
-        def get_four_element(self):
-            four_element = super(OverseaRepayService, self).get_four_element()
-            response = {
-                "code": 0,
-                "message": "success",
-                "data": {
-                    "bank_account": four_element["data"]["bank_code"],
-                    "card_num": four_element["data"]["bank_code"],
-                    "mobile": four_element["data"]["phone_number"],
-                    "user_name": "Craltonliu",
-                    "id_number": four_element["data"]["id_number"],
-                    "address": "Floor 8 TaiPingYang Building TianFuSanGai Chengdu,Sichuan,China",
-                    "email": four_element["data"]["phone_number"] + "@qq.com",
-                    "upi": four_element["data"]["phone_number"] + "@upi"
-                }
+    def get_repay_card_by_item_no(self, item_no):
+        sql = "select card_acc_id_num_encrypt, card_acc_num_encrypt, card_acc_tel_encrypt, " \
+              "card_borrower_uuid as card_acc_name_encrypt " \
+              "from card join card_asset on card_no = card_asset_card_no where " \
+              "card_asset_asset_item_no='{0}'and card_asset_type = 'repay'".format(item_no)
+        id_num_info = self.db_session.execute(sql)
+        return id_num_info[0] if id_num_info else ''
+
+    def get_four_element(self):
+        four_element = super(OverseaRepayService, self).get_four_element()
+        response = {
+            "code": 0,
+            "message": "success",
+            "data": {
+                "bank_account": four_element["data"]["bank_code"],
+                "card_num": four_element["data"]["bank_code"],
+                "mobile": four_element["data"]["phone_number"],
+                "user_name": "Craltonliu",
+                "id_number": four_element["data"]["id_number"],
+                "address": "Floor 8 TaiPingYang Building TianFuSanGai Chengdu,Sichuan,China",
+                "email": four_element["data"]["phone_number"] + "@qq.com",
+                "upi": four_element["data"]["phone_number"] + "@upi"
             }
-            data = [{"type": 1, "plain": response["data"]["mobile"]},
-                    {"type": 2, "plain": response["data"]["id_number"]},
-                    {"type": 3, "plain": response["data"]["card_num"]},
-                    {"type": 3, "plain": response["data"]["upi"]},
-                    {"type": 4, "plain": response["data"]["user_name"]},
-                    {"type": 5, "plain": response["data"]["email"]},
-                    {"type": 6, "plain": response["data"]["address"]}]
-            resp = Http.http_post(url=self.encrypt_url, req_data=data)
-            response["data"]["mobile_encrypt"] = resp["data"][0]["hash"]
-            response["data"]["id_number_encrypt"] = resp["data"][1]["hash"]
-            response["data"]["card_num_encrypt"] = resp["data"][2]["hash"]
-            response["data"]["upi_encrypt"] = resp["data"][3]["hash"]
-            response["data"]["user_name_encrypt"] = resp["data"][4]["hash"]
-            response["data"]["email_encrypt"] = resp["data"][5]["hash"]
-            response["data"]["address_encrypt"] = resp["data"][6]["hash"]
-            response["data"]["bank_account_encrypt"] = resp["data"][2]["hash"]
-            return response
+        }
+        data = [{"type": 1, "plain": response["data"]["mobile"]},
+                {"type": 2, "plain": response["data"]["id_number"]},
+                {"type": 3, "plain": response["data"]["card_num"]},
+                {"type": 3, "plain": response["data"]["upi"]},
+                {"type": 4, "plain": response["data"]["user_name"]},
+                {"type": 5, "plain": response["data"]["email"]},
+                {"type": 6, "plain": response["data"]["address"]}]
+        resp = Http.http_post(url=self.encrypt_url, req_data=data)
+        response["data"]["mobile_encrypt"] = resp["data"][0]["hash"]
+        response["data"]["id_number_encrypt"] = resp["data"][1]["hash"]
+        response["data"]["card_num_encrypt"] = resp["data"][2]["hash"]
+        response["data"]["upi_encrypt"] = resp["data"][3]["hash"]
+        response["data"]["user_name_encrypt"] = resp["data"][4]["hash"]
+        response["data"]["email_encrypt"] = resp["data"][5]["hash"]
+        response["data"]["address_encrypt"] = resp["data"][6]["hash"]
+        response["data"]["bank_account_encrypt"] = resp["data"][2]["hash"]
+        return response
 
-        def auto_loan(self, channel, count, day, amount, source_type, from_system='香蕉', from_app=''):
-            element = self.get_four_element_global(id_num_begin='110')
-            item_no, asset_info = self.grant.asset_import(channel, count, day, "day", amount, from_system, from_app,
-                                                          source_type, element, "")
-            self.grant.loan_to_success(item_no)
-            x_item_no, asset_info_noloan = self.grant.asset_import_noloan(asset_info)
-            # 判断是否有小单
-            if x_item_no:
-                self.noloan_to_success(x_item_no)
-            self.add_asset(item_no, 0)
-            return item_no, x_item_no
+    def auto_loan(self, channel, period, days, amount, source_type, from_app='phi011', withdraw_type='online'):
+        element = self.get_four_element()
+        asset_info, old_asset, item_no = self.grant.asset_import(channel, period, days, "day", amount, self.country,
+                                                                 from_app, source_type, element, withdraw_type)
+        print('item_no:', item_no)
+        x_item_no = ''
+        import_asset_info = self.grant.asset_import_success(asset_info)
+        withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info, element)
+        self.grant.asset_withdraw_success(withdraw_success_data)
+        capital_data = self.grant.get_capital_asset_data(item_no)
+        self.grant.capital_asset_success(capital_data)
+        # 判断是否有小单
+        if x_item_no:
+            self.noloan_to_success(x_item_no)
+        self.add_asset(item_no, 0)
+        return item_no, x_item_no
 
-        @time_print
-        def sync_plan_to_bc(self, item_no):
-            self.run_xxl_job('manualSyncAsset', param={"assetItemNo": [item_no]})
-            self.run_task_by_order_no(item_no, 'AssetAccountChangeNotify')
-            self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')
+    @time_print
+    def sync_plan_to_bc(self, item_no):
+        self.run_xxl_job('manualSyncAsset', param={"assetItemNo": [item_no]})
+        self.run_task_by_order_no(item_no, 'AssetAccountChangeNotify')
+        self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')

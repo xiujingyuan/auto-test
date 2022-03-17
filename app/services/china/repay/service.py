@@ -357,13 +357,6 @@ class ChinaRepayService(RepayBaseService):
             random_card['bank_code_encrypt'] = 'enc_03_2953903355913046016_400'
             return random_card
 
-    def get_repay_card_by_item_no(self, item_no):
-        sql = "select card_acc_id_num_encrypt, card_acc_num_encrypt, card_acc_tel_encrypt, card_acc_name_encrypt " \
-              "from card join card_asset on card_no = card_asset_card_no where " \
-              "card_asset_asset_item_no='{0}'and card_asset_type = 'repay'".format(item_no)
-        id_num_info = self.db_session.execute(sql)
-        return id_num_info[0] if id_num_info else ''
-
     def get_withhold_key_info(self, item_no, request_no=None, req_key=None, max_create_at=None):
         item_no_x = self.get_no_loan(item_no)
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
@@ -443,40 +436,6 @@ class ChinaRepayService(RepayBaseService):
         ret.update(withhold_detail_dict)
         ret.update(withhold_request_dict)
         return ret
-
-    def check_item_exist(self, item_no):
-        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
-        return asset
-
-    def get_asset(self, item_no):
-        asset = self.check_item_exist(item_no)
-        if asset is None:
-            return {'asset': []}
-        asset = asset.to_spec_dict
-        extend_list = self.db_session.query(AssetExtend).filter(AssetExtend.asset_extend_asset_item_no == item_no).all()
-        for extend in extend_list:
-            asset[extend.asset_extend_type] = extend.asset_extend_val
-        four_ele = self.get_repay_card_by_item_no(item_no)
-        asset['id_num'] = four_ele['card_acc_id_num_encrypt']
-        asset['repay_card'] = four_ele['card_acc_num_encrypt']
-        asset['item_x'] = self.get_no_loan(item_no)
-        return {'asset': [asset]}
-
-    @modify_return
-    def get_asset_tran(self, item_no):
-        item_no_x = self.get_no_loan(item_no)
-        item_tuple = (item_no, item_no_x) if item_no_x else (item_no,)
-        asset_tran_list = self.db_session.query(AssetTran).filter(
-            AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
-        return asset_tran_list
-
-    def get_asset_info(self, item_no):
-        asset_info = {}
-        asset = self.get_asset(item_no)
-        asset_tran = self.get_asset_tran(item_no)
-        asset_info.update(asset)
-        asset_info.update(asset_tran)
-        return asset_info
 
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
