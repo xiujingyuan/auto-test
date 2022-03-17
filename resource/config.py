@@ -49,8 +49,8 @@ class AutoTestConfig:
                 }
             },
             'mex': {
-                "repay": "mysql+pymysql://root:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/mex_rbiz{0}",
-                "grant": "mysql+pymysql://root:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/mex_gbiz{0}",
+                "repay": "mysql+pymysql://root:uJQaHO5Gh817x9Ew@127.0.0.1:{1}/mex_rbiz{0}",
+                "grant": "mysql+pymysql://root:uJQaHO5Gh817x9Ew@127.0.0.1:{1}/mex_gbiz{0}",
                 "ssh": {
                     "ssh_proxy_host": "47.116.2.104",
                     "ssh_remote_host": "rm-uf6z2o8w9rure4as4.mysql.rds.aliyuncs.com",

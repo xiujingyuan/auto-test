@@ -44,6 +44,9 @@ XXL_JOB_DICT = {
         'password': '123456',
         'repay': {
             "1": 2
+        },
+        'grant': {
+            "1": 4
         }
     },
     "tha": {
@@ -51,6 +54,9 @@ XXL_JOB_DICT = {
         'username': 'admin',
         'password': '123456',
         'repay': {
+            "1": 4
+        },
+        'grant': {
             "1": 4
         }
     },
@@ -70,6 +76,9 @@ XXL_JOB_DICT = {
         'username': 'admin',
         'password': '123456',
         'repay': {
+            "1": 4
+        },
+        'grant': {
             "1": 4
         }
     }

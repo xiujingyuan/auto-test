@@ -39,6 +39,7 @@ class GrantBaseService(BaseService):
         capital_asset.capital_asset_granted_at = asset.asset_actual_grant_at
         capital_asset.capital_asset_push_at = asset.asset_actual_grant_at
         capital_asset.capital_asset_period_count = asset.asset_period_count
+        capital_asset.capital_asset_period_term = asset.asset_product_category
         capital_asset.capital_asset_due_at = asset.asset_due_at
         capital_asset.capital_asset_granted_amount = asset.asset_granted_principal_amount
         capital_asset.capital_asset_cmdb_no = asset.asset_cmdb_product_number
