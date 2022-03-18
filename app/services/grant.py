@@ -213,6 +213,7 @@ class GrantBaseService(BaseService):
             .order_by(desc(Synctask.synctask_create_at)).first()
         if asset_import_sync_task is None:
             LogUtil.log_info('not fount the asset import task')
+            raise ValueError('not fount the asset import task')
         return json.loads(asset_import_sync_task.synctask_request_data), asset_import_sync_task.synctask_order_no
 
 
