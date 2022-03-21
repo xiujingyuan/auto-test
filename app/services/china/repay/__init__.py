@@ -8,6 +8,7 @@ from app.services.china.repay.Model import WithholdOrder
 def query_withhold(func):
     def wrapper(self, **kwargs):
         status = kwargs.pop('status', None)
+        back_amount = kwargs.pop('back_amount', 0)
         item_no = kwargs.get('item_no', None)
         request, request_url, response = "", "", "error"
         try:
@@ -37,7 +38,7 @@ def query_withhold(func):
             if status is not None and serial_no_tuple:
                 ret['callback'] = []
                 for serial in serial_no_tuple:
-                    calls = dict(zip(('serial_no', 'status'), (serial, status)))
+                    calls = dict(zip(('serial_no', 'status', 'back_amount'), (serial, status, back_amount)))
                     call_ret = getattr(self, 'repay_callback')(**calls)
                     ret['callback'].append(call_ret)
             return ret
