@@ -21,7 +21,8 @@ def hello_world():
 
 @api_web.route('/menu', methods=["GET"])
 def get_menu():
-    menu_list = Menu.query.filter(Menu.menu_parent_id == 0).order_by(Menu.menu_order).all()
+    menu_list = Menu.query.filter(Menu.menu_parent_id == 0,
+                                  Menu.menu_active == 1).order_by(Menu.menu_order).all()
     ret = deepcopy(RET)
     ret['data'] = get_all_menu(menu_list)
     print(json.dumps(ret['data'], ensure_ascii=False))

@@ -525,8 +525,7 @@ class RepayBaseService(BaseService):
             if not asset_list:
                 raise ValueError('not found the asset, check the env!')
             asset_tran_list = self.db_session.query(AssetTran).filter(
-                AssetTran.asset_tran_asset_item_no.in_(item_tuple),
-                AssetTran.asset_tran_type).order_by(AssetTran.asset_tran_period).all()
+                AssetTran.asset_tran_asset_item_no.in_(item_tuple)).order_by(AssetTran.asset_tran_period).all()
 
             capital_asset = self.db_session.query(CapitalAsset).filter(
                 CapitalAsset.capital_asset_item_no == item).first()

@@ -20,6 +20,9 @@ class AutoTestConfig:
         DB_IP = '127.0.0.1'
         DEBUG = True
     SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/auto-test?charset=utf8'
+    SQLALCHEMY_BINDS = {
+        "jc-mock": f'mysql+pymysql://root:Coh8Beyiusa7@{DB_IP}:3306/auto-test?charset=utf8',
+    }
     SQLALCHEMY_DICT = {
             'china': {
                 "repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/rbiz{0}",
