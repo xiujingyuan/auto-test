@@ -266,6 +266,30 @@ class RepayBaseService(BaseService):
         if msg:
             return self.run_msg_by_id(msg.sendmsg_id)
 
+    def __early_settlement_need_decrease__(self, item_no):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        ret = False
+        if asset is None:
+            return ret
+        if asset.asset_loan_channel in ('qinnong', 'qinnong_jieyi'):
+            config_content = self.nacos.get_config_content('repay_{0}_config'.format(asset.asset_loan_channel))
+            advance_settle_decrease = config_content['advanceSettleDecrease']
+            advance_settle_decrease_start = config_content['advanceSettleDecreaseStart']
+            advance_settle_decrease_end = config_content['advanceSettleDecreaseEnd']
+            if advance_settle_decrease:
+                if advance_settle_decrease_start is not None:
+                    if advance_settle_decrease_end is not None and self.cal_days(advance_settle_decrease_start,
+                                                                                 asset.asset_actual_grant_at
+                                                                                 ) > 0 \
+                            and self.cal_days(asset.asset_actual_grant_at, advance_settle_decrease_end) > 0:
+                        ret = True
+                    elif self.cal_days(advance_settle_decrease_start, asset.asset_actual_grant_at) > 0:
+                        ret = True
+                elif advance_settle_decrease_end is not None and self.cal_days(asset.asset_actual_grant_at,
+                                                                               advance_settle_decrease_end) > 0:
+                    ret = True
+        return ret
+
     def __get_repay_amount__(self, amount, item_no, period_start, period_end, max_period, is_overdue):
         if amount == 0 and period_start is not None and period_end is not None and item_no:
             if period_end == max_period and not is_overdue and self.__early_settlement_need_decrease__(item_no):
@@ -314,14 +338,19 @@ class RepayBaseService(BaseService):
                 active_request_data['data']['project_list'].append(dict(zip(amount_info_key, amount_info)))
         return active_request_data
 
-    @staticmethod
-    def __get_four_element_key__(repay_card):
-        repay_key = ('card_num_encrypt', 'card_user_id_encrypt', 'card_user_name_encrypt', 'card_user_phone_encrypt')
-        if repay_card in (1, 3, 0):
+    def __get_four_element_key__(self, repay_card):
+        if self.country == 'china':
+            repay_key = (
+            'card_num_encrypt', 'card_user_id_encrypt', 'card_user_name_encrypt', 'card_user_phone_encrypt')
+            if repay_card in (1, 3, 0):
+                card_element = ('card_acc_num_encrypt', 'card_acc_id_num_encrypt', 'card_acc_name_encrypt',
+                                'card_acc_tel_encrypt')
+            elif repay_card == 2:
+                card_element = ('bank_code_encrypt', 'id_number_encrypt', 'user_name_encrypt', 'phone_number_encrypt')
+        else:
+            repay_key = ('card_uuid', 'id_num', 'user_id', 'mobile')
             card_element = ('card_acc_num_encrypt', 'card_acc_id_num_encrypt', 'card_acc_name_encrypt',
                             'card_acc_tel_encrypt')
-        elif repay_card == 2:
-            card_element = ('bank_code_encrypt', 'id_number_encrypt', 'user_name_encrypt', 'phone_number_encrypt')
         return dict(zip(repay_key, card_element))
 
     @time_print

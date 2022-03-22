@@ -193,30 +193,6 @@ class ChinaRepayService(RepayBaseService):
             resp = [resp, agree_resp]
         return request_data, self.active_repay_url, resp
 
-    def __early_settlement_need_decrease__(self, item_no):
-        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
-        ret = False
-        if asset is None:
-            return ret
-        config_content = self.nacos.get_config_content('repay_{0}_config'.format(asset.asset_loan_channel))
-        if asset.asset_loan_channel in ('qinnong', 'qinnong_jieyi'):
-            advance_settle_decrease = config_content['advanceSettleDecrease']
-            advance_settle_decrease_start = config_content['advanceSettleDecreaseStart']
-            advance_settle_decrease_end = config_content['advanceSettleDecreaseEnd']
-            if advance_settle_decrease:
-                if advance_settle_decrease_start is not None:
-                    if advance_settle_decrease_end is not None and self.cal_days(advance_settle_decrease_start,
-                                                                                 asset.asset_actual_grant_at
-                                                                                 ) > 0 \
-                            and self.cal_days(asset.asset_actual_grant_at, advance_settle_decrease_end) > 0:
-                        ret = True
-                    elif self.cal_days(advance_settle_decrease_start, asset.asset_actual_grant_at) > 0:
-                        ret = True
-                elif advance_settle_decrease_end is not None and self.cal_days(asset.asset_actual_grant_at,
-                                                                               advance_settle_decrease_end) > 0:
-                    ret = True
-        return ret
-
     def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg, source_type):
         is_run = True
         for index, task in enumerate((asset_import, capital_import, withdraw_success)):

@@ -21,14 +21,34 @@ class MexRepayService(OverseaRepayService):
     def __get_active_request_data__(self, item_no, item_no_x, amount, x_amount, repay_card, item_no_priority=12,
                                     item_no_x_priority=1, order_no='', coupon_list=None):
         card_info = self.get_active_card_info(item_no, repay_card)
-        for coupon in coupon_list.split("\n"):
-            coupon_or, coupon_num, coupon_amount, coupon_type = coupon.split(",")
+        coupon_dict = dict(zip((item_no, item_no_x), ([], [])))
+        if coupon_list is not None:
+            for coupon in coupon_list.split("\n"):
+                coupon_or, coupon_num, coupon_amount, coupon_type = coupon.split(",")
+                coupon_or = item_no if coupon_or == '1' else item_no_x
+                coupon_num = coupon_num if coupon_num else '{0}_{1}'.format(
+                    self.get_date(is_str=True, fmt='%Y%m%d%H%M%S'), coupon_type)
+                if coupon_amount:
+                    coupon_dict[coupon_or].append(dict(zip(('coupon_num', 'coupon_amount', 'coupon_type'),
+                                                           (coupon_num, int(coupon_amount), coupon_type))))
         key = self.__create_req_key__(item_no, prefix='Active')
         active_request_data = {
             "type": "PaydayloanUserActiveRepay",
             "key": key,
             "from_system": "DSQ",
             "data": {
+                "card_cvv": None,
+                "payment_mode": None,
+                "user_ip": None,
+                "address": None,
+                "email": None,
+                "user_name": None,
+                "individual_uuid": None,
+                "payment_type": "barcode",
+                "payment_option": "oxxo_cash",
+                "card_num_encrypt": None,
+                "card_expiry_year": None,
+                "card_expiry_month": None,
                 "total_amount": amount + x_amount,
                 "project_list": [],
                 "order_no": order_no,
@@ -37,13 +57,11 @@ class MexRepayService(OverseaRepayService):
             }
         }
 
-        coupon_item = {'coupon_num': "", 'coupon_amount': 0, 'coupon_type': 'cash'}
-
         for four_element_key, four_element_value in self.__get_four_element_key__(repay_card).items():
             active_request_data['data'][four_element_key] = card_info[four_element_value]
-        amount_info_list = [(item_no, amount, item_no_priority, None, None),
-                            (item_no_x, x_amount, item_no_x_priority, None, None)]
-        amount_info_key = ("project_num", "amount", "priority", "coupon_num", "coupon_amount")
+        amount_info_list = [(item_no, amount, item_no_priority, None, None, coupon_dict[item_no]),
+                            (item_no_x, x_amount, item_no_x_priority, None, None, coupon_dict[item_no_x])]
+        amount_info_key = ("project_num", "amount", "priority", "coupon_num", "coupon_amount", "coupon_list")
         for amount_info in amount_info_list:
             if amount_info[1] != 0:
                 active_request_data['data']['project_list'].append(dict(zip(amount_info_key, amount_info)))
@@ -63,7 +81,7 @@ class MexRepayService(OverseaRepayService):
 
         if amount == 0 and x_amount == 0:
             return "当前已结清", "", []
-        request_data = self.__get_active_request_data__(item_no, item_no_x, amount, x_amount, 1, coupon_list)
+        request_data = self.__get_active_request_data__(item_no, item_no_x, amount, x_amount, 1, coupon_list=coupon_list)
         print(json.dumps(request_data))
         resp = Http.http_post(self.active_repay_url, request_data)
         return request_data, self.active_repay_url, resp
@@ -72,28 +90,30 @@ class MexRepayService(OverseaRepayService):
         withhold = self.db_session.query(Withhold).filter(Withhold.withhold_serial_no == serial_no).first()
         if not withhold:
             raise ValueError('代扣记录不存在')
-        if not back_amount:
-            return
+        back_amount = back_amount if back_amount else withhold.withhold_amount
         channel = withhold.withhold_channel if \
             withhold.withhold_channel and \
             withhold.withhold_channel not in ('lanzhou_haoyue', 'hami_tianshan') else 'baofu_4_baidu'
+        key = self.__create_req_key__(item_no, prefix='CallBack')
         req_data = {
-            "amount": back_amount,
-            "platform_code": "E20000",
-            "payment_mode": "CREDIT_CARD",
-            "merchant_key": serial_no,
-            "channel_name": channel,
-            "channel_key": serial_no,
-            "finished_at": self.get_date(is_str=True, timezone=pytz.timezone(TIMEZONE[self.country])),
-            "transaction_status": status,
-            "sign": "6401cd046b5ae44ef208b8ea82d398ab",
             "from_system": "paysvr",
-            "channel_message": "交易成功" if status == 2 else '交易失败'
+            "key": key,
+            "type": "withhold",
+            "data": {
+                "amount": back_amount,
+                "platform_code": "E20000",
+                "payment_mode": "CREDIT_CARD",
+                "merchant_key": serial_no,
+                "channel_name": channel,
+                "channel_key": serial_no,
+                "finished_at": self.get_date(is_str=True, timezone=pytz.timezone(TIMEZONE[self.country])),
+                "status": status,
+                "channel_message": "交易成功" if status == 2 else '交易失败'
+            }
         }
         resp = Http.http_post(self.pay_svr_callback_url, req_data)
         if resp['code'] != 0:
             raise ValueError('执行回调接口失败，返回:{0}'.format(resp))
-        self.run_callback_task_and_msg(serial_no, status)
         if refresh_type is not None:
             return self.info_refresh(item_no, refresh_type=refresh_type, max_create_at=max_create_at)
         return req_data, self.pay_svr_callback_url, resp
