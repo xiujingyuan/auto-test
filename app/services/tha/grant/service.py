@@ -3,7 +3,7 @@ import json
 from sqlalchemy import desc
 
 from app.common.log_util import LogUtil
-from app.services import Synctask, Sendmsg, Asset
+from app.services.grant import Synctask, Sendmsg, Asset
 from app.services.grant import OverseaGrantService
 
 
@@ -19,13 +19,14 @@ class ThaGrantService(OverseaGrantService):
         msg_task = self.db_session.query(Sendmsg).join(Asset, Asset.asset_item_no == Sendmsg.sendmsg_order_no)\
             .filter(Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
                     Asset.asset_status.in_(('repay', 'payoff')),
-                    Asset.asset_loan_channel == channel).order_by(desc(Synctask.synctask_create_at)).limit(100)
+                    Asset.asset_loan_channel == channel).order_by(desc(Sendmsg.sendmsg_create_at)).limit(100)
         for task in msg_task:
             asset_import_sync_task = self.db_session.query(Synctask).filter(
-                Synctask.synctask_order_no == (task + channel),
+                Synctask.synctask_order_no == (task.sendmsg_order_no + channel),
                 Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
             if asset_import_sync_task is not None:
-                return json.loads(asset_import_sync_task.synctask_request_data), asset_import_sync_task.synctask_order_no
+                return json.loads(asset_import_sync_task.synctask_request_data), \
+                       asset_import_sync_task.synctask_order_no.replace(channel, '')
         LogUtil.log_info('not fount the asset import task')
         raise ValueError('not fount the asset import task')
 

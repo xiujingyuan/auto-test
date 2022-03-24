@@ -218,7 +218,8 @@ class BaseService(object):
                 asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
             else:
                 asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
-            if asset_tran.asset_tran_finish_at.year != 1000:
+            if isinstance(asset_tran.asset_tran_finish_at, datetime.datetime) \
+                    and asset_tran.asset_tran_finish_at.year != 1000:
                 cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                 cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                 if cal_advance_day == 0 and cal_advance_month == 0:
@@ -233,7 +234,8 @@ class BaseService(object):
                                                    days=capital_tran.capital_transaction_period * interval_day)
             else:
                 expect_finished_at = self.get_date(date=real_now, months=capital_tran.capital_transaction_period)
-            if capital_tran.capital_transaction_user_repay_at.year != 1000:
+            if isinstance(capital_tran.capital_transaction_user_repay_at, datetime.datetime) \
+                    and capital_tran.capital_transaction_user_repay_at.year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_user_repay_at)
                 cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
@@ -248,7 +250,8 @@ class BaseService(object):
             actual_operate_at = 'capital_transaction_actual_operate_at' if \
                 hasattr(capital_tran, 'capital_transaction_actual_operate_at') \
                 else 'capital_transaction_actual_finished_at'
-            if getattr(capital_tran, actual_operate_at).year != 1000:
+            if isinstance(getattr(capital_tran, actual_operate_at), datetime.datetime) and \
+                    getattr(capital_tran, actual_operate_at).year != 1000:
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 getattr(capital_tran, actual_operate_at))
                 cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
