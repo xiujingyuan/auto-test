@@ -24,6 +24,7 @@ class RepayBaseService(BaseService):
         self.refresh_url = self.repay_host + "/asset/refreshLateFee"
         self.send_msg_url = self.repay_host + "/paydayloan/repay/bindSms"
         self.pay_svr_callback_url = self.repay_host + "/paysvr/callback"
+        self.pay_svr_offline_callback_url = self.repay_host + "/paysvr/offline-withhold/callback"
         self.reverse_url = self.repay_host + "/asset/repayReverse"
         self.withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
         self.run_task_id_url = self.repay_host + '/task/run?taskId={0}'
@@ -160,8 +161,8 @@ class RepayBaseService(BaseService):
     def _sum_amount_(amount_type, amount_list):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
 
-    def run_task_by_id(self, task_id, max_create_at=None, item_no=None):
-        ret = super(RepayBaseService, self).run_task_by_id(task_id)
+    def run_task_by_id(self, task_id, max_create_at=None, item_no=None, excepts={'code': 0}):
+        ret = super(RepayBaseService, self).run_task_by_id(task_id, excepts=excepts)
         if max_create_at is not None:
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type="task")
         return ret
@@ -631,7 +632,7 @@ class OverseaRepayService(RepayBaseService):
         element = self.get_four_element()
         if joint_debt_item:
             joint_debt_asset = self.db_session.query(Asset).filter(Asset.asset_item_no == joint_debt_item).first()
-            if joint_debt_asset:
+            if joint_debt_asset is not None:
                 raise ValueError('not fount the joint_debt_asset')
             joint_debt_asset = self.get_repay_card_by_item_no(joint_debt_asset)
             element["data"]["id_number_encrypt"] = joint_debt_asset['card_acc_id_num_encrypt']

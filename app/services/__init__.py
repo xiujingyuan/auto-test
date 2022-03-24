@@ -11,6 +11,7 @@ import socket
 
 from dateutil.relativedelta import relativedelta
 from faker import Faker
+from flask import current_app
 
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -74,25 +75,38 @@ class BaseService(object):
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
+        db_key = '{0}_{1}_{2}'.format(country, env, program)
         if country == 'china':
-            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False)
-            self.db_session = MyScopedSession(sessionmaker())
-            self.db_session.configure(bind=self.engine)
+            if db_key not in current_app.global_data:
+                self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False,
+                                            pool_size=100, pool_recycle=3600)
+                current_app.global_data[db_key] = {}
+                current_app.global_data[db_key]['engine'] = self.engine
+            else:
+                self.engine = current_app.global_data[db_key]['engine']
         else:
-            ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
-            self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
-            port = self.get_port()
-            self.server = SSHTunnelForwarder(
-                        (ssh_config["ssh_proxy_host"], 22),
-                        ssh_username=ssh_config["ssh_user_name"],
-                        ssh_pkey=ssh_pkey,
-                        remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
-                        local_bind_address=('127.0.0.1', port))
-            self.server.start()
-            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False)
-            self.db_session = MyScopedSession(sessionmaker())
-            self.db_session.configure(bind=self.engine)
+            if db_key not in current_app.global_data:
+                ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
+                self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
+                port = self.get_port()
+                self.server = SSHTunnelForwarder(
+                            (ssh_config["ssh_proxy_host"], 22),
+                            ssh_username=ssh_config["ssh_user_name"],
+                            ssh_pkey=ssh_pkey,
+                            remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
+                            local_bind_address=('127.0.0.1', port))
+                self.server.start()
+                self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port),
+                                            echo=False, pool_size=100, pool_recycle=3600)
+                current_app.global_data[db_key] = {}
+                current_app.global_data[db_key]['engine'] = self.engine
+                current_app.global_data[db_key]['server'] = self.server
+            else:
+                self.engine = current_app.global_data[db_key]['engine']
+                self.server = current_app.global_data[db_key]['server']
+        self.db_session = MyScopedSession(sessionmaker())
+        self.db_session.configure(bind=self.engine)
         self.log = LogUtil()
 
     def run_job_by_api(self, job_type, job_params):
@@ -116,7 +130,7 @@ class BaseService(object):
                 raise Exception("未选到合适的端口")
         return port
 
-    def run_xxl_job(self, job_type, param=None, invoke_type='api'):
+    def run_xxl_job(self, job_type, param={}, invoke_type='api'):
         if invoke_type == 'api':
             return self.run_job_by_api(job_type, param)
         else:
@@ -125,8 +139,8 @@ class BaseService(object):
     def __del__(self):
         if hasattr(self, 'db_session'):
             self.db_session.close()
-        if hasattr(self, 'server'):
-            self.server.close()
+    #     if hasattr(self, 'server'):
+    #         self.server.close()
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):

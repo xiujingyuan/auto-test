@@ -1,5 +1,6 @@
 import copy
 import json
+import random
 
 import pytz
 
@@ -18,11 +19,11 @@ class MexRepayService(OverseaRepayService):
         self.grant = MexGrantService(env, run_env, check_req, return_req)
         super(MexRepayService, self).__init__('mex', env, run_env, check_req, return_req)
 
-    def __get_active_request_data__(self, item_no, item_no_x, amount, x_amount, repay_card, item_no_priority=12,
-                                    item_no_x_priority=1, order_no='', coupon_list=None):
+    def __get_active_request_data__(self, item_no, item_no_x, amount, x_amount, repay_card, payment_type,
+                                    item_no_priority=12, item_no_x_priority=1, order_no='', coupon_list=None):
         card_info = self.get_active_card_info(item_no, repay_card)
         coupon_dict = dict(zip((item_no, item_no_x), ([], [])))
-        if coupon_list is not None:
+        if coupon_list and coupon_list is not None:
             for coupon in coupon_list.split("\n"):
                 coupon_or, coupon_num, coupon_amount, coupon_type = coupon.split(",")
                 coupon_or = item_no if coupon_or == '1' else item_no_x
@@ -44,8 +45,9 @@ class MexRepayService(OverseaRepayService):
                 "email": None,
                 "user_name": None,
                 "individual_uuid": None,
-                "payment_type": "barcode",
-                "payment_option": "oxxo_cash",
+                "payment_type": payment_type,
+                "payment_option": random.choice(["oxxo_cash", "bank_account"]) if
+                payment_type == 'barcode' else payment_type,
                 "card_num_encrypt": None,
                 "card_expiry_year": None,
                 "card_expiry_month": None,
@@ -68,7 +70,7 @@ class MexRepayService(OverseaRepayService):
         return active_request_data
 
     @query_withhold
-    def active_repay(self, item_no, amount=0, x_amount=0, period_start=None, period_end=None,
+    def active_repay(self, item_no, payment_type, amount=0, x_amount=0, period_start=None, period_end=None,
                      coupon_list=''):
         asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
         max_period = asset_tran[-1].asset_tran_period
@@ -81,7 +83,8 @@ class MexRepayService(OverseaRepayService):
 
         if amount == 0 and x_amount == 0:
             return "当前已结清", "", []
-        request_data = self.__get_active_request_data__(item_no, item_no_x, amount, x_amount, 1, coupon_list=coupon_list)
+        request_data = self.__get_active_request_data__(item_no, item_no_x, amount, x_amount, 1, payment_type,
+                                                        coupon_list=coupon_list)
         print(json.dumps(request_data))
         resp = Http.http_post(self.active_repay_url, request_data)
         return request_data, self.active_repay_url, resp
@@ -117,4 +120,42 @@ class MexRepayService(OverseaRepayService):
         if refresh_type is not None:
             return self.info_refresh(item_no, refresh_type=refresh_type, max_create_at=max_create_at)
         return req_data, self.pay_svr_callback_url, resp
+
+    def repay_offline_callback(self, item_no, back_amount=0, refresh_type=None, max_create_at=None):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        if asset is None:
+            raise ValueError('not found the asset!')
+        back_amount = back_amount if back_amount else asset.asset_balance_amount
+        key = self.__create_req_key__(item_no, prefix='OfflineCallBack')
+        channel_key = self.__create_req_key__(item_no, prefix='channel_')
+        req_data = {
+            "from_system": "paysvr",
+            "key": key,
+            "type": "withhold",
+            "data": {
+                "amount": back_amount,
+                "merchant_key": channel_key,
+                "status": "2",
+                "finished_at": self.get_date(is_str=True, timezone=pytz.timezone(TIMEZONE[self.country])),
+                "channel_key": channel_key,
+                "channel_name": "pandapay_alibey_collect",
+                "from_system": None,
+                "platform_message": "OK",
+                "platform_code": "E20000",
+                "payment_mode": "",
+                "account_no": item_no
+            },
+            "sync_datetime": None,
+            "busi_key": "e82c588cb1fc4885be15b19c130f33f2"
+        }
+        resp = Http.http_post(self.pay_svr_offline_callback_url, req_data)
+        if resp['code'] != 0:
+            raise ValueError('执行回调接口失败，返回:{0}'.format(resp))
+        self.run_task_by_order_no(channel_key, 'offline_withhold_process')
+        self.run_task_by_order_no(channel_key, 'withhold_callback_process')
+        if refresh_type is not None:
+            return self.info_refresh(item_no, refresh_type=refresh_type, max_create_at=max_create_at)
+        return req_data, self.pay_svr_callback_url, resp
+
+
 

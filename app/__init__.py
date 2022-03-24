@@ -22,6 +22,7 @@ def create_app():
     # 调用config.py的init_app()
     AutoTestConfig.init_app(app)
     db.init_app(app, )
+    app.global_data = {}
 
     from app.api.nacos import api_nacos as api_nacos_blueprint
     app.register_blueprint(api_nacos_blueprint, url_prefix='/api/nacos/')
