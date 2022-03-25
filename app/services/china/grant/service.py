@@ -191,23 +191,6 @@ class ChinaGrantService(GrantBaseService):
                                       sub_order_type=sub_order_type)
         return asset_info, old_asset
 
-    def asset_no_loan_import(self, asset_info, import_asset_info, item_no, x_item_no, source_type):
-        _, no_old_asset = self.get_asset_info_from_db()
-        no_asset_info = deepcopy(asset_info)
-        asset_extend = self.db_session.query(AssetExtend).filter(
-            AssetExtend.asset_extend_asset_item_no == item_no).first()
-        if source_type == 'lieyin':
-            no_asset_info['data']['asset']['period_count'] = 5
-        no_asset_info['key'] = self.__create_req_key__(x_item_no, prefix='Import')
-        no_asset_info['data']['asset']['item_no'] = x_item_no
-        no_asset_info['data']['asset']['name'] = x_item_no
-        no_asset_info['data']['asset']['source_number'] = item_no
-        no_asset_info['data']['asset']['amount'] = self.calc_noloan_amount(import_asset_info, source_type)
-        no_asset_info['data']['asset']['source_type'] = source_type
-        no_asset_info['data']['asset']['loan_channel'] = 'noloan'
-        no_asset_info['data']['asset']['sub_order_type'] = asset_extend.asset_extend_sub_order_type
-        return no_asset_info, no_old_asset
-
     def capital_asset_success(self, capital_asset):
         Http.http_post(self.repay_capital_asset_import_url, capital_asset)
         resp = Http.http_post(self.biz_central.capital_asset_import_url, capital_asset)

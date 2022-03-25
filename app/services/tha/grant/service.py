@@ -21,8 +21,10 @@ class ThaGrantService(OverseaGrantService):
                     Asset.asset_status.in_(('repay', 'payoff')),
                     Asset.asset_loan_channel == channel).order_by(desc(Sendmsg.sendmsg_create_at)).limit(100)
         for task in msg_task:
+            sync_order = ''.join((task.sendmsg_order_no, channel)) if \
+                channel != 'noloan' else '{0}_{1}'.format(task.sendmsg_order_no, channel)
             asset_import_sync_task = self.db_session.query(Synctask).filter(
-                Synctask.synctask_order_no == (task.sendmsg_order_no + channel),
+                Synctask.synctask_order_no == sync_order,
                 Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
             if asset_import_sync_task is not None:
                 return json.loads(asset_import_sync_task.synctask_request_data), \
