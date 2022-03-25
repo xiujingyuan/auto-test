@@ -700,16 +700,17 @@ class OverseaRepayService(RepayBaseService):
         asset_info, old_asset, item_no = self.grant.asset_import(channel, period, days, "day", amount, self.country,
                                                                  from_app, source_type, element, withdraw_type)
         print('item_no:', item_no)
-        x_item_no = 'no_loan_{0}'.format(x_item_no) if x_item_no else ''
+        x_item_no = 'no_loan_{0}'.format(item_no) if x_item_no else ''
         import_asset_info = self.grant.asset_import_success(asset_info)
-        withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info, element)
+        withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info,
+                                                                     element=element)
         self.grant.asset_withdraw_success(withdraw_success_data)
         capital_data = self.grant.get_capital_asset_data(item_no)
         self.grant.capital_asset_success(capital_data)
         # 判断是否有小单
         if x_item_no:
             no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
-                                                                          x_item_no, 'noloan')
+                                                                          x_item_no, source_type + "_split")
             self.grant.asset_import_success(no_asset_info)
             withdraw_success_data_no = self.grant.get_withdraw_success_data(x_item_no, no_old_asset, item_no,
                                                                             no_asset_info)
