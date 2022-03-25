@@ -715,7 +715,7 @@ class OverseaRepayService(RepayBaseService):
             withdraw_success_data_no = self.grant.get_withdraw_success_data(x_item_no, no_old_asset, item_no,
                                                                             no_asset_info)
             self.grant.asset_withdraw_success(withdraw_success_data_no)
-            self.run_msg_by_type_and_order_no(x_item_no, 'AssetWithdrawSuccess')
+            self.run_msg_by_order_no(x_item_no, 'AssetWithdrawSuccess')
         self.add_asset(item_no, 0)
         return item_no, x_item_no
 

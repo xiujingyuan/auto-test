@@ -371,7 +371,7 @@ class OverseaGrantService(GrantBaseService):
 
     def set_withdraw_success_asset(self, withdraw_success_data, asset, x_item_no):
         asset.asset_status = 'repay'
-        asset.asset_version = asset.asset_version + 10
+        asset.asset_version = time.time()
         asset.asset_interest_rate = 5
         asset.asset_item_no = asset.asset_item_no
         asset.asset_actual_grant_at = self.get_date()
