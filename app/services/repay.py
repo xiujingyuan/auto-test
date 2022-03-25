@@ -683,7 +683,7 @@ class OverseaRepayService(RepayBaseService):
         response["data"]["bank_account_encrypt"] = resp["data"][2]["hash"]
         return response
 
-    def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item = ''
+    def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item='', x_item_no=False
                   , from_app='phi011', withdraw_type='online'):
         element = self.get_four_element()
         if joint_debt_item:
@@ -700,7 +700,7 @@ class OverseaRepayService(RepayBaseService):
         asset_info, old_asset, item_no = self.grant.asset_import(channel, period, days, "day", amount, self.country,
                                                                  from_app, source_type, element, withdraw_type)
         print('item_no:', item_no)
-        x_item_no = ''
+        x_item_no = 'no_loan_{0}'.format(x_item_no) if x_item_no else ''
         import_asset_info = self.grant.asset_import_success(asset_info)
         withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info, element)
         self.grant.asset_withdraw_success(withdraw_success_data)
@@ -708,7 +708,7 @@ class OverseaRepayService(RepayBaseService):
         self.grant.capital_asset_success(capital_data)
         # 判断是否有小单
         if x_item_no:
-            self.noloan_to_success(x_item_no)
+            self.grant.noloan_to_success(x_item_no)
         self.add_asset(item_no, 0)
         return item_no, x_item_no
 

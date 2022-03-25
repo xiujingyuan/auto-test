@@ -198,6 +198,10 @@ class GrantBaseService(BaseService):
         self.db_session.add(router_record)
         self.db_session.commit()
 
+    def noloan_to_success(self, item_no):
+        
+        return item_no
+
     def create_item_no(self):
         return "{0}{1}{2}".format(random.choice(('B', 'S')), self.get_date().year, int(time.time()))
 

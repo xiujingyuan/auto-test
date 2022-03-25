@@ -9,4 +9,8 @@ class ThaRepayService(OverseaRepayService):
         self.grant = ThaGrantService(env, run_env, check_req, return_req)
         super(ThaRepayService, self).__init__('tha', env, run_env, check_req, return_req)
 
+    def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item='', from_app='cherry'):
+        return super(ThaRepayService, self).auto_loan(channel, period, days, amount, source_type,
+                                                      joint_debt_item=joint_debt_item,
+                                                      x_item_no=True, from_app=from_app)
 
