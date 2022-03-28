@@ -449,7 +449,7 @@ class OverseaGrantService(GrantBaseService):
         response["data"]["bank_account_encrypt"] = resp["data"][2]["hash"]
         return response
 
-    def asset_no_loan_import(self, asset_info, import_asset_info, item_no, x_item_no, source_type):
+    def asset_no_loan_import(self, asset_info, import_asset_info, item_no, x_item_no, source_type, element):
         _, no_old_asset = self.get_asset_info_from_db()
         no_asset_info = copy.deepcopy(asset_info)
         no_asset_info['key'] = self.__create_req_key__(x_item_no, prefix='Import')
@@ -460,6 +460,7 @@ class OverseaGrantService(GrantBaseService):
         no_asset_info['data']['asset']['source_type'] = source_type
         no_asset_info['data']['asset']['loan_channel'] = 'noloan'
         no_asset_info['data']['asset']['ref_order_type'] = source_type
+        self.set_asset_borrower(no_asset_info, element)
         return no_asset_info, no_old_asset
 
     def asset_import(self, channel, count, day, types, amount, from_system, from_app,

@@ -710,10 +710,10 @@ class OverseaRepayService(RepayBaseService):
         # 判断是否有小单
         if x_item_no:
             no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
-                                                                          x_item_no, source_type + "_split")
+                                                                          x_item_no, source_type + "_split", element)
             self.grant.asset_import_success(no_asset_info)
             withdraw_success_data_no = self.grant.get_withdraw_success_data(x_item_no, no_old_asset, item_no,
-                                                                            no_asset_info)
+                                                                            no_asset_info, element=element)
             self.grant.asset_withdraw_success(withdraw_success_data_no)
             self.run_msg_by_order_no(x_item_no, 'AssetWithdrawSuccess')
         self.add_asset(item_no, 0)
