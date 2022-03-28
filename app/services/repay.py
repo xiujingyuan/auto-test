@@ -599,8 +599,8 @@ class OverseaRepayService(RepayBaseService):
             for coupon in coupon_list.split("\n"):
                 coupon_or, coupon_num, coupon_amount, coupon_type = coupon.split(",")
                 coupon_or = item_no if coupon_or == '1' else item_no_x
-                coupon_num = coupon_num if coupon_num else '{0}_{1}'.format(
-                    self.get_date(is_str=True, fmt='%Y%m%d%H%M%S'), coupon_type)
+                coupon_num = coupon_num if coupon_num else '{0}{2}_{1}'.format(
+                    self.get_date(is_str=True, fmt='%Y%m%d%H%M%S'), coupon_type, item_no[1])
                 if coupon_amount:
                     coupon_dict[coupon_or].append(dict(zip(('coupon_num', 'coupon_amount', 'coupon_type'),
                                                            (coupon_num, int(coupon_amount), coupon_type))))
