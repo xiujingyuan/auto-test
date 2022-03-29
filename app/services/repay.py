@@ -576,7 +576,7 @@ class RepayBaseService(BaseService):
             capital_tran_list = self.db_session.query(CapitalTransaction).filter(
                 CapitalTransaction.capital_transaction_item_no == item).all()
             self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                                     advance_month, asset_list[0].asset_product_category)
+                                     advance_month, int(asset_list[0].asset_product_category))
             if self.country == 'china':
                 self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
         self.refresh_late_fee(item_no)

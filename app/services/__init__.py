@@ -96,6 +96,8 @@ class BaseService(object):
                                         pool_size=100, pool_recycle=3600)
             current_app.global_data[db_key]['engine'] = self.engine
         else:
+            self.server = current_app.global_data[db_key]['server']
+            self.server.start()
             self.engine = current_app.global_data[db_key]['engine']
 
         self.db_session = MyScopedSession(sessionmaker())
@@ -131,7 +133,7 @@ class BaseService(object):
 
     def __del__(self):
         if hasattr(self, 'db_session'):
-            self.db_session.close()
+            self.db_session.remove()
         # if hasattr(self, 'server'):
         #     self.server.close()
 
