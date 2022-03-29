@@ -76,23 +76,28 @@ class BaseService(object):
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
         db_key = '{0}_{1}_{2}'.format(country, env, program)
-        if country == 'china':
-            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env), echo=False,
+        port = 3306
+        if db_key not in current_app.global_data:
+            current_app.global_data[db_key] = {}
+            if country != 'china':
+                port = self.get_port()
+                ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
+                self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
+                self.server = SSHTunnelForwarder(
+                    (ssh_config["ssh_proxy_host"], 22),
+                    ssh_username=ssh_config["ssh_user_name"],
+                    ssh_pkey=ssh_pkey,
+                    remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
+                    local_bind_address=('127.0.0.1', port))
+                current_app.global_data[db_key]['server'] = self.server
+                self.server.start()
+            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False,
                                         pool_size=100, pool_recycle=3600)
+            current_app.global_data[db_key]['engine'] = self.engine
         else:
-            ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
-            self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
-            port = self.get_port()
-            self.server = SSHTunnelForwarder(
-                        (ssh_config["ssh_proxy_host"], 22),
-                        ssh_username=ssh_config["ssh_user_name"],
-                        ssh_pkey=ssh_pkey,
-                        remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
-                        local_bind_address=('127.0.0.1', port))
-            self.server.start()
-            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port),
-                                        echo=False, pool_size=100, pool_recycle=3600)
+            self.engine = current_app.global_data[db_key]['engine']
+
         self.db_session = MyScopedSession(sessionmaker())
         self.db_session.configure(bind=self.engine)
         self.log = LogUtil()
@@ -127,8 +132,8 @@ class BaseService(object):
     def __del__(self):
         if hasattr(self, 'db_session'):
             self.db_session.close()
-    #     if hasattr(self, 'server'):
-    #         self.server.close()
+        # if hasattr(self, 'server'):
+        #     self.server.close()
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
@@ -194,15 +199,18 @@ class BaseService(object):
 
     @time_print
     def change_asset_due_at(self, asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                            advance_month, interval_day=30):
-        real_now = self.get_date(months=advance_month, days=advance_day).date()
+                            advance_month, interval_day):
+        if interval_day == 30:
+            real_now = self.get_date(months=advance_month, days=advance_day).date()
+        else:
+            real_now = self.get_date(days=(advance_day + interval_day * advance_month)).date()
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
         if capital_asset is not None and capital_asset:
             capital_asset.capital_asset_granted_at = real_now
 
         for asset_tran in asset_tran_list:
-            if interval_day in (7, 14):
+            if interval_day != 30:
                 asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
             else:
                 asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
@@ -217,7 +225,7 @@ class BaseService(object):
             asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
-            if interval_day in (7, 14):
+            if interval_day != 30:
                 expect_finished_at = self.get_date(date=real_now,
                                                    days=capital_tran.capital_transaction_period * interval_day)
             else:

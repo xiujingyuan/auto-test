@@ -549,11 +549,20 @@ class RepayBaseService(BaseService):
                                                          ref_order_type.asset_extend_val != 'lieyin' else ''
         return item_no_x
 
+    def get_right_item(self, item_no):
+        item_no_right = ''
+        asset_extend = self.db_session.query(AssetExtend).filter(
+            AssetExtend.asset_extend_val == item_no,
+            AssetExtend.asset_extend_type == 'ref_order_no'
+        ).first()
+        if asset_extend:
+            item_no_right = asset_extend.asset_extend_asset_item_no
+        return item_no_right
+
     @time_print
-    def change_asset(self, item_no, item_no_rights, advance_day, advance_month, interval_day=30):
+    def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no,)
         for index, item in enumerate(item_no_tuple):
-
             item_no_x = self.get_no_loan(item)
             item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
             asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
@@ -567,7 +576,7 @@ class RepayBaseService(BaseService):
             capital_tran_list = self.db_session.query(CapitalTransaction).filter(
                 CapitalTransaction.capital_transaction_item_no == item).all()
             self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                                     advance_month, interval_day)
+                                     advance_month, asset_list[0].asset_product_category)
             if self.country == 'china':
                 self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
         self.refresh_late_fee(item_no)
@@ -600,7 +609,7 @@ class OverseaRepayService(RepayBaseService):
                 coupon_or, coupon_num, coupon_amount, coupon_type = coupon.split(",")
                 coupon_or = item_no if coupon_or == '1' else item_no_x
                 coupon_num = coupon_num if coupon_num else '{0}{2}_{1}'.format(
-                    self.get_date(is_str=True, fmt='%Y%m%d%H%M%S'), coupon_type, item_no[1])
+                    self.get_date(is_str=True, fmt='%Y%m%d%H%M%S'), coupon_type, coupon_or[0])
                 if coupon_amount:
                     coupon_dict[coupon_or].append(dict(zip(('coupon_num', 'coupon_amount', 'coupon_type'),
                                                            (coupon_num, int(coupon_amount), coupon_type))))
@@ -777,10 +786,16 @@ class OverseaRepayService(RepayBaseService):
             return self.info_refresh(item_no, refresh_type=refresh_type, max_create_at=max_create_at)
         return req_data, self.pay_svr_callback_url, resp
 
-    def repay_offline_callback(self, item_no, back_amount=0, refresh_type=None, max_create_at=None):
+    def repay_offline_callback(self, item_no, item_type, back_amount=0, refresh_type=None, max_create_at=None):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         if asset is None:
             raise ValueError('not found the asset!')
+        account_no = item_no
+        if not item_type:
+            asset_x = self.get_no_loan(item_no)
+            if not asset_x:
+                raise ValueError('not found the asset!')
+            account_no = asset_x.asset_item_no
         back_amount = back_amount if back_amount else asset.asset_balance_amount
         key = self.__create_req_key__(item_no, prefix='OfflineCallBack')
         channel_key = self.__create_req_key__(item_no, prefix='channel_')
@@ -799,7 +814,7 @@ class OverseaRepayService(RepayBaseService):
                 "platform_message": "OK",
                 "platform_code": "E20000",
                 "payment_mode": "",
-                "account_no": item_no
+                "account_no": account_no
             },
             "sync_datetime": None,
             "busi_key": "e82c588cb1fc4885be15b19c130f33f2"

@@ -25,8 +25,8 @@ class AutoTestConfig:
     }
     SQLALCHEMY_DICT = {
             'china': {
-                "repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/rbiz{0}",
-                "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/gbiz{0}",
+                "repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/rbiz{0}",
+                "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/gbiz{0}",
                 "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}"
             },
             'ind': {
