@@ -77,28 +77,28 @@ class BaseService(object):
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
         db_key = '{0}_{1}_{2}'.format(country, env, program)
         port = 3306
-        if db_key not in current_app.global_data:
-            current_app.global_data[db_key] = {}
-            if country != 'china':
-                port = self.get_port()
-                ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
-                self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-                ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
-                self.server = SSHTunnelForwarder(
-                    (ssh_config["ssh_proxy_host"], 22),
-                    ssh_username=ssh_config["ssh_user_name"],
-                    ssh_pkey=ssh_pkey,
-                    remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
-                    local_bind_address=('127.0.0.1', port))
-                current_app.global_data[db_key]['server'] = self.server
-                self.server.start()
-            self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False,
-                                        pool_size=100, pool_recycle=3600)
-            current_app.global_data[db_key]['engine'] = self.engine
-        else:
-            self.server = current_app.global_data[db_key]['server']
+        # if db_key not in current_app.global_data:
+        current_app.global_data[db_key] = {}
+        if country != 'china':
+            port = self.get_port()
+            ssh_config = AutoTestConfig.SQLALCHEMY_DICT[country]['ssh']
+            self.dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            ssh_pkey = os.path.join(self.dir, ssh_config["ssh_private_key"])
+            self.server = SSHTunnelForwarder(
+                (ssh_config["ssh_proxy_host"], 22),
+                ssh_username=ssh_config["ssh_user_name"],
+                ssh_pkey=ssh_pkey,
+                remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
+                local_bind_address=('127.0.0.1', port))
+            current_app.global_data[db_key]['server'] = self.server
             self.server.start()
-            self.engine = current_app.global_data[db_key]['engine']
+        self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False,
+                                    pool_size=100, pool_recycle=3600)
+        current_app.global_data[db_key]['engine'] = self.engine
+        # else:
+        #     self.server = current_app.global_data[db_key]['server']
+        #     self.server.start()
+        #     self.engine = current_app.global_data[db_key]['engine']
 
         self.db_session = MyScopedSession(sessionmaker())
         self.db_session.configure(bind=self.engine)
@@ -134,8 +134,8 @@ class BaseService(object):
     def __del__(self):
         if hasattr(self, 'db_session'):
             self.db_session.remove()
-        # if hasattr(self, 'server'):
-        #     self.server.close()
+        if hasattr(self, 'server'):
+            self.server.close()
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
