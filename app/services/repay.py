@@ -179,27 +179,25 @@ class RepayBaseService(BaseService):
         return ret
 
     def reverse_item_no(self, item_no, serial_no, max_create_at=None):
-        req_data = {
-            "from_system": "Biz",
-            "key": self.__create_req_key__(item_no, prefix='Reverse'),
-            "type": "AssetRepayReverse",
-            "data": {
-                "asset_item_no": item_no,
-                "serial_no": "",
-                "operator_name": "dongyuhong",
-                "comment": "decrease and repay",
-                "fromSystem": "rbiz",
-                "send_change_mq": True
-            }
-        }
-        order_info = self.db_session.query(WithholdOrder).filter(WithholdOrder.withhold_order_serial_no == serial_no,
-                                                                 WithholdOrder.withhold_order_reference_no == item_no
-                                                                 ).first()
-        if not order_info:
-            raise ValueError('withhold not found !')
+        order_info = self.db_session.query(WithholdOrder).filter(WithholdOrder.withhold_order_serial_no == serial_no
+                                                                 ).all()
         withhold_info = self.db_session.query(Withhold).filter(Withhold.withhold_serial_no == serial_no).first()
-        req_data['data']['serial_no'] = withhold_info.withhold_channel_key
-        resp = Http.http_post(self.reverse_url, req_data)
+        for order in order_info:
+            req_data = {
+                "from_system": "Biz",
+                "key": self.__create_req_key__(item_no, prefix='Reverse'),
+                "type": "AssetRepayReverse",
+                "data": {
+                    "asset_item_no": order.withhold_order_reference_no,
+                    "serial_no": "",
+                    "operator_name": "dongyuhong",
+                    "comment": "decrease and repay",
+                    "fromSystem": "rbiz",
+                    "send_change_mq": True
+                }
+            }
+            req_data['data']['serial_no'] = withhold_info.withhold_channel_key
+            resp = Http.http_post(self.reverse_url, req_data)
         if max_create_at is not None:
             info_ret = self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='withhold')
             info_ret['request'] = req_data
@@ -795,7 +793,7 @@ class OverseaRepayService(RepayBaseService):
             asset_x = self.get_no_loan(item_no)
             if not asset_x:
                 raise ValueError('not found the asset!')
-            account_no = asset_x.asset_item_no
+            account_no = asset_x
         back_amount = back_amount if back_amount else asset.asset_balance_amount
         key = self.__create_req_key__(item_no, prefix='OfflineCallBack')
         channel_key = self.__create_req_key__(item_no, prefix='channel_')
