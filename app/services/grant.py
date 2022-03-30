@@ -325,7 +325,7 @@ class OverseaGrantService(GrantBaseService):
                     Asset.asset_loan_channel == channel).order_by(desc(Sendmsg.sendmsg_create_at)).limit(100)
         for task in msg_task:
             sync_order = ''.join((task.sendmsg_order_no, channel)) if \
-                channel != 'noloan' else '{0}_{1}'.format(task.sendmsg_order_no, channel)
+                channel != 'noloan' else task.sendmsg_order_no
             asset_import_sync_task = self.db_session.query(Synctask).filter(
                 Synctask.synctask_order_no == sync_order,
                 Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
