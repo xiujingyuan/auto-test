@@ -23,8 +23,6 @@ def repay_tools(tool):
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
     period = req.pop("period", None)
-    if period is None:
-        period = req.pop("count", None)
     if period is not None:
         if isinstance(period, str) and "-" in period:
             req['period'] = period.split('-')[0]
