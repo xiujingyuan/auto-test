@@ -15,6 +15,24 @@ class ThaGrantService(OverseaGrantService):
                           "shanghai.alicontainer.com/".format(env)
         super(ThaGrantService, self).__init__('tha', env, run_env, check_req, return_req)
 
+    def get_asset_info_from_db(self, channel='noloan'):
+        msg_task = self.db_session.query(Sendmsg).join(Asset, Asset.asset_item_no == Sendmsg.sendmsg_order_no)\
+            .filter(Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
+                    Asset.asset_status.in_(('repay', 'payoff')),
+                    Asset.asset_loan_channel == channel).order_by(desc(Sendmsg.sendmsg_create_at)).limit(100)
+        for task in msg_task:
+            sync_order = ''.join((task.sendmsg_order_no, channel)) if \
+                channel != 'noloan' else task.sendmsg_order_no
+            asset_import_sync_task = self.db_session.query(Synctask).filter(
+                Synctask.synctask_order_no == sync_order,
+                Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
+            if asset_import_sync_task is not None:
+                item_no = asset_import_sync_task.synctask_order_no[0:-7] if  \
+                    channel == 'noloan' else asset_import_sync_task.synctask_order_no.replace(channel, '')
+                return json.loads(asset_import_sync_task.synctask_request_data), item_no
+        LogUtil.log_info('not fount the asset import task')
+        raise ValueError('not fount the asset import task')
+
     def asset_import(self, channel, count, day, types, amount, from_system, from_app,
                      source_type, element, withdraw_type, route_uuid='', insert_router_record=True):
         return super(ThaGrantService, self).asset_import(channel, count, day, types, amount, from_system, 'THA053',
