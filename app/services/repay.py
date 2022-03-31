@@ -547,14 +547,15 @@ class RepayBaseService(BaseService):
                                                          ref_order_type.asset_extend_val != 'lieyin' else ''
         return item_no_x
 
-    def get_right_item(self, item_no):
+    def get_right_item(self, item_no, item_no_x):
         item_no_right = ''
         asset_extend = self.db_session.query(AssetExtend).filter(
             AssetExtend.asset_extend_val == item_no,
             AssetExtend.asset_extend_type == 'ref_order_no'
-        ).first()
+        ).all()
         if asset_extend:
-            item_no_right = asset_extend.asset_extend_asset_item_no
+            item_no_filter = list(filter(lambda x: x.asset_extend_asset_item_no != item_no_x, asset_extend))
+            item_no_right = item_no_filter[0] if item_no_filter else ''
         return item_no_right
 
     @time_print
@@ -784,36 +785,42 @@ class OverseaRepayService(RepayBaseService):
             return self.info_refresh(item_no, refresh_type=refresh_type, max_create_at=max_create_at)
         return req_data, self.pay_svr_callback_url, resp
 
-    # def test(self):
-    #     req_list = []
-    #     for item_no in ('S20221648524895', 'B20221648524831'):
-    #         key = self.__create_req_key__(item_no, prefix='CallBack')
-    #         channel_key = self.__create_req_key__(item_no, prefix='channel_')
-    #         req_data = {
-    #             "from_system": "paysvr",
-    #             "key": key,
-    #             "type": "withhold",
-    #             "data": {
-    #                 "amount": 7000,
-    #                 "merchant_key": channel_key,
-    #                 "status": "2",
-    #                 "finished_at": self.get_date(is_str=True, timezone=pytz.timezone(TIMEZONE[self.country])),
-    #                 "channel_key": channel_key,
-    #                 "channel_name": "pandapay_alibey_collect",
-    #                 "from_system": None,
-    #                 "platform_message": "OK",
-    #                 "platform_code": "E20000",
-    #                 "payment_mode": "",
-    #                 "account_no": item_no
-    #             },
-    #             "sync_datetime": None,
-    #             "busi_key": "e82c588cb1fc4885be15b19c130f33f2"
-    #         }
-    #         req_list.append((item_no, req_data, channel_key))
-    #     for item_no, req_data, channel_key in req_list:
-    #         Http.http_post(self.pay_svr_offline_callback_url, req_data)
-    #     for item_no, req_data, channel_key in req_list:
-    #         self.run_task_by_order_no(channel_key, 'offline_withhold_process')
+    def test(self):
+        req_list = []
+        amount = ['21000', '14000', '7000']
+
+        for index, item_no in enumerate(('S20221648633013', 'S20221648633026')):
+            key = self.__create_req_key__(item_no, prefix='CallBack')
+            channel_key = self.__create_req_key__("test", prefix='channel_')
+            req_data = {
+                "from_system": "paysvr",
+                "key": key,
+                "type": "withhold",
+                "data": {
+                    "amount": amount[index],
+                    "merchant_key": channel_key,
+                    "status": "2",
+                    "finished_at": self.get_date(is_str=True, timezone=pytz.timezone(TIMEZONE[self.country])),
+                    "channel_key": channel_key,
+                    "channel_name": "pandapay_alibey_collect",
+                    "from_system": None,
+                    "platform_message": "OK",
+                    "platform_code": "E20000",
+                    "payment_mode": "",
+                    "account_no": "test"
+                },
+                "sync_datetime": None,
+                "busi_key": "e82c588cb1fc4885be15b19c130f33f2"
+            }
+            req_list.append((item_no, req_data, channel_key))
+        for item_no, req_data, channel_key in req_list:
+            Http.http_post(self.pay_svr_offline_callback_url, req_data)
+
+        for item_no, req_data, channel_key in req_list:
+            try:
+                self.run_task_by_order_no(channel_key, 'offline_withhold_process')
+            except:
+                continue
 
     def repay_offline_callback(self, item_no, item_type, back_amount=0, refresh_type=None, max_create_at=None):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()

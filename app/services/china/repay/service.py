@@ -163,7 +163,7 @@ class ChinaRepayService(RepayBaseService):
                 AssetExtend.asset_extend_val == 'lieyin').first()
             if not rights_info:
                 raise ValueError('The item {0} is not rights asset!'.format(item_no_rights))
-        item_no_rights = self.get_right_item(item_no) if not item_no_rights else item_no_rights
+        item_no_rights = self.get_right_item(item_no, item_no_x) if not item_no_rights else item_no_rights
         if not item_no and not item_no_rights:
             raise ValueError('need item_no or item_no_rights one is not null!')
         amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
