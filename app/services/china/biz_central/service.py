@@ -339,7 +339,7 @@ class ChinaBizCentralService(BaseService):
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
         self.change_asset_due_at([], [], capital_asset, capital_tran_list, advance_day,
-                                 advance_month, int(capital_asset.capital_asset_period_count))
+                                 advance_month, 30)
 
     def update_central_task_next_run_at_forward_by_task_id(self, task_id, re_run):
         central_task = self.db_session.query(CentralTask).filter(CentralTask.task_id == task_id).first()

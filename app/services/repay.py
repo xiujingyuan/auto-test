@@ -6,7 +6,10 @@ from functools import reduce
 
 import pytz
 from sqlalchemy import desc
+from sqlalchemy import desc
 
+from app.common.log_util import LogUtil
+from app.services import Sendmsg, Asset, Synctask
 from app import db
 from app.common.http_util import Http
 from app.model.Model import AutoAsset
@@ -561,10 +564,12 @@ class RepayBaseService(BaseService):
     @time_print
     def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no,)
+
         for index, item in enumerate(item_no_tuple):
             item_no_x = self.get_no_loan(item)
             item_tuple = tuple([x for x in [item, item_no_x, item_no_rights] if x])
             asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
+            interval_day = 30 if self.country == 'china' else int(asset_list[0].asset_product_category)
             if not asset_list:
                 raise ValueError('not found the asset, check the env!')
             asset_tran_list = self.db_session.query(AssetTran).filter(
@@ -575,7 +580,7 @@ class RepayBaseService(BaseService):
             capital_tran_list = self.db_session.query(CapitalTransaction).filter(
                 CapitalTransaction.capital_transaction_item_no == item).all()
             self.change_asset_due_at(asset_list, asset_tran_list, capital_asset, capital_tran_list, advance_day,
-                                     advance_month, int(asset_list[0].asset_product_category))
+                                     advance_month, interval_day)
             if self.country == 'china':
                 self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
         self.refresh_late_fee(item_no)
@@ -598,6 +603,24 @@ class OverseaRepayService(RepayBaseService):
         super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
         self.encrypt_url = 'http://47.101.30.198:8081/encrypt/'
         self.capital_asset_success_url = self.repay_host + '/capital-asset/grant'
+
+    def get_asset_info_from_db(self, channel='noloan'):
+        msg_task = self.db_session.query(Sendmsg).join(Asset, Asset.asset_item_no == Sendmsg.sendmsg_order_no)\
+            .filter(Sendmsg.sendmsg_type == 'AssetWithdrawSuccess',
+                    Asset.asset_status.in_(('repay', 'payoff')),
+                    Asset.asset_loan_channel == channel).order_by(desc(Sendmsg.sendmsg_create_at)).limit(100)
+        for task in msg_task:
+            sync_order = ''.join((task.sendmsg_order_no, channel)) if \
+                channel != 'noloan' else task.sendmsg_order_no
+            asset_import_sync_task = self.db_session.query(Synctask).filter(
+                Synctask.synctask_order_no == sync_order,
+                Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
+            if asset_import_sync_task is not None:
+                item_no = asset_import_sync_task.synctask_order_no[0:-7] if  \
+                    channel == 'noloan' else asset_import_sync_task.synctask_order_no.replace(channel, '')
+                return json.loads(asset_import_sync_task.synctask_request_data), item_no
+        LogUtil.log_info('not fount the asset import task')
+        raise ValueError('not fount the asset import task')
 
     def __get_active_request_data__(self, item_no, item_no_x, amount, x_amount, repay_card, payment_type,
                                     item_no_priority=12, item_no_x_priority=1, order_no='', coupon_list=None):
