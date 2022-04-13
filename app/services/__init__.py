@@ -90,11 +90,11 @@ class BaseService(object):
                 ssh_pkey=ssh_pkey,
                 remote_bind_address=(ssh_config["ssh_remote_host"], 3306),
                 local_bind_address=('127.0.0.1', port))
-            current_app.global_data[db_key]['server'] = self.server
+            # current_app.global_data[db_key]['server'] = self.server
             self.server.start()
         self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False,
                                     pool_size=100, pool_recycle=3600)
-        current_app.global_data[db_key]['engine'] = self.engine
+        # current_app.global_data[db_key]['engine'] = self.engine
         # else:
         #     self.server = current_app.global_data[db_key]['server']
         #     self.server.start()
@@ -133,7 +133,7 @@ class BaseService(object):
 
     def __del__(self):
         if hasattr(self, 'db_session'):
-            self.db_session.remove()
+            self.db_session.close()
         if hasattr(self, 'server'):
             self.server.close()
 
