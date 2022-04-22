@@ -24,12 +24,13 @@ def repay_tools(tool):
     environment = req.pop('environment', 'dev')
     period = req.pop("period", None)
     if period is not None:
-        if isinstance(period, str) and "-" in period:
-            req['period'] = period.split('-')[0]
-            req['days'] = int(period.split('-')[1])
-        else:
-            req['period'] = period
-            req['days'] = 0
+        req['period'] = period
+        if country != 'china':
+            if isinstance(period, str) and "-" in period:
+                req['period'] = period.split('-')[0]
+                req['days'] = int(period.split('-')[1])
+            else:
+                req['days'] = 0
     try:
         if tool == 'copy_asset':
             to_env = req.pop('to_env', None)
