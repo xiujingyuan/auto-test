@@ -193,6 +193,7 @@ class RepayBaseService(BaseService):
                 "data": {
                     "asset_item_no": order.withhold_order_reference_no,
                     "serial_no": "",
+                    "type": "asset",
                     "operator_name": "dongyuhong",
                     "comment": "decrease and repay",
                     "fromSystem": "rbiz",
@@ -606,6 +607,38 @@ class OverseaRepayService(RepayBaseService):
         self.online_refund_url = self.repay_host + '/page/asset/repeated-withhold/online-refund'
         self.offline_refund_url = self.repay_host + '/page/asset/repeated-withhold/offline-refund'
         self.repay_joint_debt_url = self.repay_host + '/asset/settleDebt'
+        self.fox_repay_url = self.repay_host + '/fox/withhold'
+
+    @query_withhold
+    def fox_repay(self, item_no, payment_type, amount=0, period_start=None, period_end=None):
+        asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
+        max_period = asset_tran[-1].asset_tran_period
+        is_overdue = False if self.cal_days(self.get_date(), asset_tran[-1].asset_tran_due_at) > 0 else True
+        if amount == 0 and period_start is not None and period_end is not None:
+            amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
+        req_key = self.__create_req_key__(item_no, prefix='FOX')
+        payment_option = payment_type
+        if payment_type == 'barcode':
+            payment_option = random.choice(["oxxo_cash", "bank_account"])
+        elif payment_type == 'paycode':
+            payment_option = random.choice(["wallet", "store"])
+        fox_active_data = {
+            "busi_key": "20190731061116179",
+            "data": {
+                "amount": amount,
+                "item_no": item_no,
+                "user_id": "",
+                "payment_type": payment_type,
+                "payment_option": payment_option,
+                "payment_mode": None
+            },
+            "from_system": "Fox",
+            "key": req_key,
+            "sync_datetime": None,
+            "type": "FoxManualWithhold"
+        }
+        resp = Http.http_post(self.fox_repay_url, fox_active_data)
+        return fox_active_data, self.fox_repay_url, resp
 
     @query_withhold
     def repay_joint_debt(self, item_no, serial_no):
