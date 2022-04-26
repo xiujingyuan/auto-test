@@ -1339,12 +1339,11 @@ class WithholdOrder(db.Model, BaseToDict):
     withhold_order_withhold_amount = db.Column(db.Integer, nullable=False, info='代扣金额（单位:分）')
     withhold_order_reference_no = db.Column(db.String(50), nullable=False, index=True, info='关联项目编号')
     withhold_order_withhold_status = db.Column(db.Enum('ready', 'process', 'success', 'fail', 'cancel'), nullable=False, info='状态')
-    withhold_order_withhold_sub_status = db.Column(db.Enum('normal', 'payment_cancel', 'agreement'), nullable=False, info='子状态,normal:正常,payment_cancel:协议支付取消,agreement:协议支付')
+    withhold_order_withhold_sub_status = db.Column(db.Enum('normal', 'payment_cancel', 'agreement', 'user_cancel'), nullable=False, info='子状态,normal:正常,payment_cancel:协议支付取消,agreement:协议支付')
     withhold_order_operate_type = db.Column(db.Enum('active', 'auto', 'manual'), info='代扣操作类型')
     withhold_order_create_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='创建时间')
     withhold_order_update_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='更新时间')
     withhold_order_balance_amount = db.Column(db.Integer, nullable=False, info='剩余金额(单位:分)')
-
 
 
 class WithholdRepeated(db.Model, BaseToDict):

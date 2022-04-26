@@ -104,7 +104,7 @@ class BaseService(object):
         self.log = LogUtil()
 
     def run_job_by_api(self, job_type, job_params):
-        return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, job_params))
+        return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, json.dumps(job_params)))
 
     @staticmethod
     def get_port():
@@ -207,6 +207,9 @@ class BaseService(object):
             real_now = self.get_date(days=(advance_day + interval_day * advance_month)).date()
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
+            if asset.asset_status == 'payoff':
+                asset.asset_actual_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
+                asset.asset_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
         if capital_asset is not None and capital_asset:
             capital_asset.capital_asset_granted_at = real_now
 
