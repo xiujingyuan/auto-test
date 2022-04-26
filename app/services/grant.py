@@ -409,7 +409,14 @@ class OverseaGrantService(GrantBaseService):
                 Synctask.synctask_order_no == sync_order,
                 Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
             if asset_import_sync_task is not None:
-                item_no = asset_import_sync_task.synctask_order_no[0:-7] if  \
+                item_no = asset_import_sync_task.synctask_order_no[0:-len(channel)] if  \
+                    channel == 'noloan' else asset_import_sync_task.synctask_order_no.replace(channel, '')
+                return json.loads(asset_import_sync_task.synctask_request_data), item_no
+            else:
+                asset_import_sync_task = self.db_session.query(Synctask).filter(
+                    Synctask.synctask_order_no == task.sendmsg_order_no,
+                    Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))).first()
+                item_no = asset_import_sync_task.synctask_order_no if \
                     channel == 'noloan' else asset_import_sync_task.synctask_order_no.replace(channel, '')
                 return json.loads(asset_import_sync_task.synctask_request_data), item_no
         LogUtil.log_info('not fount the asset import task')
