@@ -438,7 +438,7 @@ class ChinaRepayService(RepayBaseService):
                 "asset_period": None,
                 "customer_bank_card_encrypt": card_info['card_acc_num_encrypt'],
                 "customer_bank_code": "CCB",
-                "customer_mobile_encrypt": card_info['card_acc_id_num_encrypt'],
+                "customer_mobile_encrypt": card_info['card_acc_tel_encrypt'],
                 "manual_user_id_num": None,
                 "manual_user_id_num_encrypt": None,
                 "manual_user_name": None,
