@@ -429,15 +429,16 @@ class ChinaRepayService(RepayBaseService):
         if amount == 0 and period_start is not None and period_end is not None:
             amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
         req_key = self.__create_req_key__(item_no, prefix='FOX')
+        card_info = self.get_active_card_info(item_no, 1)
         fox_active_data = {
             "busi_key": "20190731061116179",
             "data": {
                 "amount": amount,
                 "asset_item_no": item_no,
                 "asset_period": None,
-                "customer_bank_card_encrypt": "enc_03_2767440037125031936_469",
+                "customer_bank_card_encrypt": card_info['card_acc_num_encrypt'],
                 "customer_bank_code": "CCB",
-                "customer_mobile_encrypt": "enc_01_2764219608117807104_022",
+                "customer_mobile_encrypt": card_info['card_acc_id_num_encrypt'],
                 "manual_user_id_num": None,
                 "manual_user_id_num_encrypt": None,
                 "manual_user_name": None,
