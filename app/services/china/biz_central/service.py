@@ -83,6 +83,12 @@ class ChinaBizCentralService(BaseService):
         for capital_tran in capital_tran_list:
             capital_tran.capital_transaction_operation_type = operate_type
             capital_tran.capital_transaction_status = status
+            capital_tran.capital_transaction_actual_operate_at = capital_tran.capital_transaction_expect_finished_at
+            capital_tran.capital_transaction_expect_operate_at = capital_tran.capital_transaction_expect_finished_at
+            capital_tran.capital_transaction_user_repay_at = capital_tran.capital_transaction_expect_finished_at
+            capital_tran.capital_transaction_withhold_result_channel = 'qsq'
+            capital_tran.capital_transaction_repaid_amount = capital_tran.capital_transaction_amount
+            capital_tran.capital_transaction_process_status = 'success'
         if capital_notify and operate_type != 'grant' and period > 1:
             notify_list = []
             channel = capital_tran_list[0].capital_transaction_channel

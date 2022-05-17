@@ -35,6 +35,7 @@ CHANNEL_SOURCE_TYPE_DICT = {
   "lanzhou_dingsheng_zkbc2": [APR_RONGDAN, IRR_RONGDAN_QUANYI],
   "tongrongqianjingjing": [APR_RONGDAN, IRR_QUANYI],
   "haohanqianjingjing": [APR_RONGDAN, IRR_QUANYI],
+  "jinmeixin_daqin": [APR_RONGDAN, IRR_QUANYI],
   "weishenma_daxinganling": [APR_RONGDAN],
 }
 

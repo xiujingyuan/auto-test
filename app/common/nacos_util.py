@@ -134,6 +134,7 @@ class Nacos(object):
         self.update_config(config_name, content, group)
 
     def update_config_by_json_path(self, config_name, json_path_dict, group='KV'):
+        # $.store.book [0].title  ----json path
         config = self.get_config(config_name, group)
         if not config['type'] == "json":
             raise TypeError("need type = json, but {0} type found".format(config['type']))

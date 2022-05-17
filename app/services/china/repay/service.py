@@ -132,6 +132,10 @@ class ChinaRepayService(RepayBaseService):
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
 
+    def set_asset_tran_status(self, period, item_no, status='finish'):
+        self.biz_central.set_capital_tran_status(item_no, period, operate_type='compensate')
+        return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, status=status)
+
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
                      verify_code='', verify_seq=None, agree=False, protocol=False,
@@ -271,7 +275,6 @@ class ChinaRepayService(RepayBaseService):
             offline_req, offline_repay_url, repay_ret = '', '', '线下还款失败'
         return dict(zip(('offline_recharge', 'offline_repay'), ([req_data, offline_recharge_url, recharge_ret],
                                                                 [offline_req, offline_repay_url, repay_ret])))
-
 
     def offline_repay(self, item_no, serial_no, period):
         req_data = {

@@ -40,6 +40,27 @@ class RepayBaseService(BaseService):
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
         self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
 
+    def change_kv(self, kv_type, kv_value):
+        kv_type = 'update_repay_{0}_config'.format(kv_type)
+        return getattr(self, kv_type)(kv_value)
+
+    def update_repay_paysvr_config(self, kv_value):
+        payment_url = 'http://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/5de5d515d1784d36471d6041/rbiz_auto_test'
+        if kv_value == 'manual':
+            payment_url = 'http://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/617b69d43083b20020c66359' \
+                          '/rbiz_manual_test'
+        elif kv_value == 'stating':
+            payment_url = 'http://biz-payment-staging.k8s-ingress-nginx.kuainiujinke.com'
+        json_path_dict = {
+            '$.api_config.payment_url': payment_url,
+            '$.api_config.url': payment_url,
+            '$.sign_company_config.sign_subject_domain_mapping[0].payment_domain': payment_url,
+            '$.sign_company_config.sign_subject_domain_mapping[1].payment_domain': payment_url,
+            '$.batch_sign_bind_card_url': '{0}/batchBinding/uploadBindingCard'.format(payment_url)
+        }
+
+        return self.nacos.update_config_by_json_path('repay_paysvr_config', json_path_dict)
+
     def get_withhold_key_info(self, item_no, request_no=None, req_key=None, max_create_at=None):
         item_no_x = self.get_no_loan(item_no)
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
