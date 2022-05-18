@@ -218,6 +218,7 @@ class BaseService(object):
                 asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
             else:
                 asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
+            asset_tran.asset_tran_due_at = asset_tran_due_at
             if isinstance(asset_tran.asset_tran_finish_at, datetime.datetime) \
                     and asset_tran.asset_tran_finish_at.year != 1000:
                 cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
@@ -226,7 +227,6 @@ class BaseService(object):
                     continue
                 asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
                                                                 days=cal_advance_day)
-            asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
             if interval_day != 30:
