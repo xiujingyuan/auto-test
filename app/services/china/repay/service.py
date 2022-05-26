@@ -97,7 +97,7 @@ class ChinaRepayService(RepayBaseService):
         return verify_seq
 
     def set_trail_mock(self, item_no, period_start, period_end, channel, status, principal_over=False,
-                       interest_type='less'):
+                       interest_type='less', repay_type='early_settlement'):
         """
         设置微神马试算金额
         :param item_no:资产编号
@@ -107,27 +107,230 @@ class ChinaRepayService(RepayBaseService):
         :param status: 试算返回状态 0：成功，1：失败，2：其他，3：不存在
         :param principal_over: 是否本金和试算本金不一致
         :param interest_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
+        :param repay_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
         :return: 无返回
         """
         at_list = self.db_session.query(AssetTran).filter(
             AssetTran.asset_tran_period >= period_start,
             AssetTran.asset_tran_period <= period_end,
-            AssetTran.asset_tran_asset_item_no == item_no,
-            AssetTran.asset_tran_type.in_(('repayprincipal', 'repayinterest'))).all()
+            AssetTran.asset_tran_asset_item_no == item_no).all()
         principal_amount = 0
         interest_amount = 0
+        fee_amount = 0
+        repayPlanDict = {}
         for at in at_list:
             if at.asset_tran_type == 'repayprincipal':
-                principal_amount += at.asset_tran_total_amount
-            elif at.asset_tran_period == period_start:
-                interest_amount = at.asset_tran_total_amount
+                principal_amount += at.asset_tran_balance_amount
+            elif at.asset_tran_type == 'repayinterest' and at.asset_tran_period == period_start:
+                interest_amount = at.asset_tran_balance_amount
+            elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
+                fee_amount += at.asset_tran_balance_amount
+            if channel == 'jinmeixin_daqin' and repay_type == 'early_settlement':
+                if at.asset_tran_period not in repayPlanDict:
+                    repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
+                if at.asset_tran_type == 'repayprincipal':
+                    repayPlanDict[at.asset_tran_period]['principal'] = float(at.asset_tran_balance_amount / 100)
+                if at.asset_tran_period == period_start:
+                    if at.asset_tran_type == 'repayinterest':
+                        repayPlanDict[at.asset_tran_period]['interest'] = float(at.asset_tran_balance_amount / 100)
+                    if at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
+                        repayPlanDict[at.asset_tran_period]['fee'] += float(at.asset_tran_balance_amount / 100)
         if principal_over:
             principal_amount = principal_amount - 1
         if interest_type == 'less':
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
             interest_amount = interest_amount + 1
-        return self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, status)
+        if channel == 'jinmeixin_daqin':
+            if repay_type == 'early_settlement':
+                repayPlanList = []
+                for period in list(range(period_start, period_end + 1)):
+                    if period == period_start:
+                        repayPlanList.append({
+                            "termNo": period,
+                            "repayDate": "20220723",
+                            "repayAmt": repayPlanDict[period]['principal'] + repayPlanDict[period]['interest'] + repayPlanDict[period]['fee'],
+                            "repayPrin": repayPlanDict[period]['principal'],
+                            "repayInt": repayPlanDict[period]['interest'],
+                            "repayPen": 0,
+                            "repayFee": repayPlanDict[period]['fee']
+                        })
+                    else:
+                        repayPlanList.append({
+                            "termNo": period,
+                            "repayDate": "20220723",
+                            "repayAmt": repayPlanDict[period]['principal'],
+                            "repayPrin": repayPlanDict[period]['principal'],
+                            "repayInt": 0,
+                            "repayPen": 0,
+                            "repayFee": 0
+                        })
+                req_data = {
+                    "code": "000000",
+                    "msg": "成功",
+                    "data": {
+                        "loanOrderNo": item_no,
+                        "repayType": "PRE",
+                        "repayTerm": list(range(period_start, period_end + 1)),
+                        "repayAmt": float((principal_amount + interest_amount + fee_amount) / 100),
+                        "repayPrin": float(principal_amount / 100),
+                        "repayInt": float(interest_amount / 100),
+                        "repayFee": float(fee_amount / 100),
+                        "repayPen": 0,
+                        "bankCardList": [
+                            {}
+                        ],
+                        "repayPlanList": repayPlanList
+                    }
+                }
+            elif repay_type == 'normal':
+                req_data = {
+                    "code": "000000",
+                    "msg": "success",
+                    "data": {
+                        "loanOrderNo": item_no,
+                        "repayType ": "DO",
+                        "repayTerm": [
+                            period_start
+                        ],
+                        "repayAmt": 0,
+                        "repayPrin": 0,
+                        "repayInt": 0,
+                        "repayFee": 0,
+                        "repayPen": 0,
+                        "repayPlanList": [
+                            {
+                                "loanOrderNo": item_no,
+                                "termNo": str(period_start),
+                                "repayAmt": float((principal_amount + interest_amount + fee_amount) / 100),
+                                "repayPrin": float(principal_amount / 100),
+                                "repayInt": float(interest_amount / 100),
+                                "repayFee": float(fee_amount / 100),
+                                "repayPen": 0,
+                                "repayTime": "2019-09-26 18:30:20"
+                            }
+                        ],
+                        " bankCardList": [
+                            {
+                                "requestId": "DD21312311",
+                                "bindId": "11000000000000768",
+                                "bankCardNo": "380506199002230014",
+                                "bankName": "工商银行",
+                                "bankCode": "ICBC"
+                            }
+                        ]
+                    }
+                }
+            return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/calc', req_data)
+        return self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, fee_amount, status)
+
+    def repay_query_interface(self, item_no, period_start, period_end, channel, success_type='PART'):
+        """
+        设置微神马试算金额
+        :param item_no:资产编号
+        :param period_start: 还款开始期次
+        :param period_end: 还款到期期次
+        :param channel: 资方
+        :param status: 试算返回状态 0：成功，1：失败，2：其他，3：不存在
+        :param principal_over: 是否本金和试算本金不一致
+        :param interest_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
+        :param repay_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
+        :return: 无返回
+        """
+        at_list = self.db_session.query(AssetTran).filter(
+            AssetTran.asset_tran_period >= period_start,
+            AssetTran.asset_tran_period <= period_end,
+            AssetTran.asset_tran_asset_item_no == item_no).all()
+        principal_amount = 0
+        interest_amount = 0
+        fee_amount = 0
+        repayPlanDict = {}
+        for at in at_list:
+            if at.asset_tran_period not in repayPlanDict and period_start != period_end \
+                    and at.asset_tran_type == 'repayprincipal':
+                repayPlanDict[at.asset_tran_period] = at.asset_tran_balance_amount
+            if at.asset_tran_type == 'repayprincipal':
+                principal_amount += at.asset_tran_balance_amount
+            elif at.asset_tran_type == 'repayinterest' and at.asset_tran_period == period_start:
+                interest_amount = at.asset_tran_balance_amount
+            elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest') \
+                    and at.asset_tran_period == period_start:
+                fee_amount += at.asset_tran_balance_amount
+        withhold = self.db_session.query(Withhold)\
+            .join(WithholdOrder, WithholdOrder.withhold_order_request_no == Withhold.withhold_request_no)\
+            .filter(WithholdOrder.withhold_order_reference_no == item_no,
+                    Withhold.withhold_channel == channel,
+                    Withhold.withhold_status.in_(('process', 'ready'))).first()
+        if channel == 'jinmeixin_daqin':
+            fee_amount = fee_amount if success_type == 'SUCCESS' else 0
+            if period_start == period_end:
+                req_data = {
+                    "code": "000000",
+                    "msg": "成功",
+                    "data": {
+                        "orderId": withhold.withhold_serial_no,
+                        "repayStatus": success_type,
+                        "repayResult": "部分还款成功",
+                        "failCode": None,
+                        "repayPlanList": [{
+                            "loanOrderNo": item_no,
+                            "termNo": period_start,
+                            "payOrderId": "R103" + self.__create_req_key__(item_no),
+                            "repayStatus": success_type,
+                            "repayResult": "part",
+                            "repayAmt": float((principal_amount + interest_amount + fee_amount) / 100),
+                            "repayPrin": float(principal_amount / 100),
+                            "repayInt": float(interest_amount / 100),
+                            "repayPen": 0,
+                            "repayFee": float(fee_amount / 100),
+                            "repayTime": "2022-05-25 19:02:47"
+                        }]
+                    }
+                }
+            else:
+                repayPlanList = []
+                for period in list(range(period_start, period_end + 1)):
+                    if period == period_start:
+                        repayPlanList.append({
+                                "loanOrderNo": item_no,
+                                "termNo": period,
+                                "payOrderId": "R103" + self.__create_req_key__(item_no),
+                                "repayStatus": success_type,
+                                "repayResult": "part",
+                                "repayAmt": float((repayPlanDict[period] + interest_amount +
+                                                         fee_amount) / 100),
+                                "repayPrin": float(repayPlanDict[period] / 100),
+                                "repayInt": float(interest_amount / 100),
+                                "repayPen": 0,
+                                "repayFee": float(fee_amount / 100),
+                                "repayTime": "2022-05-25 19:02:47"
+                            })
+                    else:
+                        repayPlanList.append({
+                            "loanOrderNo": item_no,
+                            "termNo": period,
+                            "payOrderId": "R103" + self.__create_req_key__(item_no),
+                            "repayStatus": success_type,
+                            "repayResult": "part",
+                            "repayAmt": float((repayPlanDict[period]) / 100),
+                            "repayPrin": float(repayPlanDict[period] / 100),
+                            "repayInt": 0,
+                            "repayPen": 0,
+                            "repayFee": 0,
+                            "repayTime": "2022-05-25 19:02:47"
+                        })
+                req_data = {
+                    "code": "000000",
+                    "msg": "成功",
+                    "data": {
+                        "orderId": withhold.withhold_serial_no,
+                        "repayStatus": success_type,
+                        "repayResult": "部分还款成功",
+                        "failCode": None,
+                        "repayPlanList": repayPlanList
+                    }
+                }
+        return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/queryStatus', req_data)
 
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)

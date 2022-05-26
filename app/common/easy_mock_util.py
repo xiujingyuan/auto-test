@@ -142,6 +142,18 @@ class EasyMock(object):
         resp = Http.http_post(self.update_url, api_info, headers=self.header)
         return resp
 
+    def update_by_value(self, api, value, method=None):
+        """
+        :param api: 需要修改的api的url
+        :param value:jsonpath的字典
+        :param method 方法类型
+        :return:
+        """
+        api_info = self.get_api_info_by_api(api, method)
+        api_info['mode'] = json.dumps(value, ensure_ascii=False)
+        resp = Http.http_post(self.update_url, api_info, headers=self.header)
+        return resp
+
     def update_by_api_id(self, api_id, api, mode, method="post"):
         api_list = self.get_api_list(self.project_id)
         api_info = {}

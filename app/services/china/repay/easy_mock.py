@@ -21,7 +21,7 @@ class ChinaRepayEasyMock(EasyMock):
     def update_trail_status(self, channel, value):
         super(ChinaRepayEasyMock, self).update('/weishenma_daxinganling/pre-loan/repayTrial', '', value)
 
-    def update_trail_amount(self, channel, principal, interest, status):
+    def update_trail_amount(self, channel, principal, interest, fee, status):
         if channel == 'weishenma_daxinganling':
             value = dict(zip(('$.rest_principal', '$.total_amount'), (principal, principal + interest)))
             trail_url = '/weishenma_daxinganling/pre-loan/repayTrial'
