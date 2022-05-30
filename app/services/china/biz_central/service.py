@@ -218,7 +218,7 @@ class ChinaBizCentralService(BaseService):
         task_order_no = tuple(list(task_order_no) + [channel] + query_task_order) \
             if channel is not None else task_order_no
         task_list = self.db_session.query(CentralTask).filter(CentralTask.task_order_no.in_(task_order_no),
-                                                              CentralTask.task_create_at >= max_create_at)\
+                                                              CentralTask.task_update_at >= max_create_at)\
             .order_by(desc(CentralTask.task_id)).all()
         return task_list
 
@@ -227,7 +227,7 @@ class ChinaBizCentralService(BaseService):
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
         msg_list = self.db_session.query(CentralSendMsg). \
             filter(CentralSendMsg.sendmsg_order_no.like('{0}%'.format(item_no)),
-                   CentralSendMsg.sendmsg_create_at >= max_create_at) \
+                   CentralSendMsg.sendmsg_update_at >= max_create_at) \
             .order_by(desc(CentralSendMsg.sendmsg_id)).all()
         return msg_list
 
@@ -429,7 +429,7 @@ class ChinaBizCentralService(BaseService):
         max_create_at = self.get_date(fmt='Y-%m-%d %H:00:00', is_str=True) if max_create_at is None else max_create_at
         msg = self.db_session.query(CentralSendMsg).filter(CentralSendMsg.sendmsg_order_no == order_no,
                                                            CentralSendMsg.sendmsg_status == 'open',
-                                                           CentralSendMsg.sendmsg_create_at >= max_create_at,
+                                                           CentralSendMsg.sendmsg_update_at >= max_create_at,
                                                            CentralSendMsg.sendmsg_type == sendmsg_type).all()
         for item in msg:
             self.run_central_msg_by_msg_id(item.sendmsg_id)
