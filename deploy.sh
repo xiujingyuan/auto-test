@@ -16,7 +16,7 @@ cd /data/www/wwwroot
 #git clone https://jc_mock:1LqUuzYMJXUS_io7Ab9q@git.kuainiujinke.com/cd-test/auto-test.git
 #sleep 1
 
-echo "#########################修改一些配置##########################"
+echo "#########################修改一些配置 auto-vue ##########################"
 cp -f /data/www/wwwroot/auto-test/auto_test.conf /etc/supervisor/conf.d/auto_test.conf
 mkdir -p /data/www/wwwroot/auto-test/logs/supervisor
 mkdir -p /data/www/wwwroot/auto-test/logs/gunicon
@@ -26,6 +26,17 @@ touch /data/www/wwwroot/auto-test/logs/gunicon/gunicorn.log
 touch /data/www/wwwroot/auto-test/logs/gunicon/gunicorn.pid
 touch /data/www/wwwroot/auto-test/logs/supervisor/auto_test.log
 sleep 1
+
+echo "#########################修改一些配置 framework-test ##########################"
+cp -f /data/www/wwwroot/framework-test/framework.conf /etc/supervisor/conf.d/framework.conf
+mkdir -p /data/www/wwwroot/framework-test/logs/supervisor
+mkdir -p /data/www/wwwroot/framework-test/logs/gunicon
+
+echo "#########################修改一些配置 jc-mock ##########################"
+cp -f /data/www/wwwroot/jc-mock/jc-mock.conf /etc/supervisor/conf.d/jc-mock.conf
+cp -f /data/www/wwwroot/jc-mock/environment/k8s/config.py /data/www/wwwroot/jc-mock/app/common/config/config.py
+mkdir -p /data/www/wwwroot/jc-mock/logs/supervisor
+mkdir -p /data/www/wwwroot/jc-mock/logs/gunicon
 
 echo "#########################启动web服务##########################"
 supervisord -c /etc/supervisor/supervisord.conf
