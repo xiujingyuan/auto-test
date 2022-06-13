@@ -13,10 +13,10 @@ from app.services import Sendmsg, Asset, Synctask
 from app import db
 from app.common.http_util import Http
 from app.model.Model import AutoAsset
-from app.services import BaseService, Asset, Task, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
+from app.services import BaseService, Asset, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
 from app.services.china.repay import modify_return, WithholdOrder
 from app.services.china.repay.Model import WithholdRequest, Withhold, SendMsg, \
-    AssetOperationAuth, WithholdAssetDetailLock
+    AssetOperationAuth, WithholdAssetDetailLock, Task
 import pytz
 from app.services.china.repay import query_withhold
 
@@ -191,6 +191,7 @@ class RepayBaseService(BaseService):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
 
     def run_task_by_id(self, task_id, max_create_at=None, item_no=None, excepts={'code': 0}):
+        self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = super(RepayBaseService, self).run_task_by_id(task_id, excepts=excepts)
         if max_create_at is not None:
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type="task")
@@ -386,7 +387,7 @@ class RepayBaseService(BaseService):
     def get_task(self, task_order_no, max_create_at):
         task_list = self.db_session.query(Task).filter(
             Task.task_order_no.in_(task_order_no),
-            Task.task_id >= max_create_at).order_by(desc(Task.task_id)).all()
+            Task.task_create_at >= max_create_at).order_by(desc(Task.task_id)).all()
         task_list = list(map(lambda x: x.to_spec_dict, task_list))
         return {'task': task_list}
 
@@ -405,8 +406,7 @@ class RepayBaseService(BaseService):
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
             self.get_withhold_key_info(item_no, max_create_at=max_create_at)
         channel = asset['asset'][0]['loan_channel']
-        task_order_no = tuple(list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple)
-                              + [channel])
+        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel]
         ret = {}
         if refresh_type in ('task', 'msg'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at)

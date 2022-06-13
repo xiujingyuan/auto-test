@@ -25,7 +25,6 @@ touch /data/www/wwwroot/auto-test/logs/gunicon/info.log
 touch /data/www/wwwroot/auto-test/logs/gunicon/gunicorn.log
 touch /data/www/wwwroot/auto-test/logs/gunicon/gunicorn.pid
 touch /data/www/wwwroot/auto-test/logs/supervisor/auto_test.log
-sleep 1
 
 echo "#########################修改一些配置 framework-test ##########################"
 cp -f /data/www/wwwroot/framework-test/framework.conf /etc/supervisor/conf.d/framework.conf
@@ -37,6 +36,10 @@ cp -f /data/www/wwwroot/jc-mock/jc-mock.conf /etc/supervisor/conf.d/jc-mock.conf
 cp -f /data/www/wwwroot/jc-mock/environment/k8s/config.py /data/www/wwwroot/jc-mock/app/common/config/config.py
 mkdir -p /data/www/wwwroot/jc-mock/logs/supervisor
 mkdir -p /data/www/wwwroot/jc-mock/logs/gunicon
+touch /data/www/wwwroot/jc-mock/logs/gunicon/access.log
+touch /data/www/wwwroot/jc-mock/logs/gunicon/info.log
+touch /data/www/wwwroot/jc-mock/logs/gunicon/gunicorn.log
+touch /data/www/wwwroot/jc-mock/logs/gunicon/gunicorn.pid
 sleep 1
 
 echo "#########################启动web服务##########################"

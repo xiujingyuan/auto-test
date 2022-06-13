@@ -1,6 +1,7 @@
 import copy
 import json
 import time
+from datetime import datetime
 
 from functools import reduce
 
@@ -114,10 +115,12 @@ class ChinaRepayService(RepayBaseService):
             AssetTran.asset_tran_period >= period_start,
             AssetTran.asset_tran_period <= period_end,
             AssetTran.asset_tran_asset_item_no == item_no).all()
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         principal_amount = 0
         interest_amount = 0
         fee_amount = 0
         repayPlanDict = {}
+        total_amount = 0
         for at in at_list:
             if at.asset_tran_type == 'repayprincipal':
                 principal_amount += at.asset_tran_balance_amount
@@ -125,16 +128,33 @@ class ChinaRepayService(RepayBaseService):
                 interest_amount = at.asset_tran_balance_amount
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                 fee_amount += at.asset_tran_balance_amount
+            asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
             if channel == 'jinmeixin_daqin' and repay_type == 'early_settlement':
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
                 if at.asset_tran_type == 'repayprincipal':
-                    repayPlanDict[at.asset_tran_period]['principal'] = float(at.asset_tran_balance_amount / 100)
+                    repayPlanDict[at.asset_tran_period]['principal'] = asset_tran_balance_amount
+                    total_amount += asset_tran_balance_amount
                 if at.asset_tran_period == period_start:
                     if at.asset_tran_type == 'repayinterest':
-                        repayPlanDict[at.asset_tran_period]['interest'] = float(at.asset_tran_balance_amount / 100)
+                        repayPlanDict[at.asset_tran_period]['interest'] = asset_tran_balance_amount
+                        total_amount += asset_tran_balance_amount
                     if at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                         repayPlanDict[at.asset_tran_period]['fee'] += float(at.asset_tran_balance_amount / 100)
+                        total_amount += float(at.asset_tran_balance_amount / 100)
+            elif channel == 'weipin_zhongwei':
+                if at.asset_tran_period not in repayPlanDict:
+                    repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'late': 0}
+                if at.asset_tran_type == 'repayprincipal':
+                    repayPlanDict[at.asset_tran_period]['principal'] = asset_tran_balance_amount
+                    total_amount += asset_tran_balance_amount
+                if at.asset_tran_period == period_start:
+                    if at.asset_tran_type == 'repayinterest':
+                        repayPlanDict[at.asset_tran_period]['interest'] = asset_tran_balance_amount
+                        total_amount += asset_tran_balance_amount
+                    if at.asset_tran_type == 'lateinterest':
+                        repayPlanDict[at.asset_tran_period]['late'] = asset_tran_balance_amount
+                        total_amount += asset_tran_balance_amount
         if principal_over:
             principal_amount = principal_amount - 1
         if interest_type == 'less':
@@ -172,10 +192,10 @@ class ChinaRepayService(RepayBaseService):
                         "loanOrderNo": item_no,
                         "repayType": "PRE",
                         "repayTerm": list(range(period_start, period_end + 1)),
-                        "repayAmt": float((principal_amount + interest_amount + fee_amount) / 100),
-                        "repayPrin": float(principal_amount / 100),
-                        "repayInt": float(interest_amount / 100),
-                        "repayFee": float(fee_amount / 100),
+                        "repayAmt": principal_amount + interest_amount + fee_amount,
+                        "repayPrin": principal_amount,
+                        "repayInt": interest_amount,
+                        "repayFee": fee_amount,
                         "repayPen": 0,
                         "bankCardList": [
                             {}
@@ -202,10 +222,10 @@ class ChinaRepayService(RepayBaseService):
                             {
                                 "loanOrderNo": item_no,
                                 "termNo": str(period_start),
-                                "repayAmt": float((principal_amount + interest_amount + fee_amount) / 100),
-                                "repayPrin": float(principal_amount / 100),
-                                "repayInt": float(interest_amount / 100),
-                                "repayFee": float(fee_amount / 100),
+                                "repayAmt": principal_amount + interest_amount + fee_amount,
+                                "repayPrin": principal_amount,
+                                "repayInt": interest_amount,
+                                "repayFee": fee_amount,
                                 "repayPen": 0,
                                 "repayTime": "2019-09-26 18:30:20"
                             }
@@ -222,6 +242,54 @@ class ChinaRepayService(RepayBaseService):
                     }
                 }
             return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/calc', req_data)
+        elif channel == 'weipin_zhongwei':
+            repayPlanList = []
+            interest = repayPlanDict[period_start]['interest']
+            principal = repayPlanDict[period_start]['principal']
+            if interest_type == 'less':
+                interest = interest - 1
+            elif interest_type == 'more':
+                interest = interest + 1
+            if principal_over:
+                principal = principal - 1
+            for period in list(range(period_start, period_end + 1)):
+                if period == period_start:
+                    repayPlanList.append({
+                        "tenor": period,
+                        "principalAmount": principal,
+                        "interestAmount": interest,
+                        "penaltyAmount": repayPlanDict[period]['late'],
+                        "feeAmount": 0,
+                        "compountAmount": 0,
+                        "delqDays": 0
+                    })
+                else:
+                    repayPlanList.append({
+                        "tenor": period,
+                        "principalAmount": repayPlanDict[period]['principal'],
+                        "interestAmount": 0,
+                        "penaltyAmount": 0,
+                        "feeAmount": 0,
+                        "compountAmount": 0,
+                        "delqDays": 0
+                    })
+            req_data = {
+                    "code": 0,
+                    "message": "成功",
+                    "data": {
+                        "respCode": "000000",
+                        "respMessage": "访问成功",
+                        "creditAppNo": item_no,
+                        "userId": "16545892470612460068",
+                        "repaymentList": [
+                            {
+                                "totalAmount": total_amount,
+                                "preFeeAmount": None,
+                                "planList": repayPlanList
+                            }]
+                    }
+                }
+            return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_trial', req_data)
         return self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, fee_amount, status)
 
     def repay_query_interface(self, item_no, period_start, period_end, channel, success_type='PART'):
@@ -244,18 +312,24 @@ class ChinaRepayService(RepayBaseService):
         principal_amount = 0
         interest_amount = 0
         fee_amount = 0
+        late_amount = 0
+        total_amount = 0
         repayPlanDict = {}
         for at in at_list:
-            if at.asset_tran_period not in repayPlanDict and period_start != period_end \
-                    and at.asset_tran_type == 'repayprincipal':
-                repayPlanDict[at.asset_tran_period] = at.asset_tran_balance_amount
-            if at.asset_tran_type == 'repayprincipal':
-                principal_amount += at.asset_tran_balance_amount
+            asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
+            if at.asset_tran_period not in repayPlanDict and at.asset_tran_type == 'repayprincipal':
+                repayPlanDict[at.asset_tran_period] = asset_tran_balance_amount
+                total_amount += asset_tran_balance_amount
             elif at.asset_tran_type == 'repayinterest' and at.asset_tran_period == period_start:
-                interest_amount = at.asset_tran_balance_amount
+                interest_amount = asset_tran_balance_amount
+                total_amount += asset_tran_balance_amount
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest') \
                     and at.asset_tran_period == period_start:
-                fee_amount += at.asset_tran_balance_amount
+                fee_amount += asset_tran_balance_amount
+            elif at.asset_tran_type == 'lateinterest' and at.asset_tran_period == period_start \
+                    and channel == 'weipin_zhongwei':
+                late_amount = asset_tran_balance_amount
+                total_amount += asset_tran_balance_amount
         withhold = self.db_session.query(Withhold)\
             .join(WithholdOrder, WithholdOrder.withhold_order_request_no == Withhold.withhold_request_no)\
             .filter(WithholdOrder.withhold_order_reference_no == item_no,
@@ -278,11 +352,11 @@ class ChinaRepayService(RepayBaseService):
                             "payOrderId": "R103" + self.__create_req_key__(item_no),
                             "repayStatus": success_type,
                             "repayResult": "part",
-                            "repayAmt": float((principal_amount + interest_amount + fee_amount) / 100),
-                            "repayPrin": float(principal_amount / 100),
-                            "repayInt": float(interest_amount / 100),
+                            "repayAmt": repayPlanDict[period_start] + interest_amount + fee_amount,
+                            "repayPrin": principal_amount,
+                            "repayInt": interest_amount,
                             "repayPen": 0,
-                            "repayFee": float(fee_amount / 100),
+                            "repayFee": fee_amount / 100,
                             "repayTime": "2022-05-25 19:02:47"
                         }]
                     }
@@ -297,12 +371,11 @@ class ChinaRepayService(RepayBaseService):
                                 "payOrderId": "R103" + self.__create_req_key__(item_no),
                                 "repayStatus": success_type,
                                 "repayResult": "part",
-                                "repayAmt": float((repayPlanDict[period] + interest_amount +
-                                                         fee_amount) / 100),
-                                "repayPrin": float(repayPlanDict[period] / 100),
-                                "repayInt": float(interest_amount / 100),
+                                "repayAmt": repayPlanDict[period] + interest_amount + fee_amount,
+                                "repayPrin": repayPlanDict[period],
+                                "repayInt": interest_amount,
                                 "repayPen": 0,
-                                "repayFee": float(fee_amount / 100),
+                                "repayFee": fee_amount,
                                 "repayTime": "2022-05-25 19:02:47"
                             })
                     else:
@@ -312,8 +385,8 @@ class ChinaRepayService(RepayBaseService):
                             "payOrderId": "R103" + self.__create_req_key__(item_no),
                             "repayStatus": success_type,
                             "repayResult": "part",
-                            "repayAmt": float((repayPlanDict[period]) / 100),
-                            "repayPrin": float(repayPlanDict[period] / 100),
+                            "repayAmt": repayPlanDict[period],
+                            "repayPrin": repayPlanDict[period],
                             "repayInt": 0,
                             "repayPen": 0,
                             "repayFee": 0,
@@ -330,7 +403,121 @@ class ChinaRepayService(RepayBaseService):
                         "repayPlanList": repayPlanList
                     }
                 }
-        return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/queryStatus', req_data)
+            return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/queryStatus', req_data)
+        elif channel == 'weipin_zhongwei':
+            success_type == 'SUCCESS'
+            repayPlanList = []
+            for period in list(range(period_start, period_end + 1)):
+                if period == period_start:
+                    repayPlanList.append({
+                            "tenor": period,
+                            "principalAmount": repayPlanDict[period],
+                            "interestAmount": interest_amount,
+                            "penaltyAmount": late_amount,
+                            "feeAmount": 0,
+                            "compountAmount": 0,
+                            "delqDays": 0
+                        })
+                else:
+                    repayPlanList.append({
+                        "tenor": period,
+                        "principalAmount": repayPlanDict[period],
+                        "interestAmount": 0,
+                        "penaltyAmount": 0,
+                        "feeAmount": 0,
+                        "compountAmount": 0,
+                        "delqDays": 0
+                    })
+            req_data = {
+                "code": 0,
+                "message": "成功",
+                "data": {
+                    "respCode": "000000",
+                    "respMessage": "访问成功",
+                    "creditAppNo": item_no,
+                    "userId": "16545892470612460068",
+                    "repaymentAppNo": withhold.withhold_serial_no,
+                    "paymentSeqNo": self.__create_req_key__(item_no, 'CLO'),
+                    "paymentStatus": "0",
+                    "failReason": None,
+                    "completeTime": self.get_date(fmt='%Y%m%d%H%M%S', is_str=True),
+                    "guaranteeFee": fee_amount,
+                    "repaymentList": [
+                        {
+                            "totalAmount": total_amount,
+                            "preFeeAmount": 0,
+                            "planList": repayPlanList
+                        }]
+                }
+            }
+            return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_query', req_data)
+
+    def repay_plan_interface(self, item_no, channel):
+        """
+        设置微神马试算金额
+        :param item_no:资产编号
+        :param period_start: 还款开始期次
+        :param period_end: 还款到期期次
+        :param channel: 资方
+        :param status: 试算返回状态 0：成功，1：失败，2：其他，3：不存在
+        :param principal_over: 是否本金和试算本金不一致
+        :param interest_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
+        :param repay_type: 利息类型，normal：等于利息，more：大于当前剩余利息，less，小于当前剩余利息
+        :return: 无返回
+        """
+        at_list = self.db_session.query(AssetTran).filter(
+            AssetTran.asset_tran_asset_item_no == item_no).all()
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        repayPlanDict = {}
+        for at in at_list:
+            asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
+            if at.asset_tran_period not in repayPlanDict:
+                overdue = self.cal_days(at.asset_tran_due_at, datetime.now())
+                overdue = overdue if overdue >= 0 else 0
+                repayPlanDict[at.asset_tran_period] = {'overdue': overdue}
+            repayPlanDict[at.asset_tran_period][at.asset_tran_type] = asset_tran_balance_amount
+        if channel == 'weipin_zhongwei':
+            repayPlanList = []
+            for period in list(range(1, asset.asset_period_count + 1)):
+                overdue_amount = round(repayPlanDict[period]["overdue"] * repayPlanDict[period]["repayprincipal"] * 0.001, 2)
+                repayPlanList.append({
+                    "tenor": period,
+                    "paymentDueDate": "20221028",
+                    "payablePrincipal": repayPlanDict[period]["repayprincipal"],
+                    "paymentPrincipal": 0.00,
+                    "payableInterest": repayPlanDict[period]["repayinterest"],
+                    "paymentInterest": 0.00,
+                    "payablePenaltyInterest": overdue_amount,
+                    "paymentPenaltyInterest": 0.00,
+                    "payableCompoundInterest": 0.00,
+                    "paymentCompoundInterest": 0.00,
+                    "payableFee": 0.00,
+                    "paymentFee": 0.00,
+                    "paymentFlag": "2",
+                    "paymentDate": None,
+                    "totalAmount": repayPlanDict[period]["repayprincipal"] + repayPlanDict[period]["repayinterest"]
+                                   + overdue_amount,
+                    "principalAmount": repayPlanDict[period]["repayprincipal"],
+                    "interestAmount": repayPlanDict[period]["repayinterest"],
+                    "penaltyIntAmount": overdue_amount,
+                    "compoundAmount": 0,
+                    "feeAmount": 0.00,
+                    "exemptAmount": 0.00,
+                    "waivedAmount": 0,
+                    "delqDays": repayPlanDict[period]["overdue"]
+                })
+            req_data = {
+                "code": 0,
+                "message": "成功",
+                "data": {
+                    "respCode": "000000",
+                    "respMessage": "访问成功",
+                    "creditAppNo": item_no,
+                    "userId": "16545887197922460067",
+                    "planList": repayPlanList
+                }
+            }
+            return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repayplan_query', req_data)
 
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
