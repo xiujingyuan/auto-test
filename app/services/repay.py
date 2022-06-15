@@ -284,7 +284,7 @@ class RepayBaseService(BaseService):
         return dict(zip(('auth_lock', 'detail_lock'), (auth_lock, detail_lock)))
 
     @time_print
-    @wait_time
+    @wait_time(timeout=10)
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
                                                     SendMsg.sendmsg_status == 'open',
@@ -565,7 +565,7 @@ class RepayBaseService(BaseService):
         return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
             if asset_x else [resp]
 
-    @wait_time
+    @wait_time(timeout=10)
     def run_task_by_type_and_order_no(self, task_type, order_no):
         task_list = self.db_session.query(Task).filter(Task.task_type == task_type,
                                                        Task.task_order_no == order_no,
