@@ -522,6 +522,14 @@ class ChinaRepayService(RepayBaseService):
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
 
+    def add_buyback(self, item_no, channel, period_start):
+        super(ChinaRepayService, self).add_buyback(item_no, channel, period_start)
+        return self.biz_central.add_buyback(item_no, period_start)
+
+    def remove_buyback(self, item_no, channel):
+        super(ChinaRepayService, self).remove_buyback(item_no, channel)
+        return self.biz_central.remove_buyback(item_no, channel)
+
     def set_asset_tran_status(self, period, item_no, status='finish'):
         self.biz_central.set_capital_tran_status(item_no, period, operate_type='compensate')
         return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, status=status)

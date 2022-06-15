@@ -248,7 +248,7 @@ class ChinaBizCentralService(BaseService):
                                                              AssetTran.asset_tran_period == period).all()
         principal = list(filter(lambda x: x.asset_tran_type == 'repayprincipal', asset_tran))[0].asset_tran_amount
         interest = list(filter(lambda x: x.asset_tran_type == 'repayinterest', asset_tran))[0].asset_tran_amount
-        due_at = asset_tran[0].asset_tran_due_at
+        due_at = self.get_date(days=-1)
         return self.add_capital_settlement_detail(item_no, period, due_at, principal, interest, 'compensate')
 
     def add_buyback(self, item_no, period):
@@ -257,34 +257,40 @@ class ChinaBizCentralService(BaseService):
         principal = sum([x.asset_tran_amount for x in (filter(
             lambda x: x.asset_tran_type == 'repayprincipal', asset_tran))])
         interest = list(filter(lambda x: x.asset_tran_type == 'repayinterest', asset_tran))[0].asset_tran_amount
-        due_at = asset_tran[0].asset_tran_due_at
+        due_at = self.get_date(days=-1)
         return self.add_capital_settlement_detail(item_no, period, due_at, principal, interest, 'buyback')
+
+    def remove_buyback(self, item_no, channel):
+        self.db_session.query(CapitalSettlementDetail).filter(
+            CapitalSettlementDetail.asset_item_no == item_no,
+            CapitalSettlementDetail.channel == channel).delete()
+        self.db_session.flush()
+        self.db_session.commit()
 
     def add_capital_settlement_detail(self, item_no, period, due_at, principal, interest, settlement_type):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         if not asset:
             raise ValueError('not fount the asset with item_no is :{0}'.format(asset))
         compensate = self.db_session.query(CapitalSettlementDetail).filter(
-            CapitalSettlementDetail.asset_item_no == item_no, CapitalSettlementDetail.period == period,
-            CapitalSettlementDetail.capital_tran_process_status == 'ready').first()
+            CapitalSettlementDetail.asset_item_no == item_no).first()
+        # if self.cal_days(due_at, self.get_date()) < 0:
+        #     raise ValueError('not overdue with asset is :{0}, period is :{1}'.format(item_no, period))
         if not compensate:
-            if self.cal_days(due_at, self.get_date()) < 0:
-                raise ValueError('not overdue with asset is :{0}, period is :{1}'.format(item_no, period))
-
             compensate = CapitalSettlementDetail()
             compensate.asset_item_no = item_no
-            compensate.period = period
+        compensate.period = period
 
-            compensate.channel = asset.asset_loan_channel
-            compensate.asset_granted_principal_amount = asset.asset_granted_principal_amount_f
-            compensate.repay_total_amount = 1
-            compensate.repay_principal = principal
-            compensate.repay_interest = interest
-            compensate.contract_start_date = asset.asset_actual_grant_at
-            compensate.contract_end_date = asset.asset_due_at
-            compensate.type = settlement_type
-            compensate.capital_tran_process_status = 'open'
+        compensate.channel = asset.asset_loan_channel
+        compensate.asset_granted_principal_amount = asset.asset_granted_principal_amount_f
+        compensate.repay_total_amount = principal + interest
+        compensate.repay_principal = principal
+        compensate.repay_interest = interest
+        compensate.contract_start_date = asset.asset_actual_grant_at
+        compensate.contract_end_date = asset.asset_due_at
+        compensate.type = settlement_type
+        compensate.capital_tran_process_status = 'open'
         compensate.repay_date = due_at
+
         self.db_session.add(compensate)
         self.db_session.commit()
 

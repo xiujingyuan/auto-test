@@ -4,19 +4,15 @@ import json
 import random
 from functools import reduce
 
-import pytz
-from sqlalchemy import desc
 from sqlalchemy import desc
 
-from app.common.log_util import LogUtil
-from app.services import Sendmsg, Asset, Synctask
 from app import db
 from app.common.http_util import Http
 from app.model.Model import AutoAsset
 from app.services import BaseService, Asset, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
 from app.services.china.repay import modify_return, WithholdOrder
 from app.services.china.repay.Model import WithholdRequest, Withhold, SendMsg, \
-    AssetOperationAuth, WithholdAssetDetailLock, Task
+    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback
 import pytz
 from app.services.china.repay import query_withhold
 
@@ -452,6 +448,30 @@ class RepayBaseService(BaseService):
         asset['item_x'] = self.get_no_loan(item_no)
         return {'asset': [asset]}
 
+    def add_buyback(self, item_no, channel, period_start):
+        find_exist = self.db_session.query(Buyback).filter(Buyback.buyback_asset_item_no == item_no).first()
+        if find_exist:
+            return '已经在回购表中'
+        buy_back = self.db_session.query(Buyback).order_by(desc(Buyback.buyback_id)).first()
+        new_back = Buyback()
+        for attr in buy_back.__dict__:
+            if attr in ('buyback_id', '_sa_instance_state'):
+                continue
+            setattr(new_back, attr, getattr(buy_back, attr))
+        new_back.buyback_asset_item_no = item_no
+        new_back.buyback_asset_loan_channel = channel
+        new_back.buyback_min_period = period_start
+        self.db_session.add(new_back)
+        self.db_session.commit()
+        return '添加成功'
+
+    def remove_buyback(self, item_no, channel):
+        self.db_session.query(Buyback).filter(Buyback.buyback_asset_item_no == item_no,
+                                                           Buyback.buyback_asset_loan_channel == channel).delete()
+        self.db_session.flush()
+        self.db_session.commit()
+        return '移除回购成功'
+
     @modify_return
     def get_asset_tran(self, item_no):
         item_no_x = self.get_no_loan(item_no)
@@ -584,7 +604,7 @@ class RepayBaseService(BaseService):
         return item_no_right
 
     @time_print
-    def change_asset(self, item_no, item_no_rights, advance_day, advance_month):
+    def change_asset(self, item_no, item_no_rights, advance_day, advance_month, refresh_late):
         item_no_tuple = tuple(item_no.split(',')) if ',' in item_no else (item_no,)
 
         for index, item in enumerate(item_no_tuple):
@@ -605,8 +625,9 @@ class RepayBaseService(BaseService):
                                      advance_month, interval_day)
             if self.country == 'china':
                 self.biz_central.change_asset(item, item_no_x, item_no_rights, advance_day, advance_month)
-        self.refresh_late_fee(item_no)
-        self.refresh_late_fee(item_no_rights)
+        if refresh_late:
+            self.refresh_late_fee(item_no)
+            self.refresh_late_fee(item_no_rights)
         self.sync_plan_to_bc(item_no)
         return "修改完成"
 
