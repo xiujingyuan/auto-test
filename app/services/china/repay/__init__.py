@@ -84,6 +84,7 @@ def wait_time(timeout=10):
                 count += 1
                 if count >= 10 * timeout:
                     print('time is out but obj not found!')
+                    return ret
         return wrapper
     return outer_wrapper
 
