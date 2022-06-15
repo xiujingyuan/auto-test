@@ -10,7 +10,7 @@ from app import db
 from app.common.http_util import Http
 from app.model.Model import AutoAsset
 from app.services import BaseService, Asset, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
-from app.services.china.repay import modify_return, WithholdOrder
+from app.services.china.repay import modify_return, WithholdOrder, wait_time
 from app.services.china.repay.Model import WithholdRequest, Withhold, SendMsg, \
     AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback
 import pytz
@@ -284,6 +284,7 @@ class RepayBaseService(BaseService):
         return dict(zip(('auth_lock', 'detail_lock'), (auth_lock, detail_lock)))
 
     @time_print
+    @wait_time
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
                                                     SendMsg.sendmsg_status == 'open',
@@ -291,6 +292,7 @@ class RepayBaseService(BaseService):
             desc(SendMsg.sendmsg_create_at)).first()
         if msg:
             return self.run_msg_by_id(msg.sendmsg_id)
+        return None
 
     def __early_settlement_need_decrease__(self, item_no):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
@@ -563,17 +565,20 @@ class RepayBaseService(BaseService):
         return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
             if asset_x else [resp]
 
+    @wait_time
     def run_task_by_type_and_order_no(self, task_type, order_no):
         task_list = self.db_session.query(Task).filter(Task.task_type == task_type,
                                                        Task.task_order_no == order_no,
                                                        Task.task_status == 'open').all()
         for task in task_list:
             self.run_task_by_id(task.task_id)
+        return task_list
 
     @time_print
     def sync_plan_to_bc(self, item_no):
         now = self.get_date(is_str=True, fmt='%Y-%m-%d')
         self.run_xxl_job('syncAssetToBiz', param={'assetItemNo': [item_no]})
+        self.run_task_by_order_no('AssetAccountChangeNotify', item_no)
         self.run_msg_by_order_no(item_no, 'asset_change_fix_status')
         self.biz_central.run_central_msg_by_order_no(item_no, 'AssetChangeNotify', max_create_at=now)
 

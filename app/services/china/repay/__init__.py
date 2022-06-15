@@ -1,4 +1,5 @@
 import json
+import time
 from copy import deepcopy
 
 from app.common.log_util import LogUtil
@@ -69,6 +70,22 @@ def time_print(func):
         return ret
     return wrapper
 
+
+def wait_time(timeout=10):
+    def outer_wrapper(func):
+        def wrapper(self, *args, **kwargs):
+            LogUtil.log_info(func.__name__ + ' begin: ')
+            count = 0
+            while True:
+                ret = func(self, *args, **kwargs)
+                if ret:
+                    return ret
+                time.sleep(0.1)
+                count += 1
+                if count >= 10 * timeout:
+                    print('time is out but obj not found!')
+        return wrapper
+    return outer_wrapper
 
 def run_callback(func):
     def wrapper(self, **kwargs):

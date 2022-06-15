@@ -577,7 +577,6 @@ class ChinaRepayService(RepayBaseService):
         request_data = self.__get_active_request_data__(item_no, item_no_x, item_no_rights, amount, x_amount,
                                                         rights_amount, repay_card, verify_code=verify_code,
                                                         verify_seq=verify_seq)
-        print(json.dumps(request_data))
         resp = Http.http_post(self.active_repay_url, request_data)
         if resp['code'] == 0 and agree:
             # 协议支付 发短信
