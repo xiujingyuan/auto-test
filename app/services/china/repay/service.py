@@ -129,7 +129,7 @@ class ChinaRepayService(RepayBaseService):
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                 fee_amount += at.asset_tran_balance_amount
             asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
-            if channel == 'jinmeixin_daqin' and repay_type == 'early_settlement':
+            if channel == 'jinmeixin_daqin':
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
                 if at.asset_tran_type == 'repayprincipal':
@@ -222,10 +222,12 @@ class ChinaRepayService(RepayBaseService):
                             {
                                 "loanOrderNo": item_no,
                                 "termNo": str(period_start),
-                                "repayAmt": principal_amount + interest_amount + fee_amount,
-                                "repayPrin": principal_amount,
-                                "repayInt": interest_amount,
-                                "repayFee": fee_amount,
+                                "repayAmt": repayPlanDict[period_start]['principal'] +
+                                            repayPlanDict[period_start]['interest'] +
+                                            repayPlanDict[period_start]['fee'],
+                                "repayPrin": repayPlanDict[period_start]['principal'],
+                                "repayInt": repayPlanDict[period_start]['interest'],
+                                "repayFee": repayPlanDict[period_start]['fee'],
                                 "repayPen": 0,
                                 "repayTime": "2019-09-26 18:30:20"
                             }
