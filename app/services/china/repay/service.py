@@ -355,10 +355,10 @@ class ChinaRepayService(RepayBaseService):
                             "repayStatus": success_type,
                             "repayResult": "part",
                             "repayAmt": repayPlanDict[period_start] + interest_amount + fee_amount,
-                            "repayPrin": principal_amount,
+                            "repayPrin": repayPlanDict[period_start],
                             "repayInt": interest_amount,
                             "repayPen": 0,
-                            "repayFee": fee_amount / 100,
+                            "repayFee": fee_amount,
                             "repayTime": "2022-05-25 19:02:47"
                         }]
                     }
