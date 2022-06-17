@@ -21,6 +21,8 @@ CHANNEL_SOURCE_TYPE_DICT = {
   "mozhi_jinmeixin": [IRR_NO, IRR_QUANYI],
   "beiyin_tianbang": [APR_RONGDAN, IRR_QUANYI],
   "weipin_zhongwei": [APR_RONGDAN, IRR_QUANYI],
+  "jincheng_hanchen": [APR_RONGDAN, IRR_QUANYI],
+  "zhongyuan_zunhao": [APR_RONGDAN, IRR_QUANYI],
   "yilian_dingfeng": [APR_RONGDAN],
   "hamitianshan_xingjiang": [APR_RONGDAN, IRR_QUANYI],
   "hami_tianshan": [APR_RONGDAN, IRR_QUANYI],

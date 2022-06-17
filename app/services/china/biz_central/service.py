@@ -209,17 +209,15 @@ class ChinaBizCentralService(BaseService):
 
     @biz_modify_return
     def get_task(self, task_order_no, channel=None, max_create_at=None):
-        now = self.get_date()
-        query_task_order = []
-        for index in range(1, 8):
-            index_now = self.get_date(fmt='%Y-%m-%d', date=now, is_str=True, days=-index)
-            query_task_order.append('settle_detail_{0}_{1} 00:00:00'.format(channel, index_now))
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
-        task_order_no = tuple(list(task_order_no) + [channel] + query_task_order) \
+        task_order_no = tuple(list(task_order_no) + [channel]) \
             if channel is not None else task_order_no
-        task_list = self.db_session.query(CentralTask).filter(CentralTask.task_order_no.in_(task_order_no),
-                                                              CentralTask.task_update_at >= max_create_at)\
+        task_list = self.db_session.query(CentralTask).filter(
+            or_(CentralTask.task_order_no.in_(task_order_no),
+                CentralTask.task_order_no.like('settle_detail_{0}%'.format(channel))),
+            CentralTask.task_update_at >= max_create_at)\
             .order_by(desc(CentralTask.task_id)).all()
+
         return task_list
 
     @biz_modify_return
