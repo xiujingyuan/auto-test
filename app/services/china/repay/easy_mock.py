@@ -26,19 +26,27 @@ class ChinaRepayEasyMock(EasyMock):
             value = dict(zip(('$.rest_principal', '$.total_amount'), (principal, principal + interest)))
             trail_url = '/weishenma_daxinganling/pre-loan/repayTrial'
         elif channel == 'longjiang_daqin':
+            principal = round(float(principal / 100), 2)
+            interest = round(float(interest / 100))
             value = dict(
                 zip(('$.data.assets[0].principal', '$.data.assets[0].interest', '$.data.assets[0].total_amount'),
-                    (round(float(principal / 100), 2), round(float(interest / 100), 2),
-                     round(float((principal + interest) / 100), 2))))
+                    (principal, interest, principal + interest)))
             trail_url = '/longjiang/std/repayment/calculate'
         elif channel == 'qinnong':
             value = dict(zip(('$.data.assets[0].principal', '$.data.assets[0].interest', '$.data.assets[0].total_amount'),
                              (principal, interest, principal + interest)))
             trail_url = '/qinnong/std/repayment/calculate'
         elif channel == 'yilian_dingfeng':
+            principal = round(float(principal / 100), 2)
+            interest = round(float(interest / 100), 2)
             value = dict(zip(('$.data.repaytotal', '$.data.repaycapital', '$.data.repayinterest'),
-                             (round(float((principal + interest) / 100), 2),
-                             round(float(principal / 100), 2),
-                             round(float(interest / 100), 2))))
+                             (principal + interest, principal, interest)))
             trail_url = '/qingjia/yilian_dingfeng/repayTrial'
+        elif channel == 'zhongyuan_zunhao':
+            value = dict(zip(('$.data.totalRepayAmt', '$.data.totalPlanamt',
+                              '$.data.totalPsPrcpAmt', '$.data.totalPsNormInt'), (
+                             principal + interest, principal + interest,
+                              principal,
+                             interest)))
+            trail_url = '/zhongzhirong/zhongyuan_zunhao/repayTrial'
         return super(ChinaRepayEasyMock, self).update_by_json_path(trail_url, value, method='post')
