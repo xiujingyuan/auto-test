@@ -161,7 +161,7 @@ class ChinaRepayService(RepayBaseService):
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
             interest_amount = interest_amount + 1
-        if channel == 'jinmeixin_daqin':
+        if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
             if repay_type == 'early_settlement':
                 repayPlanList = []
                 for period in list(range(period_start, period_end + 1)):
@@ -337,7 +337,7 @@ class ChinaRepayService(RepayBaseService):
             .filter(WithholdOrder.withhold_order_reference_no == item_no,
                     Withhold.withhold_channel == channel,
                     Withhold.withhold_status.in_(('process', 'ready'))).first()
-        if channel == 'jinmeixin_daqin':
+        if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
             fee_amount = fee_amount if success_type == 'SUCCESS' else 0
             if period_start == period_end:
                 req_data = {
