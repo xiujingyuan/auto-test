@@ -129,7 +129,7 @@ class ChinaRepayService(RepayBaseService):
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                 fee_amount += at.asset_tran_balance_amount
             asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
-            if channel == 'jinmeixin_daqin':
+            if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
                 if at.asset_tran_type == 'repayprincipal':
@@ -243,7 +243,9 @@ class ChinaRepayService(RepayBaseService):
                         ]
                     }
                 }
-            return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/calc', req_data)
+            url = '/chongtian/jincheng_hanchen/repay/calc' if channel == 'jincheng_hanchen' \
+                else '/chongtian/jinmeixin_daqin/repay/calc'
+            return self.easy_mock.update_by_value(url, req_data)
         elif channel == 'weipin_zhongwei':
             repayPlanList = []
             interest = repayPlanDict[period_start]['interest']
@@ -405,6 +407,8 @@ class ChinaRepayService(RepayBaseService):
                         "repayPlanList": repayPlanList
                     }
                 }
+            url = '/chongtian/jincheng_hanchen/repay/queryStatus' if channel == 'jincheng_hanchen' \
+                else '/chongtian/jinmeixin_daqin/repay/queryStatus'
             return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/queryStatus', req_data)
         elif channel == 'weipin_zhongwei':
             success_type == 'SUCCESS'
