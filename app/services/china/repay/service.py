@@ -409,7 +409,7 @@ class ChinaRepayService(RepayBaseService):
                 }
             url = '/chongtian/jincheng_hanchen/repay/queryStatus' if channel == 'jincheng_hanchen' \
                 else '/chongtian/jinmeixin_daqin/repay/queryStatus'
-            return self.easy_mock.update_by_value('/chongtian/jinmeixin_daqin/repay/queryStatus', req_data)
+            return self.easy_mock.update_by_value(url, req_data)
         elif channel == 'weipin_zhongwei':
             success_type == 'SUCCESS'
             repayPlanList = []
