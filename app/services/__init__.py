@@ -44,13 +44,13 @@ ENCRYPT_DICT = {
 def wait_timeout(func):
     def wrapper(self, *kw, **kwargs):
         begin = self.get_date()
-        timeout = kwargs.pop("timeout") if 'timeout' in kwargs else 60
+        timeout = kwargs.pop("timeout") if 'timeout' in kwargs else 1
         while True:
             ret = func(self, *kw, **kwargs)
             if ret:
                 break
-            elif (self.get_date() - begin).seconds >= 60:
-                raise CaseException('not found the record with {0}， with args is :{1}'.format(timeout, kwargs))
+            elif (self.get_date() - begin).seconds >= 1:
+                raise CaseException('not found the record')
         return ret
 
     return wrapper

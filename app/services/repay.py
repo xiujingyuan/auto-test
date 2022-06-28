@@ -284,7 +284,7 @@ class RepayBaseService(BaseService):
         return dict(zip(('auth_lock', 'detail_lock'), (auth_lock, detail_lock)))
 
     @time_print
-    @wait_time(timeout=10)
+    @wait_time(timeout=1)
     def run_msg_by_order_no(self, order_no, sendmsg_type, excepts={"code": 0}):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
                                                     SendMsg.sendmsg_status == 'open',

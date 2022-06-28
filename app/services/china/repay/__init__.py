@@ -71,7 +71,7 @@ def time_print(func):
     return wrapper
 
 
-def wait_time(timeout=10):
+def wait_time(timeout=1):
     def outer_wrapper(func):
         def wrapper(self, *args, **kwargs):
             LogUtil.log_info(func.__name__ + ' begin: ')
