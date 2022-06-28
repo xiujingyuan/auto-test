@@ -36,6 +36,7 @@ cp -f /data/www/wwwroot/jc-mock/jc-mock.conf /etc/supervisor/conf.d/jc-mock.conf
 cp -f /data/www/wwwroot/jc-mock/environment/k8s/config.py /data/www/wwwroot/jc-mock/app/common/config/config.py
 mkdir -p /data/www/wwwroot/jc-mock/logs/supervisor
 mkdir -p /data/www/wwwroot/jc-mock/logs/gunicon
+mkdir -p /data/www/wwwroot/jc-mock/logs/celery
 touch /data/www/wwwroot/jc-mock/logs/gunicon/access.log
 touch /data/www/wwwroot/jc-mock/logs/gunicon/info.log
 touch /data/www/wwwroot/jc-mock/logs/gunicon/gunicorn.log
