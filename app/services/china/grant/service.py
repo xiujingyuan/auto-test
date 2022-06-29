@@ -97,8 +97,8 @@ class ChinaGrantService(GrantBaseService):
         noloan_amount_dict = dict(zip(("rongdan", "rongdan_irr", "lieyin"),
                                       (apr36_total - loan_total_amount, irr36_total - loan_total_amount,
                                        apr36_total - irr36_total)))
-        return noloan_amount_dict[noloan_source_type] / 100 \
-            if noloan_source_type in noloan_amount_dict else loan_principal_amount / 9000
+        return noloan_amount_dict[noloan_source_type] / 1000 \
+            if noloan_source_type in noloan_amount_dict else loan_principal_amount / 10000
 
     @staticmethod
     def get_from_system_and_ref(from_system_name, source_type):
