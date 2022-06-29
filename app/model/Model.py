@@ -21,6 +21,18 @@ class AutoAsset(db.Model, BaseToDict):
     asset_source_type = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='0:自动放款，1:手动添加')
 
 
+class BackendKeyValue(db.Model, BaseToDict):
+    __tablename__ = 'backend_key_value'
+
+    id = db.Column(db.Integer, primary_key=True, info='自增长id')
+    backend_key = db.Column(db.String(40), nullable=False, server_default=db.FetchedValue(), info='后台配置key')
+    backend_value = db.Column(db.Text, nullable=False, info='后台配置value')
+    backend_group = db.Column(db.String(20), nullable=False, server_default=db.FetchedValue(), info='后台配置分组')
+    backend_is_active = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='后台配置是否有效')
+    backend_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='后台配置创建时间')
+    backend_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='后台配置更想时间')
+
+
 class Menu(db.Model, BaseToDict):
     __tablename__ = 'menu'
 

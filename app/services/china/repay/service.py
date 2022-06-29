@@ -2,6 +2,7 @@ import copy
 import json
 import time
 from datetime import datetime
+from decimal import Decimal
 
 from functools import reduce
 
@@ -62,7 +63,7 @@ class ChinaRepayService(RepayBaseService):
         import_asset_info = self.grant.asset_import_success(asset_info)
         withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info)
         self.grant.asset_withdraw_success(withdraw_success_data)
-        self.run_msg_by_type_and_order_no(item_no, 'AssetWithdrawSuccess', timeout=60)
+        self.run_msg_by_type_and_order_no(item_no, 'AssetWithdrawSuccess', timeout=1)
         capital_data = self.grant.get_capital_asset_data(item_no)
         self.grant.capital_asset_success(capital_data)
 
@@ -122,13 +123,13 @@ class ChinaRepayService(RepayBaseService):
         repayPlanDict = {}
         total_amount = 0
         for at in at_list:
+            asset_tran_balance_amount = float(Decimal(float(at.asset_tran_balance_amount / 100)).quantize(Decimal("0.00")))
             if at.asset_tran_type == 'repayprincipal':
                 principal_amount += at.asset_tran_balance_amount
             elif at.asset_tran_type == 'repayinterest' and at.asset_tran_period == period_start:
                 interest_amount = at.asset_tran_balance_amount
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                 fee_amount += at.asset_tran_balance_amount
-            asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
             if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
@@ -140,8 +141,8 @@ class ChinaRepayService(RepayBaseService):
                         repayPlanDict[at.asset_tran_period]['interest'] = asset_tran_balance_amount
                         total_amount += asset_tran_balance_amount
                     if at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
-                        repayPlanDict[at.asset_tran_period]['fee'] += float(at.asset_tran_balance_amount / 100)
-                        total_amount += float(at.asset_tran_balance_amount / 100)
+                        repayPlanDict[at.asset_tran_period]['fee'] += asset_tran_balance_amount
+                        total_amount += asset_tran_balance_amount
             elif channel == 'weipin_zhongwei':
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'late': 0}
@@ -320,7 +321,7 @@ class ChinaRepayService(RepayBaseService):
         total_amount = 0
         repayPlanDict = {}
         for at in at_list:
-            asset_tran_balance_amount = float(at.asset_tran_balance_amount / 100)
+            asset_tran_balance_amount = float(Decimal(float(at.asset_tran_balance_amount / 100)).quantize(Decimal("0.00")))
             if at.asset_tran_period not in repayPlanDict and at.asset_tran_type == 'repayprincipal':
                 repayPlanDict[at.asset_tran_period] = asset_tran_balance_amount
                 total_amount += asset_tran_balance_amount

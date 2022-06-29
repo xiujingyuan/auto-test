@@ -6,7 +6,7 @@ from flask import current_app
 
 from app import db
 from app.common import RET
-from app.model.Model import Menu, TestCase
+from app.model.Model import Menu, TestCase, BackendKeyValue
 from app.test_cases.china.biz_central.QinnongPushAutoTest import QinnongCentralAutoTest
 
 
@@ -25,7 +25,18 @@ def get_menu():
                                   Menu.menu_active == 1).order_by(Menu.menu_order).all()
     ret = deepcopy(RET)
     ret['data'] = get_all_menu(menu_list)
-    print(json.dumps(ret['data'], ensure_ascii=False))
+    return jsonify(ret)
+
+
+@api_web.route('/backend_config', methods=["GET"])
+def get_backend_key_value():
+    key_value_list = BackendKeyValue.query.filter(BackendKeyValue.backend_is_active == 1,
+                                                  BackendKeyValue.backend_group == 'backend').all()
+    ret = deepcopy(RET)
+    backend_config_dict = {'backend_config': {}}
+    for item in key_value_list:
+        backend_config_dict['backend_config'][item.backend_key] = json.loads(item.backend_value)
+    ret['data'] = backend_config_dict
     return jsonify(ret)
 
 
