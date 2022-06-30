@@ -42,6 +42,12 @@ class ChinaRepayEasyMock(EasyMock):
             value = dict(zip(('$.data.repaytotal', '$.data.repaycapital', '$.data.repayinterest'),
                              (principal + interest, principal, interest)))
             trail_url = '/qingjia/yilian_dingfeng/repayTrial'
+        elif channel == 'lanzhou_haoyue_qinjia':
+            principal = round(float(principal / 100), 2)
+            interest = round(float(interest / 100), 2)
+            value = dict(zip(('$.data.repaytotal', '$.data.repaycapital', '$.data.repayinterest'),
+                             (principal + interest, principal, interest)))
+            trail_url = '/qingjia/lanzhou_haoyue_qinjia/repayTrial'
         elif channel == 'zhongyuan_zunhao':
             value = dict(zip(('$.data.totalRepayAmt', '$.data.totalPlanamt',
                               '$.data.totalPsPrcpAmt', '$.data.totalPsNormInt'), (
