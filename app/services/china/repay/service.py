@@ -68,16 +68,20 @@ class ChinaRepayService(RepayBaseService):
         self.grant.capital_asset_success(capital_data)
 
         # 小单
-        x_list = (x_source_type, x_right)
-        for index, x_asset in enumerate((x_item_no, x_rights)):
-            if x_asset:
-                no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
-                                                                              x_asset, x_list[index])
-                self.grant.asset_import_success(no_asset_info)
-                withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, item_no,
-                                                                                no_asset_info)
-                self.grant.asset_withdraw_success(withdraw_success_data_no)
-                self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
+        try:
+            x_list = (x_source_type, x_right)
+            for index, x_asset in enumerate((x_item_no, x_rights)):
+                if x_asset:
+                    no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
+                                                                                  x_asset, x_list[index])
+                    self.grant.asset_import_success(no_asset_info)
+                    withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, item_no,
+                                                                                    no_asset_info)
+                    self.grant.asset_withdraw_success(withdraw_success_data_no)
+                    self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
+        except Exception as e:
+            print(e)
+            print('小单放款失败')
         self.add_asset(item_no, 0)
         return item_no, x_item_no
 
