@@ -237,9 +237,12 @@ class RepayBaseService(BaseService):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         if item_no_x:
             asset_x = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no_x).first()
-            asset_x.asset_status = 'repay'
-            asset_x.asset_actual_grant_at = '1000-01-01 00:00:00'
-            asset_x.asset_balance_amount = asset_x.asset_repaid_amount = 0
+            if asset_x:
+                asset_x.asset_status = 'repay'
+                asset_x.asset_actual_grant_at = '1000-01-01 00:00:00'
+                asset_x.asset_balance_amount = asset_x.asset_repaid_amount = 0
+            else:
+                item_no_x = ''
         item_tuple = tuple(filter(lambda x: x, [item_no, item_no_x]))
         asset_tran_list = self.db_session.query(AssetTran).filter(
             AssetTran.asset_tran_asset_item_no.in_(item_tuple)).all()
