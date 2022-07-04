@@ -89,16 +89,24 @@ class ChinaGrantService(GrantBaseService):
         :param noloan_source_type:
         :return:
         """
+
         loan_principal_amount = loan_asset_info["data"]["asset"]["amount"] * 100
         loan_period_count = loan_asset_info["data"]["asset"]["period_count"]
-        loan_total_amount = loan_asset_info["data"]["asset"]["total_amount"] * 100
-        apr36_total = self.get_apr36_total_amount(loan_principal_amount, loan_period_count)
-        irr36_total = self.get_irr36_total_amount(loan_principal_amount, loan_period_count)
+        loan_channel = loan_asset_info["data"]["asset"]["loan_channel"]
+        req_data = {
+            "channel": loan_channel,
+            "grant_date": "",
+            "period_count": loan_period_count,
+            "principal": loan_principal_amount
+        }
+        ret = Http.http_post('http://k8s-framework-test.k8s-ingress-nginx.kuainiujinke.com/gbiz-calc-noloan-amount',
+                             req_data)
+        rongdan = ret['data']['apr融担小单金额']
+        lieyin = ret['data']['irr权益小单金额']
+        rongdan_irr = ret['data']['irr融担小单金额']
         noloan_amount_dict = dict(zip(("rongdan", "rongdan_irr", "lieyin"),
-                                      (apr36_total - loan_total_amount, irr36_total - loan_total_amount,
-                                       apr36_total - irr36_total)))
-        return noloan_amount_dict[noloan_source_type] / 1000 \
-            if noloan_source_type in noloan_amount_dict else loan_principal_amount / 10000
+                                      (rongdan, rongdan_irr, lieyin)))
+        return noloan_amount_dict[noloan_source_type] / 100
 
     @staticmethod
     def get_from_system_and_ref(from_system_name, source_type):
