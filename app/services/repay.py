@@ -36,6 +36,27 @@ class RepayBaseService(BaseService):
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
         self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
 
+    def get_debt_item_card(self, joint_debt_item):
+        element = self.get_four_element()
+        if joint_debt_item:
+            joint_debt_asset = self.db_session.query(Asset).filter(Asset.asset_item_no == joint_debt_item).first()
+            if joint_debt_asset is None:
+                raise ValueError('not fount the joint_debt_asset')
+            joint_debt_card_info = self.get_repay_card_by_item_no(joint_debt_asset.asset_item_no)
+            if self.country == 'china':
+                element["data"]["id_number_encrypt"] = joint_debt_card_info['card_acc_id_num_encrypt']
+                element["data"]["bank_code_encrypt"] = joint_debt_card_info['card_acc_num_encrypt']
+                element["data"]["bank_account_encrypt"] = joint_debt_card_info['card_acc_num_encrypt']
+                element["data"]["mobile_encrypt"] = joint_debt_card_info['card_acc_tel_encrypt']
+                element["data"]["user_name_encrypt"] = joint_debt_card_info['card_acc_name_encrypt']
+            else:
+                element["data"]["id_number_encrypt"] = joint_debt_card_info['card_acc_num_encrypt']
+                element["data"]["card_num"] = joint_debt_card_info['card_acc_name_encrypt']
+                element["data"]["bank_account_encrypt"] = joint_debt_card_info['card_acc_name_encrypt']
+                element["data"]["mobile_encrypt"] = joint_debt_card_info['card_acc_tel_encrypt']
+                element["data"]["user_name_encrypt"] = joint_debt_card_info['card_acc_id_num_encrypt']
+        return element
+
     def change_kv(self, kv_type, kv_value):
         kv_type = 'update_repay_{0}_config'.format(kv_type)
         return getattr(self, kv_type)(kv_value)
@@ -837,18 +858,7 @@ class OverseaRepayService(RepayBaseService):
 
     def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item='', x_item_no=False
                   , from_app='phi011', withdraw_type='online'):
-        element = self.get_four_element()
-        if joint_debt_item:
-            joint_debt_asset = self.db_session.query(Asset).filter(Asset.asset_item_no == joint_debt_item).first()
-            if joint_debt_asset is None:
-                raise ValueError('not fount the joint_debt_asset')
-            joint_debt_card_info = self.get_repay_card_by_item_no(joint_debt_asset.asset_item_no)
-            element["data"]["id_number_encrypt"] = joint_debt_card_info['card_acc_num_encrypt']
-            element["data"]["card_num"] = joint_debt_card_info['card_acc_name_encrypt']
-            element["data"]["bank_account_encrypt"] = joint_debt_card_info['card_acc_name_encrypt']
-            element["data"]["mobile_encrypt"] = joint_debt_card_info['card_acc_tel_encrypt']
-            element["data"]["user_name_encrypt"] = joint_debt_card_info['card_acc_id_num_encrypt']
-
+        element = self.get_debt_item_card(joint_debt_item)
         asset_info, old_asset, item_no = self.grant.asset_import(channel, period, days, "day", amount, self.country,
                                                                  from_app, source_type, element, withdraw_type)
         print('item_no:', item_no)

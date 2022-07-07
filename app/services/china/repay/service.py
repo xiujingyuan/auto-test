@@ -40,7 +40,7 @@ class ChinaRepayService(RepayBaseService):
                 decrease_amount += value['advance_repay_decrease_amount']
         return total_amount - decrease_amount - repaid_amount
 
-    def auto_loan(self, channel, period, amount, source_type, from_system_name='香蕉', days=0):
+    def auto_loan(self, channel, period, amount, source_type, from_system_name='香蕉', days=0, joint_debt_item=''):
         """
         自动放款
         :param channel:
@@ -48,11 +48,12 @@ class ChinaRepayService(RepayBaseService):
         :param amount:
         :param source_type:
         :param from_system_name:
+        :param joint_debt_item:
         :param days:
         :return:
         """
         self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, channel))
-        element = self.get_four_element()
+        element = self.get_debt_item_card(joint_debt_item)
         # item_no 大单, x_item_no 小单, x_rights 权益单
         # item_no, x_item_no, x_rights = '20201630050959854539', '', ''
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
