@@ -20,6 +20,7 @@ CHANNEL_SOURCE_TYPE_DICT = {
   "qinnong_jieyi": [IRR_NO, IRR_QUANYI],
   "mozhi_jinmeixin": [IRR_NO, IRR_QUANYI],
   "beiyin_tianbang": [APR_RONGDAN, IRR_QUANYI],
+  "yixin_hengrun": [APR_RONGDAN, IRR_QUANYI],
   "beiyin_daqin": [APR_RONGDAN, IRR_QUANYI],
   "weipin_zhongwei": [APR_RONGDAN, IRR_QUANYI],
   "jincheng_hanchen": [APR_RONGDAN, IRR_QUANYI],
