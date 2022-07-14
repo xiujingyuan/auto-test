@@ -167,7 +167,7 @@ class ChinaRepayService(RepayBaseService):
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
             interest_amount = interest_amount + 1
-        if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
+        if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin'):
             if repay_type == 'early_settlement':
                 repayPlanList = []
                 for period in list(range(period_start, period_end + 1)):
@@ -249,8 +249,7 @@ class ChinaRepayService(RepayBaseService):
                         ]
                     }
                 }
-            url = '/chongtian/jincheng_hanchen/repay/calc' if channel == 'jincheng_hanchen' \
-                else '/chongtian/jinmeixin_daqin/repay/calc'
+            url = '/chongtian/{0}/repay/calc'.format(channel)
             return self.easy_mock.update_by_value(url, req_data)
         elif channel == 'weipin_zhongwei':
             repayPlanList = []
@@ -345,7 +344,7 @@ class ChinaRepayService(RepayBaseService):
             .filter(WithholdOrder.withhold_order_reference_no == item_no,
                     Withhold.withhold_channel == channel,
                     Withhold.withhold_status.in_(('process', 'ready'))).first()
-        if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
+        if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin'):
             fee_amount = fee_amount if success_type == 'SUCCESS' else 0
             if period_start == period_end:
                 req_data = {
@@ -413,8 +412,7 @@ class ChinaRepayService(RepayBaseService):
                         "repayPlanList": repayPlanList
                     }
                 }
-            url = '/chongtian/jincheng_hanchen/repay/queryStatus' if channel == 'jincheng_hanchen' \
-                else '/chongtian/jinmeixin_daqin/repay/queryStatus'
+            url = '/chongtian/{0}/repay/queryStatus'.format(channel)
             return self.easy_mock.update_by_value(url, req_data)
         elif channel == 'weipin_zhongwei':
             success_type == 'SUCCESS'
