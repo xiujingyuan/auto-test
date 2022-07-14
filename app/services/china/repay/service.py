@@ -135,7 +135,7 @@ class ChinaRepayService(RepayBaseService):
                 interest_amount = at.asset_tran_balance_amount
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                 fee_amount += at.asset_tran_balance_amount
-            if channel in ('jinmeixin_daqin', 'jincheng_hanchen'):
+            if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin'):
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
                 if at.asset_tran_type == 'repayprincipal':
