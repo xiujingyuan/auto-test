@@ -461,6 +461,20 @@ class ChinaRepayService(RepayBaseService):
                 }
             }
             return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_query', req_data)
+        elif channel == 'zhongke_hegang':
+            query_url = '/hegang/repayQuery'
+            withhold_detail = self.db_session.query(WithholdDetail.withhold_detail_serial_no ==
+                                                    withhold.withhold_serial_no).all()
+            total = 0
+            for item in withhold_detail:
+                withhold_amount = round(float(item.withhold_detail_withhold_amount / 100), 2)
+                if item.withhold_detail_asset_tran_type == 'repayprincipal':
+                    principal = withhold_amount
+                elif item.withhold_detail_asset_tran_type == 'repayinterest':
+                    interest = withhold_amount
+                total += withhold_amount
+            value = dict(zip(('$.rpyTotalAmt', '$.prinAmt', '$.intAmt'), (total, principal, interest)))
+            return self.easy_mock.update_by_json_path(query_url, value, method='post')
 
     def repay_plan_interface(self, item_no, channel):
         """

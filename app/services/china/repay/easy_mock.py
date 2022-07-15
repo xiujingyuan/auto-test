@@ -37,6 +37,8 @@ class ChinaRepayEasyMock(EasyMock):
                              (principal, interest, principal + interest)))
             trail_url = '/qinnong/std/repayment/calculate'
         elif channel == 'zhongke_hegang':
+            principal = round(float(principal / 100), 2)
+            interest = round(float(interest / 100), 2)
             value = dict(zip(('$.tradeCapital', '$.tradeInt', '$.tradeAmt'),
                              (principal, interest, principal + interest)))
             trail_url = '/hegang/repayTrialQuery'
