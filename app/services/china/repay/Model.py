@@ -172,7 +172,7 @@ class Asset(db.Model, BaseToDict):
     asset_repayment_app = db.Column(db.String(10), nullable=False, server_default=db.FetchedValue())
     asset_last_late_at = db.Column(db.DateTime, server_default=db.FetchedValue(), info='最新刷新罚息时间')
     asset_full_late_flag = db.Column(db.Enum('yes', 'no'), server_default=db.FetchedValue(), info='是否为最大罚息')
-
+    asset_product_code = db.Column(db.String(50), nullable=False, server_default=db.FetchedValue(), info='产品编号')
 
 
 class AssetExtend(db.Model, BaseToDict):

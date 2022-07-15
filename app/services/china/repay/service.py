@@ -299,6 +299,13 @@ class ChinaRepayService(RepayBaseService):
                     }
                 }
             return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_trial', req_data)
+        elif channel == 'zhongke_hegang':
+            principal = round(float(principal_amount / 100), 2)
+            interest = round(float(interest_amount / 100), 2)
+            value = dict(zip(('$.tradeCapital', '$.tradeInt', '$.tradeAmt'),
+                             (principal, interest, principal + interest)))
+            trail_url = '/hegang/repayTrialQuery/{0}'.format(asset.asset_product_code)
+            return self.easy_mock.update_by_json_path(trail_url, value, method='post')
         return self.easy_mock.update_trail_amount(channel, principal_amount, interest_amount, fee_amount, status)
 
     def repay_query_interface(self, item_no, period_start, period_end, channel, success_type='PART'):
@@ -318,6 +325,7 @@ class ChinaRepayService(RepayBaseService):
             AssetTran.asset_tran_period >= period_start,
             AssetTran.asset_tran_period <= period_end,
             AssetTran.asset_tran_asset_item_no == item_no).all()
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         principal_amount = 0
         interest_amount = 0
         fee_amount = 0
@@ -462,7 +470,7 @@ class ChinaRepayService(RepayBaseService):
             }
             return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_query', req_data)
         elif channel == 'zhongke_hegang':
-            query_url = '/hegang/repayQuery'
+            query_url = '/hegang/repayQuery/{0}'.format(asset.asset_product_code)
             withhold_detail = self.db_session.query(WithholdDetail.withhold_detail_serial_no ==
                                                     withhold.withhold_serial_no).all()
             total = 0
