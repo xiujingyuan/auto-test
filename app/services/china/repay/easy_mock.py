@@ -36,6 +36,10 @@ class ChinaRepayEasyMock(EasyMock):
             value = dict(zip(('$.data.assets[0].principal', '$.data.assets[0].interest', '$.data.assets[0].total_amount'),
                              (principal, interest, principal + interest)))
             trail_url = '/qinnong/std/repayment/calculate'
+        elif channel == 'zhongke_hegang':
+            value = dict(zip(('$.tradeCapital', '$.tradeInt', '$.tradeAmt'),
+                             (principal, interest, principal + interest)))
+            trail_url = '/hegang/repayTrialQuery'
         elif channel == 'yilian_dingfeng':
             principal = round(float(principal / 100), 2)
             interest = round(float(interest / 100), 2)
