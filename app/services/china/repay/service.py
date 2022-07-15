@@ -300,8 +300,8 @@ class ChinaRepayService(RepayBaseService):
                 }
             return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_trial', req_data)
         elif channel == 'zhongke_hegang':
-            principal = round(float(principal_amount / 100), 2)
-            interest = round(float(interest_amount / 100), 2)
+            principal = float(Decimal(float(principal_amount / 100)).quantize(Decimal("0.00")))
+            interest = float(Decimal(float(interest_amount / 100)).quantize(Decimal("0.00")))
             value = dict(zip(('$.tradeCapital', '$.tradeInt', '$.tradeAmt'),
                              (principal, interest, principal + interest)))
             trail_url = '/hegang/repayTrialQuery/{0}'.format(asset.asset_product_code)
@@ -471,16 +471,19 @@ class ChinaRepayService(RepayBaseService):
             return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repay_apl_query', req_data)
         elif channel == 'zhongke_hegang':
             query_url = '/hegang/repayQuery/{0}'.format(asset.asset_product_code)
-            withhold_detail = self.db_session.query(WithholdDetail.withhold_detail_serial_no ==
-                                                    withhold.withhold_serial_no).all()
+            withhold_detail = self.db_session.query(WithholdDetail).filter(
+                WithholdDetail.withhold_detail_serial_no == withhold.withhold_serial_no).all()
             total = 0
+            interest = 0
+            principal = 0
             for item in withhold_detail:
-                withhold_amount = round(float(item.withhold_detail_withhold_amount / 100), 2)
+                withhold_amount = float(Decimal(float(item.withhold_detail_withhold_amount / 100)).quantize(Decimal("0.00")))
                 if item.withhold_detail_asset_tran_type == 'repayprincipal':
-                    principal = withhold_amount
+                    principal += withhold_amount
                 elif item.withhold_detail_asset_tran_type == 'repayinterest':
-                    interest = withhold_amount
+                    interest += withhold_amount
                 total += withhold_amount
+            total = float(Decimal(total).quantize(Decimal("0.00")))
             value = dict(zip(('$.rpyTotalAmt', '$.prinAmt', '$.intAmt'), (total, principal, interest)))
             return self.easy_mock.update_by_json_path(query_url, value, method='post')
 
@@ -511,7 +514,7 @@ class ChinaRepayService(RepayBaseService):
         if channel == 'weipin_zhongwei':
             repayPlanList = []
             for period in list(range(1, asset.asset_period_count + 1)):
-                overdue_amount = round(repayPlanDict[period]["overdue"] * repayPlanDict[period]["repayprincipal"] * 0.001, 2)
+                overdue_amount = float(Decimal(repayPlanDict[period]["overdue"] * repayPlanDict[period]["repayprincipal"] * 0.001).quantize(Decimal("0.00")))
                 repayPlanList.append({
                     "tenor": period,
                     "paymentDueDate": "20221028",
