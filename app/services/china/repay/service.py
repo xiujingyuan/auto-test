@@ -328,6 +328,8 @@ class ChinaRepayService(RepayBaseService):
             AssetTran.asset_tran_period <= period_end,
             AssetTran.asset_tran_asset_item_no == item_no).all()
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        asset_extend = self.db_session.query(AssetExtend).filter(AssetExtend.asset_extend_asset_item_no == item_no,
+                                                                 AssetExtend.asset_extend_type == 'trade_no').first()
         principal_amount = 0
         interest_amount = 0
         fee_amount = 0
@@ -366,7 +368,7 @@ class ChinaRepayService(RepayBaseService):
                         "repayResult": "部分还款成功",
                         "failCode": None,
                         "repayPlanList": [{
-                            "loanOrderNo": item_no,
+                            "loanOrderNo": asset_extend.asset_extend_val,
                             "termNo": period_start,
                             "payOrderId": "R103" + self.__create_req_key__(item_no),
                             "repayStatus": success_type,
@@ -385,7 +387,7 @@ class ChinaRepayService(RepayBaseService):
                 for period in list(range(period_start, period_end + 1)):
                     if period == period_start:
                         repayPlanList.append({
-                                "loanOrderNo": item_no,
+                                "loanOrderNo": asset_extend.asset_extend_val,
                                 "termNo": period,
                                 "payOrderId": "R103" + self.__create_req_key__(item_no),
                                 "repayStatus": success_type,
@@ -399,7 +401,7 @@ class ChinaRepayService(RepayBaseService):
                             })
                     else:
                         repayPlanList.append({
-                            "loanOrderNo": item_no,
+                            "loanOrderNo": asset_extend.asset_extend_val,
                             "termNo": period,
                             "payOrderId": "R103" + self.__create_req_key__(item_no),
                             "repayStatus": success_type,
