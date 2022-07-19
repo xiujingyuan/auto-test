@@ -344,7 +344,21 @@ class EasyMock(object):
 
 
 if __name__ == "__main__":
-    test = EasyMock()
-    print(test.copy_increment_project('rbiz_manual_test', 'rbiz_auto_test'))
+    # test = EasyMock()
+    # print(test.copy_increment_project('rbiz_manual_test', 'rbiz_auto_test'))
     # test.delete_project('test51213')
 
+    a = "('lanzhou_haoyue_qinjia', 0, 'direct', 'lateinterest', {0}, {0}, 0.000, 0, 360, '{1}', '{2}', '1000-01-01'," \
+        " '{3}', 'finished', 'N', now(), 0, 'compensate', 1, 'qsq', 'ready', {0}, '{4}'),"
+    a1 = []
+    ret = ''
+    with open('test', 'r+') as a11:
+        for item in a11.readlines():
+            item = item.strip()
+            a1.append(item.split('\t'))
+    print(a1)
+    with open('test1', 'r+') as a2:
+        for index, item in enumerate(a2.readlines()):
+            item = item.strip()
+            ret += a.format(item, a1[index][1], a1[index][2], a1[index][3], a1[index][0])
+    print(ret)

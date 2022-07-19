@@ -386,7 +386,7 @@ class BaseService(object):
                 break
             if bank_code.endswith(bank_code_suffix):
                 break
-        # return "621226430{0}9710".format(''.join(str(random.randrange(0, 9)) for x in range(0, 6)))
+        return "621226430{0}9710".format(''.join(str(random.randrange(0, 9)) for x in range(0, 6)))
         return bank_code
 
     @classmethod

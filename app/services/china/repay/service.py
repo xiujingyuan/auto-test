@@ -122,6 +122,8 @@ class ChinaRepayService(RepayBaseService):
             AssetTran.asset_tran_period <= period_end,
             AssetTran.asset_tran_asset_item_no == item_no).all()
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        asset_extend = self.db_session.query(AssetExtend).filter(AssetExtend.asset_extend_asset_item_no == item_no,
+                                                                 AssetExtend.asset_extend_type == 'trade_no').first()
         principal_amount = 0
         interest_amount = 0
         fee_amount = 0
@@ -195,7 +197,7 @@ class ChinaRepayService(RepayBaseService):
                     "code": "000000",
                     "msg": "成功",
                     "data": {
-                        "loanOrderNo": item_no,
+                        "loanOrderNo": asset_extend.asset_extend_val,
                         "repayType": "PRE",
                         "repayTerm": list(range(period_start, period_end + 1)),
                         "repayAmt": principal_amount + interest_amount + fee_amount,
@@ -214,7 +216,7 @@ class ChinaRepayService(RepayBaseService):
                     "code": "000000",
                     "msg": "success",
                     "data": {
-                        "loanOrderNo": item_no,
+                        "loanOrderNo": asset_extend.asset_extend_val,
                         "repayType ": "DO",
                         "repayTerm": [
                             period_start
@@ -226,7 +228,7 @@ class ChinaRepayService(RepayBaseService):
                         "repayPen": 0,
                         "repayPlanList": [
                             {
-                                "loanOrderNo": item_no,
+                                "loanOrderNo": asset_extend.asset_extend_val,
                                 "termNo": str(period_start),
                                 "repayAmt": repayPlanDict[period_start]['principal'] +
                                             repayPlanDict[period_start]['interest'] +
