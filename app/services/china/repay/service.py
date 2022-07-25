@@ -834,8 +834,8 @@ class ChinaRepayService(RepayBaseService):
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_msg')
         return ret
 
-    def run_biz_xxl_job(self, job_type, run_date):
-        return self.biz_central.run_xxl_job(job_type, run_date)
+    def run_biz_xxl_job(self, job_type, run_date, param):
+        return self.biz_central.run_xxl_job(job_type, run_date, param)
 
     def run_crm_task_msg_by_item_no(self, item_no):
         item_no_x = self.get_no_loan(item_no)

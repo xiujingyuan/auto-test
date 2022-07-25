@@ -19,6 +19,6 @@ def biz_central_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    repay = BizCentralServiceFactory.get_biz_central(country, env, environment)
-    ret['data'] = getattr(repay, tool)(**req)
+    central = BizCentralServiceFactory.get_biz_central(country, env, environment)
+    ret['data'] = getattr(central, tool)(**req)
     return jsonify(ret)
