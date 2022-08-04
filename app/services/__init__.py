@@ -217,19 +217,17 @@ class BaseService(object):
                 asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
             else:
                 asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
+            if isinstance(asset_tran.asset_tran_finish_at, datetime.datetime) \
+                    and asset_tran.asset_tran_finish_at.year != 1000:
+                cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
+                                                                days=cal_advance_day)
             if asset_tran.asset_tran_type == 'lateinterest':
                 asset_tran.asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, days=add_day)
             else:
                 add_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran_due_at)
                 asset_tran.asset_tran_due_at = asset_tran_due_at
-            if isinstance(asset_tran.asset_tran_finish_at, datetime.datetime) \
-                    and asset_tran.asset_tran_finish_at.year != 1000:
-                cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-                cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-                if cal_advance_day == 0 and cal_advance_month == 0:
-                    continue
-                asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month,
-                                                                days=cal_advance_day)
 
         for capital_tran in capital_tran_list:
             if interval_day != 30:

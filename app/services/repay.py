@@ -521,7 +521,6 @@ class RepayBaseService(BaseService):
     def get_auto_asset(self, channel, period, days=0):
         asset_list = AutoAsset.query.filter(AutoAsset.asset_period == period,
                                             AutoAsset.asset_channel == channel,
-                                            AutoAsset.asset_days == days,
                                             AutoAsset.asset_env == self.env,
                                             AutoAsset.asset_country == self.country,
                                             AutoAsset.asset_create_at >= self.get_date(is_str=True, days=-7)) \
