@@ -433,7 +433,7 @@ class RepayBaseService(BaseService):
         if refresh_type in ('task', 'msg'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at)
         elif refresh_type == 'biz_task':
-            ret = self.biz_central.get_task(task_order_no, channel, max_create_at)
+            ret = self.biz_central.get_task(task_order_no, item_no, channel, max_create_at)
         elif refresh_type == 'biz_msg':
             ret = self.biz_central.get_msg(item_no, max_create_at)
         elif refresh_type in ('withhold', 'withhold_detail', 'card_bind'):
