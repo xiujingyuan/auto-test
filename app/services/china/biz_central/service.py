@@ -28,6 +28,27 @@ class ChinaBizCentralService(BaseService):
         self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
         self.gate_str = 'gate.client.serviceUrl'
 
+
+    @time_print
+    def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
+        asset = self.get_asset(item_no)
+        max_create_at = self.get_date(is_str=True, days=-3)
+        request_no, serial_no, id_num, item_no_tuple, withhold_order = \
+            self.get_withhold_key_info(item_no, max_create_at=max_create_at)
+        channel = asset['asset'][0]['loan_channel']
+        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel]
+        ret = {}
+        if refresh_type == 'central_task':
+            ret = self.get_task(task_order_no, item_no, channel, max_create_at)
+        elif refresh_type == 'central_msg':
+            ret = self.get_msg(item_no, max_create_at)
+        elif refresh_type in ('capital', 'capital_tran', 'capital_notify'):
+            ret = getattr(self, 'get_{0}'.format(refresh_type[4:]))(item_no)
+        elif refresh_type == 'capital_settlement_detail':
+            ret = self.get_capital_settlement_detail(channel)
+        ret.update(asset)
+        return ret
+
     def get_capital_principal(self, item_no, period):
         capital_principal = self.db_session.query(CapitalTransaction.capital_transaction_asset_item_no == item_no,
                                                   CapitalTransaction.capital_transaction_period == period,

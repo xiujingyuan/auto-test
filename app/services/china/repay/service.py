@@ -26,6 +26,28 @@ class ChinaRepayService(RepayBaseService):
         self.grant = ChinaGrantService(env, run_env, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
 
+    def operate_action(self, item_no, extend, op_type, table_name, run_date):
+        req = {'max_create_at': extend['create_at'] if hasattr(extend, 'create_at') else None,
+                'item_no': item_no,
+               'refresh_type': table_name
+               }
+        if op_type == 'reverse_item_no':
+            req['serial_no'] = extend['serial_no']
+        elif op_type in ("run_task_by_id", "run_msg_by_id"):
+            req[op_type.split("_")[1] + '_id'] = extend['id']
+        elif op_type in ('run_biz_task', 'run_biz_msg'):
+            req['re_run'] = True
+            req['re_date'] = run_date
+            req[op_type.split("_")[-1] + '_id'] = extend['id']
+        elif op_type == "del_row_data":
+            req['del_id'] = extend['id']
+        elif op_type.startswith('repay_callback_'):
+            req['serial_no'] = extend['serial_no']
+            req['status'] = 3 if op_type.endswith('fail') else 2
+
+            op_type = 'repay_callback'
+        return getattr(self, op_type)(**req)
+
     def calc_qinnong_early_settlement(self, item_no):
         param = {
             'project_num': item_no,
@@ -104,7 +126,7 @@ class ChinaRepayService(RepayBaseService):
         return verify_seq
 
     def set_trail_mock(self, item_no, period_start, period_end, channel, status, principal_over=False,
-                       interest_type='less', repay_type='early_settlement'):
+                       interest_type='less'):
         """
         设置微神马试算金额
         :param item_no:资产编号
@@ -122,6 +144,7 @@ class ChinaRepayService(RepayBaseService):
             AssetTran.asset_tran_period <= period_end,
             AssetTran.asset_tran_asset_item_no == item_no).all()
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        repay_type = 'early_settlement' if period_end == asset.asset_period_count else 'normal'
         asset_extend = self.db_session.query(AssetExtend).filter(AssetExtend.asset_extend_asset_item_no == item_no,
                                                                  AssetExtend.asset_extend_type == 'trade_no').first()
         principal_amount = 0

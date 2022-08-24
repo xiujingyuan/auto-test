@@ -178,15 +178,15 @@ class RepayBaseService(BaseService):
         ret.update(withhold_request_dict)
         return ret
 
-    def del_row_data(self, item_no, del_id, del_type, max_create_at=None):
-        if del_type.startswith('biz_'):
-            self.biz_central.delete_row_data(del_id, del_type[4:])
+    def del_row_data(self, item_no, del_id, refresh_type, max_create_at=None):
+        if refresh_type.startswith('biz_'):
+            self.biz_central.delete_row_data(del_id, refresh_type[4:])
         else:
-            obj = eval(del_type.title().replace("_", ""))
-            self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(del_type)) == del_id).delete()
+            obj = eval(refresh_type.title().replace("_", ""))
+            self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(refresh_type)) == del_id).delete()
             self.db_session.flush()
             self.db_session.commit()
-        return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=del_type)
+        return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=refresh_type)
 
     def modify_row_data(self, item_no, modify_id, modify_type, modify_data, max_create_at=None):
         if modify_type.startswith('biz_'):
@@ -306,7 +306,7 @@ class RepayBaseService(BaseService):
         detail_lock = self.db_session.query(WithholdAssetDetailLock).filter(
             WithholdAssetDetailLock.withhold_asset_detail_lock_asset_item_no.in_((item_no, item_no_x))).all()
         detail_lock = list(map(lambda x: x.to_spec_dict, detail_lock))
-        return dict(zip(('auth_lock', 'detail_lock'), (auth_lock, detail_lock)))
+        return dict(zip(('asset_operation_auth', 'withhold_asset_detail_lock'), (auth_lock, detail_lock)))
 
     @time_print
     @wait_time(timeout=1)
@@ -449,7 +449,7 @@ class RepayBaseService(BaseService):
             ret = getattr(self.biz_central, 'get_{0}'.format(refresh_type[4:]))(item_no)
         elif refresh_type == 'biz_capital_settlement_detail':
             ret = self.biz_central.get_capital_settlement_detail(channel)
-        elif refresh_type in ('auth_lock', 'detail_lock'):
+        elif refresh_type in ('asset_operation_auth', 'withhold_asset_detail_lock'):
             ret = self.get_lock_info(item_no)
         ret.update(asset)
         return ret

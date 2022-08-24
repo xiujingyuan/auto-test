@@ -35,6 +35,7 @@ def get_backend_key_value():
     ret = deepcopy(RET)
     backend_config_dict = {'backend_config': {}}
     for item in key_value_list:
+        print(item.backend_key)
         backend_config_dict['backend_config'][item.backend_key] = json.loads(item.backend_value)
     ret['data'] = backend_config_dict
     return jsonify(ret)

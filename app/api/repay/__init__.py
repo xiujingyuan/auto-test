@@ -23,6 +23,7 @@ def repay_tools(tool):
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
     period = req.pop("period", None)
+    loading_key = req.pop('loading_key', None)
     if period is not None:
         req['period'] = period
         if country != 'china':

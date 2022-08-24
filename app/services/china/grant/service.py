@@ -99,7 +99,7 @@ class ChinaGrantService(GrantBaseService):
             "period_count": loan_period_count,
             "principal": loan_principal_amount
         }
-        ret = Http.http_post('http://k8s-framework-test.k8s-ingress-nginx.kuainiujinke.com/gbiz-calc-noloan-amount',
+        ret = Http.http_post('http://framework-test.k8s-ingress-nginx.kuainiujinke.com/gbiz-calc-noloan-amount',
                              req_data)
         rongdan = ret['data']['apr融担小单金额']
         lieyin = ret['data']['irr权益小单金额']
@@ -166,7 +166,8 @@ class ChinaGrantService(GrantBaseService):
 
     def get_asset_item_info(self, channel, source_type, from_system_name, item_no=None):
         item_no = item_no if item_no else self.create_item_no()
-        source_type_list = CHANNEL_SOURCE_TYPE_DICT[channel]
+        source_type_list = CHANNEL_SOURCE_TYPE_DICT[channel] if channel in CHANNEL_SOURCE_TYPE_DICT \
+            else CHANNEL_SOURCE_TYPE_DICT['yixin_hengrun']
         filter_source = list(filter(lambda x: x[0] == source_type, source_type_list))
         if not filter_source:
             raise ValueError('the channel {0} is not match the source type {1}'.format(channel, source_type))
