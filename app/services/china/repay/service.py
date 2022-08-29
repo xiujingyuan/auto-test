@@ -44,7 +44,6 @@ class ChinaRepayService(RepayBaseService):
         elif op_type.startswith('repay_callback_'):
             req['serial_no'] = extend['serial_no']
             req['status'] = 3 if op_type.endswith('fail') else 2
-
             op_type = 'repay_callback'
         return getattr(self, op_type)(**req)
 
@@ -592,14 +591,14 @@ class ChinaRepayService(RepayBaseService):
         super(ChinaRepayService, self).remove_buyback(item_no, channel)
         return self.biz_central.remove_buyback(item_no, channel)
 
-    def set_asset_tran_status(self, period, item_no, status='finish'):
-        self.biz_central.set_capital_tran_status(item_no, period, operate_type='compensate')
-        return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, status=status)
+    def set_asset_tran_status(self, period, item_no, refresh_type, status='finish'):
+        self.biz_central.set_capital_tran_status(item_no, period, refresh_type, operate_type='compensate')
+        return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, refresh_type, status=status)
 
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
                      verify_code='', verify_seq=None, agree=False, protocol=False,
-                     period_start=None, period_end=None):
+                     period_start=None, period_end=None, repay_card_num=None):
         """
         主动还款
         :param item_no:
@@ -638,7 +637,7 @@ class ChinaRepayService(RepayBaseService):
             return "当前已结清", "", []
         request_data = self.__get_active_request_data__(item_no, item_no_x, item_no_rights, amount, x_amount,
                                                         rights_amount, repay_card, verify_code=verify_code,
-                                                        verify_seq=verify_seq)
+                                                        verify_seq=verify_seq, repay_card_num=repay_card_num)
         resp = Http.http_post(self.active_repay_url, request_data)
         if resp['code'] == 0 and agree:
             # 协议支付 发短信
@@ -845,20 +844,20 @@ class ChinaRepayService(RepayBaseService):
             if task:
                 self.run_task_by_id(task.task_id)
 
-    def run_biz_task(self, task_id, run_date, re_run, max_create_at=None, item_no=None):
-        ret = self.biz_central.run_central_task_by_task_id(task_id, run_date, re_run)
-        if max_create_at is not None:
-            return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_task')
-        return ret
+    # def run_biz_task(self, task_id, run_date, re_run, max_create_at=None, item_no=None):
+    #     ret = self.biz_central.run_central_task_by_task_id(task_id, run_date, re_run)
+    #     if max_create_at is not None:
+    #         return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_task')
+    #     return ret
 
-    def run_biz_msg(self, msg_id, max_create_at=None, item_no=None):
-        ret = self.biz_central.run_central_msg_by_msg_id(msg_id)
-        if max_create_at is not None:
-            return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_msg')
-        return ret
-
-    def run_biz_xxl_job(self, job_type, run_date, param):
-        return self.biz_central.run_xxl_job(job_type, run_date, param)
+    # def run_biz_msg(self, msg_id, max_create_at=None, item_no=None):
+    #     ret = self.biz_central.run_central_msg_by_msg_id(msg_id)
+    #     if max_create_at is not None:
+    #         return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type='biz_msg')
+    #     return ret
+    #
+    # def run_biz_xxl_job(self, job_type, run_date, param):
+    #     return self.biz_central.run_xxl_job(job_type, run_date, param)
 
     def run_crm_task_msg_by_item_no(self, item_no):
         item_no_x = self.get_no_loan(item_no)
@@ -891,7 +890,7 @@ class ChinaRepayService(RepayBaseService):
         if amount == 0 and period_start is not None and period_end is not None:
             amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
         req_key = self.__create_req_key__(item_no, prefix='FOX')
-        card_info = self.get_active_card_info(item_no, 1)
+        card_info = self.get_active_card_info(item_no, 1, '')
         fox_active_data = {
             "busi_key": "20190731061116179",
             "data": {

@@ -27,25 +27,44 @@ class ChinaBizCentralService(BaseService):
         self.refresh_holiday_url = self.biz_host + "/job/refreshholiday"
         self.run_job_by_date_url = self.biz_host + "/job/runWithDate?jobType={0}&param={1}&date={2}"
         self.gate_str = 'gate.client.serviceUrl'
+        self.get_withhold_key_info = []
+        self.asset = None
 
+    def operate_action(self, item_no, extend, op_type, table_name, run_date, loading_key):
+        loading_key_first = loading_key.split("_")[0]
+        extend_name = '{0}_create_at'.format(loading_key_first)
+        max_create_at = extend[extend_name] if extend_name in extend else None
+        real_req = {}
+        if op_type == 'run_central_task_by_task_id':
+            real_req[loading_key] = extend[loading_key]
+            real_req['run_date'] = run_date
+            real_req['re_run'] = True
+        elif op_type == 'run_central_msg_by_msg_id':
+            real_req[loading_key] = extend[loading_key]
+        if op_type == "del_row_data":
+            real_req['del_id'] = extend['id']
+        ret = getattr(self, op_type)(**real_req)
+        if max_create_at is not None:
+            return self.info_refresh(item_no, max_create_at, refresh_type=table_name)
+        return ret
 
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
-        asset = self.get_asset(item_no)
+        asset = self.asset
         max_create_at = self.get_date(is_str=True, days=-3)
-        request_no, serial_no, id_num, item_no_tuple, withhold_order = \
-            self.get_withhold_key_info(item_no, max_create_at=max_create_at)
+        request_no, serial_no, id_num, item_no_tuple, withhold_order = self.get_withhold_key_info
         channel = asset['asset'][0]['loan_channel']
         task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel]
         ret = {}
+        req_name = 'get_{0}'.format(refresh_type)
         if refresh_type == 'central_task':
-            ret = self.get_task(task_order_no, item_no, channel, max_create_at)
+            ret = getattr(self, req_name)(task_order_no, item_no, channel, max_create_at)
         elif refresh_type == 'central_msg':
-            ret = self.get_msg(item_no, max_create_at)
-        elif refresh_type in ('capital', 'capital_tran', 'capital_notify'):
-            ret = getattr(self, 'get_{0}'.format(refresh_type[4:]))(item_no)
+            ret = getattr(self, req_name)(item_no, max_create_at)
+        elif refresh_type in ('capital', 'capital_transaction', 'capital_notify'):
+            ret = getattr(self, req_name)(item_no)
         elif refresh_type == 'capital_settlement_detail':
-            ret = self.get_capital_settlement_detail(channel)
+            ret = getattr(self, req_name)(channel)
         ret.update(asset)
         return ret
 
@@ -229,7 +248,7 @@ class ChinaBizCentralService(BaseService):
         return ret
 
     @biz_modify_return
-    def get_task(self, task_order_no, item_no, channel=None, max_create_at=None):
+    def get_central_task(self, task_order_no, item_no, channel=None, max_create_at=None):
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
         task_order_no = tuple(list(task_order_no) + [channel]) \
             if channel is not None else task_order_no
@@ -246,7 +265,7 @@ class ChinaBizCentralService(BaseService):
         return task_list
 
     @biz_modify_return
-    def get_msg(self, item_no, max_create_at=None):
+    def get_central_msg(self, item_no, max_create_at=None):
         max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
         msg_list = self.db_session.query(CentralSendMsg). \
             filter(CentralSendMsg.sendmsg_order_no.like('{0}%'.format(item_no)),
@@ -257,9 +276,9 @@ class ChinaBizCentralService(BaseService):
     def get_capital_info(self, item_no, channel):
         ret = {}
         capital = self.get_capital(item_no)
-        capital_tran = self.get_capital_tran(item_no)
+        capital_tran = self.get_capital_transaction(item_no)
         capital_notify = self.get_capital_notify(item_no)
-        capital_detail = self.get_capital_detail(channel)
+        capital_detail = self.get_capital_settlement_detail(channel)
         ret.update(capital)
         ret.update(capital_tran)
         ret.update(capital_notify)
@@ -324,7 +343,7 @@ class ChinaBizCentralService(BaseService):
         return capital_asset
 
     @biz_modify_return
-    def get_capital_tran(self, item_no):
+    def get_capital_transaction(self, item_no):
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
         return capital_tran_list

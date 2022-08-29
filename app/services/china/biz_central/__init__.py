@@ -9,7 +9,7 @@ def biz_modify_return(func):
             return ret
         elif record_type in ('to_spec_dict', 'to_dict'):
             ret = list(map(lambda x: getattr(x, record_type), ret))
-            return {'biz_{0}'.format(func_name[4:]): ret}
+            return {func_name[4:]: ret}
     return wrapper
 
 

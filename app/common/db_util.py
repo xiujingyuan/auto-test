@@ -72,6 +72,8 @@ class BaseToDict(object):
         for col in model.__table__.columns:
             if isinstance(col.type, DateTime):
                 value = BaseToDict.convert_datetime(getattr(model, col.name))
+            elif isinstance(col.type, Date):
+                value = BaseToDict.convert_datetime(getattr(model, col.name))
             elif isinstance(col.type, Numeric):
                 value = float(getattr(model, col.name))
             else:

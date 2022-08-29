@@ -15,7 +15,7 @@ FORM_HEADER = {"Content-Type": "multipart/form-data", "Connection": "close"}
 def modify_resp(func):
     def wrapper(*args, **kwargs):
         url, req_data, resp = func(*args, **kwargs)
-        if resp.status_code not in (200, 201, 400):
+        if 'status_code' not in dir(resp) or resp.status_code not in (200, 201, 400):
             raise ValueError('request run status_code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
                 resp.status_code, url, json.dumps(req_data, ensure_ascii=False)))
         content = json.loads(resp.content)

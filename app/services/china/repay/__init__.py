@@ -80,9 +80,9 @@ def wait_time(timeout=1):
                 ret = func(self, *args, **kwargs)
                 if ret:
                     return ret
-                time.sleep(0.1)
+                time.sleep(0.01)
                 count += 1
-                if count >= 10 * timeout:
+                if count >= 1 * timeout:
                     print('time is out but obj not found!')
                     return ret
         return wrapper
