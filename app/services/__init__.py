@@ -370,7 +370,7 @@ class BaseService(object):
         return noise_data
 
     @classmethod
-    def get_bank_code(cls, bank_name="工商银行", bank_code_suffix=None):
+    def get_bank_code(cls, bank_name="中国银行", bank_code_suffix=None):
         # 621226430｛6｝9710
         bank_map = {"中国银行": "621394",
                     "工商银行": "621761",
@@ -386,7 +386,6 @@ class BaseService(object):
                 break
             if bank_code.endswith(bank_code_suffix):
                 break
-        return "621226430{0}9710".format(''.join(str(random.randrange(0, 9)) for x in range(0, 6)))
         return bank_code
 
     @classmethod
@@ -421,7 +420,7 @@ class BaseService(object):
         return req['data'][0]['hash'] if req['code'] == 0 else req
 
     @classmethod
-    def get_four_element(cls, bank_name='工商银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
+    def get_four_element(cls, bank_name='中国银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
