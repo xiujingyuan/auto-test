@@ -159,7 +159,7 @@ class ChinaRepayService(RepayBaseService):
                 interest_amount = at.asset_tran_balance_amount
             elif at.asset_tran_type not in ('repayprincipal', 'repayinterest', 'lateinterest'):
                 fee_amount += at.asset_tran_balance_amount
-            if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin'):
+            if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin', 'jinmeixin_hanchen'):
                 if at.asset_tran_period not in repayPlanDict:
                     repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0}
                 if at.asset_tran_type == 'repayprincipal':
@@ -191,7 +191,7 @@ class ChinaRepayService(RepayBaseService):
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
             interest_amount = interest_amount + 1
-        if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin'):
+        if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin', 'jinmeixin_hanchen'):
             if repay_type == 'early_settlement':
                 repayPlanList = []
                 for period in list(range(period_start, period_end + 1)):
@@ -592,7 +592,7 @@ class ChinaRepayService(RepayBaseService):
         return self.biz_central.remove_buyback(item_no, channel)
 
     def set_asset_tran_status(self, period, item_no, refresh_type, status='finish'):
-        self.biz_central.set_capital_tran_status(item_no, period, refresh_type, operate_type='compensate')
+        self.biz_central.set_capital_tran_status(item_no, period, operate_type='compensate')
         return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, refresh_type, status=status)
 
     @query_withhold
