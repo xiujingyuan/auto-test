@@ -6,7 +6,7 @@ from flask import current_app
 
 from app import db
 from app.common import RET
-from app.model.Model import Menu, TestCase, BackendKeyValue
+from app.model.Model import Menu, TestCase, BackendKeyValue, AutoAsset
 from app.test_cases.china.biz_central.QinnongPushAutoTest import QinnongCentralAutoTest
 
 
@@ -92,6 +92,14 @@ def get_case():
     case_list = TestCase.query.filter(TestCase.test_cases_channel == 'qinnong').order_by(TestCase.test_cases_id).all()
     ret = deepcopy(RET)
     ret['data'] = {'case': list(map(lambda x: x.to_spec_dict, case_list))}
+    return jsonify(ret)
+
+
+@api_web.route('/remove_item/<string:item_no>', methods=["POST"])
+def remove_item(item_no):
+    ret = deepcopy(RET)
+    db.session.query(AutoAsset).filter(AutoAsset.asset_name == item_no).delete()
+    db.session.flush()
     return jsonify(ret)
 
 

@@ -378,7 +378,7 @@ class ChinaRepayService(RepayBaseService):
             .filter(WithholdOrder.withhold_order_reference_no == item_no,
                     Withhold.withhold_channel == channel,
                     Withhold.withhold_status.in_(('process', 'ready'))).first()
-        if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin'):
+        if channel in ('jinmeixin_daqin', 'jincheng_hanchen', 'beiyin_daqin', 'jinmeixin_hanchen'):
             fee_amount = fee_amount if success_type == 'SUCCESS' else 0
             if period_start == period_end:
                 req_data = {

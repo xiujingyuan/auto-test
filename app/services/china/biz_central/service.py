@@ -467,9 +467,9 @@ class ChinaBizCentralService(BaseService):
         return asset
 
     @time_print
-    def run_central_msg_by_msg_id(self, msg_id):
-        self.update_central_msg_next_run_at_forward_by_msg_id(msg_id)
-        ret = Http.http_get(self.central_msg_url.format(msg_id))
+    def run_central_msg_by_msg_id(self, sendmsg_id):
+        self.update_central_msg_next_run_at_forward_by_msg_id(sendmsg_id)
+        ret = Http.http_get(self.central_msg_url.format(sendmsg_id))
         return ret
 
     @wait_timeout
