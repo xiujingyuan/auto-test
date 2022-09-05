@@ -12,7 +12,7 @@ from app.common.http_util import Http
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import GRANT_ASSET_IMPORT_URL, FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.services.china.grant.Model import Asset, Task, Synctask, Sendmsg, RouterLoadRecord, AssetExtend, \
-    AssetTran, AssetCard, CapitalAsset
+    AssetTran, AssetCard, CapitalAsset, AssetLoanRecord, CapitalTransaction
 
 
 class ChinaGrantService(GrantBaseService):
@@ -163,6 +163,17 @@ class ChinaGrantService(GrantBaseService):
         if not asset_extend:
             raise ValueError('not found the asset extend info!')
         return asset_extend.asset_extend_ref_order_no
+
+    def copy_asset(self, item_no):
+        asset = self.db_session.queyr(Asset).filter(Asset.asset_item_no == item_no).first()
+        asset_tran = self.db_session.queyr(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
+        task = self.db_session.queyr(Task).filter(Task.task_order_no == item_no).all()
+        msg = self.db_session.queyr(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no).all()
+        asset_loan_record = self.db_session.queyr(AssetLoanRecord).filter(AssetLoanRecord.asset_loan_record_asset_item_no == item_no).all()
+        capital_asset = self.db_session.queyr(CapitalAsset).filter(CapitalAsset.capital_asset_item_no == item_no).frist()
+        capital_tran = self.db_session.queyr(CapitalTransaction).filter(CapitalTransaction.capital_transaction_item_no == item_no).all()
+        return None
+
 
     def get_asset_item_info(self, channel, source_type, from_system_name, item_no=None):
         item_no = item_no if item_no else self.create_item_no()

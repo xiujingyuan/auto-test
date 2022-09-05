@@ -259,7 +259,7 @@ class ChinaRepayService(RepayBaseService):
                                 "repayInt": repayPlanDict[period_start]['interest'],
                                 "repayFee": repayPlanDict[period_start]['fee'],
                                 "repayPen": 0,
-                                "repayTime": "2019-09-26 18:30:20"
+                                "repayTime": self.get_date()
                             }
                         ],
                         " bankCardList": [
@@ -400,7 +400,7 @@ class ChinaRepayService(RepayBaseService):
                             "repayInt": interest_amount,
                             "repayPen": 0,
                             "repayFee": fee_amount,
-                            "repayTime": "2022-05-25 19:02:47"
+                            "repayTime": self.get_date()
                         }]
                     }
                 }
@@ -419,7 +419,7 @@ class ChinaRepayService(RepayBaseService):
                                 "repayInt": interest_amount,
                                 "repayPen": 0,
                                 "repayFee": fee_amount,
-                                "repayTime": "2022-05-25 19:02:47"
+                                "repayTime": self.get_date()
                             })
                     else:
                         repayPlanList.append({
@@ -433,7 +433,7 @@ class ChinaRepayService(RepayBaseService):
                             "repayInt": 0,
                             "repayPen": 0,
                             "repayFee": 0,
-                            "repayTime": "2022-05-25 19:02:47"
+                            "repayTime": self.get_date()
                         })
                 req_data = {
                     "code": "000000",
