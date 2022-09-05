@@ -59,4 +59,8 @@ class ChinaRepayEasyMock(EasyMock):
             value = dict(zip(('$.data.repymtPnpAmt', '$.data.repymtIntAmt'),
                              (principal, interest)))
             trail_url = '/zhongzhirong/yumin_zhongbao/ym.repay.trial'
+        elif channel == 'yixin_rongsheng':
+            value = dict(zip(('$.data.lnsCurAmt', '$.data.lnsCurInt'),
+                             (principal, interest)))
+            trail_url = '/yixin/yixin_rongsheng/calAllAmountInAdvanceSingle'
         return super(ChinaRepayEasyMock, self).update_by_json_path(trail_url, value, method='post')

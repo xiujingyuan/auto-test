@@ -684,6 +684,7 @@ class ChinaRepayService(RepayBaseService):
         biz_task = self.biz_central.get_loan_asset_task(item_no)
         is_noloan = True if self.get_no_loan(item_no) else False
         grant_msg = self.grant.get_withdraw_success_info_from_db(item_no, get_type='msg')
+        grant_task = self.grant.get_withdraw_success_info_task(item_no)
         capital_data = []
         if grant_msg is None:
             grant_msg = self.get_withdraw_success_info(item_no, get_type='msg')

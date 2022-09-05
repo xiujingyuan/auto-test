@@ -151,6 +151,13 @@ class GrantBaseService(BaseService):
             return None
         return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
 
+    def get_withdraw_success_info_task(self, old_asset):
+        task = self.db_session.query(Task).filter(
+            Task.task_order_no == old_asset,
+            Task.task_type == 'AssetImport'
+        ).first()
+        return task.to_dict
+
     def asset_import_success(self, asset_info):
         resp = Http.http_post(self.asset_import_url, asset_info)
         item_no = asset_info['data']['asset']['item_no']
