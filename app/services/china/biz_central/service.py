@@ -43,6 +43,9 @@ class ChinaBizCentralService(BaseService):
             real_req[loading_key] = extend[loading_key]
         if op_type == "del_row_data":
             real_req['del_id'] = extend['id']
+            real_req['item_no'] = item_no
+            real_req['refresh_type'] = table_name
+            real_req['max_create_at'] = max_create_at
         ret = getattr(self, op_type)(**real_req)
         if max_create_at is not None:
             return self.info_refresh(item_no, max_create_at, refresh_type=table_name)
@@ -159,7 +162,20 @@ class ChinaBizCentralService(BaseService):
     def run_guarantor_push(self, plan_at):
         self.run_xxl_job('guarantorPushJob', plan_at)
 
-    def modify_row_data(self, modify_id, modify_type, modify_data):
+    def del_row_data(self, item_no, del_id, refresh_type, max_create_at=None):
+        obj = eval(refresh_type.title().replace("_", ""))
+        if refresh_type == 'capital_settlement_detail':
+            except_id = 'id'
+        elif refresh_type == 'central_task':
+            except_id = 'task_id'
+        else:
+            except_id = '{0}_id'.format(refresh_type)
+        self.db_session.query(obj).filter(getattr(obj, except_id) == del_id).delete()
+        self.db_session.flush()
+        self.db_session.commit()
+        return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=refresh_type)
+
+    def modify_row_data(self, item_no, modify_id, modify_type, modify_data, max_create_at=None):
         obj = eval(modify_type.title().replace("_", ""))
         if modify_type == 'capital_settlement_detail':
             except_id = 'id'
@@ -177,6 +193,7 @@ class ChinaBizCentralService(BaseService):
         self.db_session.add(record)
         self.db_session.flush()
         self.db_session.commit()
+        return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=modify_type)
 
     def delete_row_data(self, del_id, del_type):
         obj = eval(del_type.title().replace("_", ""))

@@ -126,6 +126,8 @@ class BaseService(object):
         return port
 
     def run_xxl_job(self, job_type, param={}, invoke_type='api'):
+        get_param = self.xxljob.get_job_info(job_type)[0]['executorParam']
+        param = param if param else get_param
         if invoke_type == 'api':
             return self.run_job_by_api(job_type, param)
         else:

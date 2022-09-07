@@ -54,6 +54,8 @@ def repay_tools(tool):
                     ret['data'].append({e: getattr(repay, tool)(**req)})
         else:
             repay = RepayServiceFactory.get_repay(country, env, environment)
+            if tool == "run_xxl_job":
+                item_no = req.pop('item_no')
             if not hasattr(repay, tool):
                 ret['message'] = '没有该工具{0}'.format(tool)
                 ret['code'] = 1

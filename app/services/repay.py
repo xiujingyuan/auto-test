@@ -177,28 +177,22 @@ class RepayBaseService(BaseService):
         return ret
 
     def del_row_data(self, item_no, del_id, refresh_type, max_create_at=None):
-        if refresh_type.startswith('biz_'):
-            self.biz_central.delete_row_data(del_id, refresh_type[4:])
-        else:
-            obj = eval(refresh_type.title().replace("_", ""))
-            self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(refresh_type)) == del_id).delete()
-            self.db_session.flush()
-            self.db_session.commit()
+        obj = eval(refresh_type.title().replace("_", ""))
+        self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(refresh_type)) == del_id).delete()
+        self.db_session.flush()
+        self.db_session.commit()
         return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=refresh_type)
 
     def modify_row_data(self, item_no, modify_id, modify_type, modify_data, max_create_at=None):
-        if modify_type.startswith('biz_'):
-            self.biz_central.modify_row_data(modify_id, modify_type[4:], modify_data)
-        else:
-            obj = eval(modify_type.title().replace("_", ""))
-            record = self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(modify_type)) == modify_id).first()
-            for item_key, item_value in modify_data.items():
-                if item_key == 'id':
-                    continue
-                setattr(record, '_'.join((modify_type, item_key)), item_value)
-            self.db_session.add(record)
-            self.db_session.flush()
-            self.db_session.commit()
+        obj = eval(modify_type.title().replace("_", ""))
+        record = self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(modify_type)) == modify_id).first()
+        for item_key, item_value in modify_data.items():
+            if item_key == 'id':
+                continue
+            setattr(record, '_'.join((modify_type, item_key)), item_value)
+        self.db_session.add(record)
+        self.db_session.flush()
+        self.db_session.commit()
         return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=modify_type)
 
     @staticmethod
