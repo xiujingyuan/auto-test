@@ -668,7 +668,7 @@ class OverseaRepayService(RepayBaseService):
 
     def __init__(self, country, env, run_env, check_req=False, return_req=False):
         super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
-        self.encrypt_url = 'http://47.101.30.198:8081/encrypt/'
+        self.encrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/encrypt/'
         self.capital_asset_success_url = self.repay_host + '/capital-asset/grant'
         self.online_refund_url = self.repay_host + '/page/asset/repeated-withhold/online-refund'
         self.offline_refund_url = self.repay_host + '/page/asset/repeated-withhold/offline-refund'
