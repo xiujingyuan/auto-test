@@ -252,14 +252,14 @@ class ChinaBizCentralService(BaseService):
     def get_loan_asset_task(self, item_no):
         task_list = self.db_session.query(CentralTask).filter(
             CentralTask.task_order_no == item_no,
-            CentralTask.task_type.in_(('AssetImport', 'CapitalAssetImport', 'AssetWithdrawSuccess')))\
+            CentralTask.task_type.in_(('AssetImport', 'CapitalAssetImport', 'AssetWithdrawSuccess'))) \
             .order_by(CentralTask.task_id).all()
         return list(map(lambda x: x.to_dict, task_list))
 
     def get_task_msg(self, task_order_no, channel, item_no, max_create_at):
         ret = {}
         task_dict = self.get_task(task_order_no, item_no, max_create_at, channel)
-        msg_dict = self.get_msg(item_no,  max_create_at)
+        msg_dict = self.get_msg(item_no, max_create_at)
         ret.update(task_dict)
         ret.update(msg_dict)
         return ret
@@ -276,7 +276,7 @@ class ChinaBizCentralService(BaseService):
                 CentralTask.task_order_no.like('COMPFILE_%'),
                 CentralTask.task_order_no.like('{0}%'.format(channel)),
                 CentralTask.task_order_no.like('{0}%'.format(item_no))),
-            CentralTask.task_update_at >= max_create_at)\
+            CentralTask.task_update_at >= max_create_at) \
             .order_by(desc(CentralTask.task_id)).all()
 
         return task_list
@@ -377,7 +377,7 @@ class ChinaBizCentralService(BaseService):
     @biz_modify_return
     def get_capital_notify(self, item_no):
         capital_notify_list = self.db_session.query(CapitalNotify).filter(
-            CapitalNotify.capital_notify_asset_item_no == item_no)\
+            CapitalNotify.capital_notify_asset_item_no == item_no) \
             .order_by(desc(CapitalNotify.capital_notify_id)).all()
         return capital_notify_list
 

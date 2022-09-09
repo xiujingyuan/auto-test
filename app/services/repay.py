@@ -110,9 +110,9 @@ class RepayBaseService(BaseService):
         withhold_order = list(map(lambda x: x.to_spec_dict, withhold_order))
         return request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order
 
-    def get_active_card_info(self, item_no, repay_card, repay_card_num):
+    def get_active_card_info(self, item_no, repay_card, repay_card_num, bank_code='中国银行'):
         card_info = self.get_repay_card_by_item_no(item_no)
-        random_card = self.get_four_element()['data']
+        random_card = self.get_four_element(bank_name=bank_code)['data']
         if repay_card == 1:
             # 1-还款卡还款
             return card_info
@@ -354,12 +354,12 @@ class RepayBaseService(BaseService):
         return reduce(lambda x, y: x + y.asset_tran_balance_amount, asset_tran_list, 0)
 
     def __get_active_request_data__(self, item_no, item_no_x, item_no_rights, amount, x_amount, rights_amount,
-                                    repay_card, item_no_priority=12, item_no_rights_priority=5,
+                                    repay_card, bank_code, item_no_priority=12, item_no_rights_priority=5,
                                     item_no_x_priority=1, coupon_num=None, coupon_amount=None, order_no='',
                                     verify_code='', verify_seq='', repay_card_num=None):
         # card_info = self.get_active_card_info('item_no_1634196466', repay_card)
 
-        card_info = self.get_active_card_info(item_no, repay_card, repay_card_num)
+        card_info = self.get_active_card_info(item_no, repay_card, repay_card_num, bank_code)
 
         key = self.__create_req_key__(item_no, prefix='Active')
         active_request_data = {
@@ -513,11 +513,12 @@ class RepayBaseService(BaseService):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
         return asset
 
-    def get_auto_asset(self, channel, period, days=0):
+    def get_auto_asset(self, channel, period, asset_type, days=0):
         asset_list = AutoAsset.query.filter(AutoAsset.asset_period == period,
                                             AutoAsset.asset_channel == channel,
                                             AutoAsset.asset_env == self.env,
                                             AutoAsset.asset_country == self.country,
+                                            AutoAsset.asset_type == asset_type,
                                             AutoAsset.asset_create_at >= self.get_date(is_str=True, days=-7)) \
             .order_by(desc(AutoAsset.asset_id)).all()
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
@@ -550,7 +551,7 @@ class RepayBaseService(BaseService):
         asset.asset_days = int(repay_asset.asset_product_category)
         db.session.add(asset)
         db.session.flush()
-        return self.get_auto_asset(repay_asset.asset_loan_channel, repay_asset.asset_period_count,
+        return self.get_auto_asset(repay_asset.asset_loan_channel, repay_asset.asset_period_count, 0,
                                    days=int(repay_asset.asset_product_category))
 
     def refresh_late_fee(self, item_no):

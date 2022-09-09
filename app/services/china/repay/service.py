@@ -16,7 +16,7 @@ from app.services.china.grant.service import ChinaGrantService
 from app.services.china.repay import query_withhold, modify_return, time_print
 from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, Card, CardAsset, AssetOperationAuth, WithholdAssetDetailLock, \
-    WithholdRequest, WithholdDetail, CardBind
+    WithholdRequest, WithholdDetail, CardBind, Individual, IndividualAsset
 
 
 class ChinaRepayService(RepayBaseService):
@@ -580,6 +580,22 @@ class ChinaRepayService(RepayBaseService):
             }
             return self.easy_mock.update_by_value('/zhongzhirong/weipin_zhongwei/repayplan_query', req_data)
 
+    def fix_id_num(self, item_no):
+        individual = self.db_session.query(Individual.individual_id_num_encrypt, Individual.individual_name_encrypt,
+                                           Individual.individual_tel_encrypt).join(IndividualAsset,
+                                                                                   Individual.individual_no ==
+                                                                                   IndividualAsset.individual_asset_individual_no
+                                                                                   ).filter(
+            IndividualAsset.individual_asset_asset_item_no == item_no).first()
+        card = self.db_session.query(Card).join(CardAsset, Card.card_no == CardAsset.card_asset_card_no).filter(
+                CardAsset.card_asset_asset_item_no == item_no
+            ).first()
+        card.card_acc_id_num_encrypt = individual.individual_id_num_encrypt
+        card.card_acc_name_encrypt = individual.individual_name_encrypt
+        card.card_acc_tel_encrypt = individual.individual_tel_encrypt
+        self.db_session.add(card)
+        self.db_session.commit()
+
     def add_and_update_holiday(self, date_time, status):
         return self.biz_central.add_and_update_holiday(date_time, status)
 
@@ -598,7 +614,7 @@ class ChinaRepayService(RepayBaseService):
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
                      verify_code='', verify_seq=None, agree=False, protocol=False,
-                     period_start=None, period_end=None, repay_card_num=None):
+                     period_start=None, period_end=None, repay_card_num=None, bank_code='中国银行'):
         """
         主动还款
         :param item_no:
@@ -613,6 +629,7 @@ class ChinaRepayService(RepayBaseService):
         :param protocol:
         :param period_start:
         :param period_end:
+        :param bank_code:
         :return:
         """
         asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
@@ -636,7 +653,7 @@ class ChinaRepayService(RepayBaseService):
         if amount == 0 and x_amount == 0 and rights_amount == 0:
             return "当前已结清", "", []
         request_data = self.__get_active_request_data__(item_no, item_no_x, item_no_rights, amount, x_amount,
-                                                        rights_amount, repay_card, verify_code=verify_code,
+                                                        rights_amount, repay_card, bank_code, verify_code=verify_code,
                                                         verify_seq=verify_seq, repay_card_num=repay_card_num)
         resp = Http.http_post(self.active_repay_url, request_data)
         if resp['code'] == 0 and agree:
