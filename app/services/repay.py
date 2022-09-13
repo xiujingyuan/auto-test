@@ -12,7 +12,7 @@ from app.model.Model import AutoAsset
 from app.services import BaseService, Asset, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
 from app.services.china.repay import modify_return, WithholdOrder, wait_time
 from app.services.china.repay.Model import WithholdRequest, Withhold, SendMsg, \
-    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback
+    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback, Card, CardAsset
 import pytz
 from app.services.china.repay import query_withhold
 
@@ -449,11 +449,10 @@ class RepayBaseService(BaseService):
         return ret
 
     def get_repay_card_by_item_no(self, item_no):
-        sql = "select card_acc_id_num_encrypt, card_acc_num_encrypt, card_acc_tel_encrypt, card_acc_name_encrypt " \
-              "from card join card_asset on card_no = card_asset_card_no where " \
-              "card_asset_asset_item_no='{0}'and card_asset_type = 'repay'".format(item_no)
-        id_num_info = self.db_session.execute(sql)
-        return id_num_info[0] if id_num_info else ''
+        id_num_info = self.db_session.query(Card).join(
+            CardAsset, Card.card_no == CardAsset.card_asset_card_no).\
+            filter(CardAsset.card_asset_asset_item_no == item_no).first()
+        return id_num_info.to_dict if id_num_info is not None else ''
 
     def get_asset(self, item_no):
         asset = self.check_item_exist(item_no)
@@ -465,7 +464,13 @@ class RepayBaseService(BaseService):
             asset[extend.asset_extend_type] = extend.asset_extend_val
         four_ele = self.get_repay_card_by_item_no(item_no)
         asset['id_num'] = four_ele['card_acc_id_num_encrypt']
+        asset['id_num_entry'] = self.decrypt_data(four_ele['card_acc_id_num_encrypt'])
         asset['repay_card'] = four_ele['card_acc_num_encrypt']
+        asset['repay_card_entry'] = self.decrypt_data(four_ele['card_acc_num_encrypt'])
+        asset['repay_name'] = four_ele['card_acc_name_encrypt']
+        asset['repay_name_entry'] = self.decrypt_data(four_ele['card_acc_name_encrypt'])
+        asset['repay_tel'] = four_ele['card_acc_tel_encrypt']
+        asset['repay_tel_entry'] = self.decrypt_data(four_ele['card_acc_tel_encrypt'])
         asset['item_x'] = self.get_no_loan(item_no)
         return {'asset': [asset]}
 
@@ -668,7 +673,6 @@ class OverseaRepayService(RepayBaseService):
 
     def __init__(self, country, env, run_env, check_req=False, return_req=False):
         super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
-        self.encrypt_url = 'http://47.101.30.198:8081/encrypt/'
         self.capital_asset_success_url = self.repay_host + '/capital-asset/grant'
         self.online_refund_url = self.repay_host + '/page/asset/repeated-withhold/online-refund'
         self.offline_refund_url = self.repay_host + '/page/asset/repeated-withhold/offline-refund'

@@ -71,6 +71,8 @@ class BaseService(object):
         self.env = env
         self.run_env = run_env
         self.country = country
+        self.encrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/encrypt/'
+        self.decrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/decrypt/plain/'
         self.job_url = getattr(self, 'biz_host' if program ==
                                                    'biz_central' else '{0}_host'.format(program)) + "/job/run"
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
@@ -414,20 +416,34 @@ class BaseService(object):
         result += str(0 if t == 10 else t)
         return result
 
-    @staticmethod
-    def encrypt_data(data_type, value):
+    def encrypt_data(self, data_type, value):
         data = {"type": ENCRYPT_DICT[data_type], "plain": value} if data_type in ENCRYPT_DICT else None
         headers = {'content-type': 'application/json'}
-        req = Http.http_post(ENCRYPT_URL, [data], headers=headers)
+        req = Http.http_post(self.encrypt_url, [data], headers=headers)
         return req['data'][0]['hash'] if req['code'] == 0 else req
 
-    @classmethod
-    def get_four_element(cls, bank_name='中国银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
+    def decrypt_data_list(self, value_list):
+        ret = {}
+        if isinstance(value_list, list) and value_list:
+            for value in value_list:
+                ret[value] = self.decrypt_data(value)
+        return {'decrypt_data_list': ret}
+
+    def decrypt_data(self, value):
+        req = {"hash": value}
+        headers = {'content-type': 'application/json'}
+        try:
+            req = Http.http_post(self.decrypt_url, [req], headers=headers)
+        except ValueError:
+            return '解密失败'
+        return req['data'][value] if req['code'] == 0 else req
+
+    def get_four_element(self, bank_name='中国银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
         user_name = fake.name()
-        bank_code = cls.get_bank_code(bank_name, bank_code_suffix)
+        bank_code = self.get_bank_code(bank_name, bank_code_suffix)
         response = {
             "code": 0,
             "message": "success",
@@ -437,10 +453,10 @@ class BaseService(object):
                 "user_name": user_name,
                 "id_number": id_number,
 
-                "bank_code_encrypt": cls.encrypt_data("card_number", bank_code),
-                "id_number_encrypt": cls.encrypt_data("idnum", id_number) if id_num is None else id_num,
-                "user_name_encrypt": cls.encrypt_data("name", user_name),
-                "phone_number_encrypt": cls.encrypt_data("mobile", phone_number),
+                "bank_code_encrypt": self.encrypt_data("card_number", bank_code),
+                "id_number_encrypt": self.encrypt_data("idnum", id_number) if id_num is None else id_num,
+                "user_name_encrypt": self.encrypt_data("name", user_name),
+                "phone_number_encrypt": self.encrypt_data("mobile", phone_number),
             }
         }
         return response
