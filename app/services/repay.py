@@ -94,17 +94,7 @@ class RepayBaseService(BaseService):
         if not withhold_order:
             withhold_order = list(filter(lambda x: x.withhold_order_withhold_status == 'ready', withhold_order_list))
         if not withhold_order and withhold_order_list:
-            max_request_no = withhold_order_list[-1].withhold_order_request_no
-            max_serial_no = withhold_order_list[-1].withhold_order_serial_no
-            max_req_key = withhold_order_list[-1].withhold_order_req_key
-            if max_serial_no.startswith("PROV_") or max_req_key.startswith("YM_ZB"):
-                second_request_no = withhold_order_list[-2].withhold_order_request_no
-                request_tuple = (max_request_no, second_request_no)
-                withhold_order = list(
-                    filter(lambda x: x.withhold_order_request_no in request_tuple, withhold_order_list))
-            else:
-                withhold_order = list(filter(lambda x: x.withhold_order_request_no == max_request_no,
-                                             withhold_order_list))
+            withhold_order = withhold_order_list
         request_no_tuple = tuple(map(lambda x: x.withhold_order_request_no, withhold_order))
         serial_no_tuple = tuple(map(lambda x: x.withhold_order_serial_no, withhold_order))
         id_num_encrypt_tuple = (self.get_repay_card_by_item_no(item_no)['card_acc_id_num_encrypt'],)
