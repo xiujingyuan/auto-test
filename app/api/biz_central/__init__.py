@@ -19,7 +19,10 @@ def biz_central_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    item_no = req.pop('item_no') if tool in ('run_xxl_job', 'add_and_update_holiday') else req.get('item_no')
+    item_no = req.pop('item_no') if tool in ('run_xxl_job',
+                                             'add_and_update_holiday',
+                                             'run_central_task_by_task_id',
+                                             'run_central_msg_by_msg_id') else req.get('item_no')
     repay = RepayServiceFactory.get_repay(country, env, environment)
     max_create_at = repay.get_date(is_str=True, days=-3)
     asset = repay.get_asset(item_no)

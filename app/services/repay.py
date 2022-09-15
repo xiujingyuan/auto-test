@@ -96,7 +96,8 @@ class RepayBaseService(BaseService):
         if not withhold_order and withhold_order_list:
             max_request_no = withhold_order_list[-1].withhold_order_request_no
             max_serial_no = withhold_order_list[-1].withhold_order_serial_no
-            if max_serial_no.startswith("PROV_"):
+            max_req_key = withhold_order_list[-1].withhold_order_req_key
+            if max_serial_no.startswith("PROV_") or max_req_key.startswith("YM_ZB"):
                 second_request_no = withhold_order_list[-2].withhold_order_request_no
                 request_tuple = (max_request_no, second_request_no)
                 withhold_order = list(
