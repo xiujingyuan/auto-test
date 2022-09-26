@@ -410,7 +410,7 @@ class RepayBaseService(BaseService):
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None, refresh_id=None):
         asset = self.get_asset(item_no)
-        max_create_at = self.get_date(is_str=True, days=-3)
+        max_create_at = self.get_date(is_str=True, days=-7)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
             self.get_withhold_key_info(item_no, max_create_at=max_create_at)
         channel = asset['asset'][0]['loan_channel']

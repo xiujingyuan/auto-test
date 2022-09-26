@@ -727,7 +727,6 @@ class Seed(db.Model, BaseToDict):
     seed_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
 
 
-
 class Sendmsg(db.Model, BaseToDict):
     __tablename__ = 'sendmsg'
     __table_args__ = (

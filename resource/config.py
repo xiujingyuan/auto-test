@@ -27,11 +27,13 @@ class AutoTestConfig:
             'china': {
                 "repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/rbiz{0}",
                 "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/gbiz{0}",
-                "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}"
+                "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}",
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@" + DB_IP + ":3321/capital{0}"
             },
             'ind': {
                 "repay": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/global_rbiz{0}",
                 "grant": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/global_gbiz{0}",
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@127.0.0.1:{1}/capital{0}",
                 "ssh": {
                     "ssh_proxy_host": "47.116.2.104",
                     "ssh_remote_host": "rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com",
@@ -43,6 +45,7 @@ class AutoTestConfig:
             'phl': {
                 "repay": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/phl_rbiz{0}",
                 "grant": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/phl_gbiz{0}",
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@127.0.0.1:{1}/capital{0}",
                 "ssh": {
                     "ssh_proxy_host": "47.116.2.104",
                     "ssh_remote_host": "rm-uf6589ct883rjc052.mysql.rds.aliyuncs.com",
@@ -54,6 +57,7 @@ class AutoTestConfig:
             'mex': {
                 "repay": "mysql+pymysql://root:uJQaHO5Gh817x9Ew@127.0.0.1:{1}/mex_rbiz{0}",
                 "grant": "mysql+pymysql://root:uJQaHO5Gh817x9Ew@127.0.0.1:{1}/mex_gbiz{0}",
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@127.0.0.1:{1}/capital{0}",
                 "ssh": {
                     "ssh_proxy_host": "47.116.2.104",
                     "ssh_remote_host": "rm-uf6z2o8w9rure4as4.mysql.rds.aliyuncs.com",
@@ -65,6 +69,7 @@ class AutoTestConfig:
             'tha': {
                 "repay": "mysql+pymysql://root:0Q^0bBURuSvS3#PB@127.0.0.1:{1}/tha_rbiz{0}",
                 "grant": "mysql+pymysql://root:0Q^0bBURuSvS3#PB@127.0.0.1:{1}/tha_gbiz{0}",
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@127.0.0.1:{1}/capital{0}",
                 "ssh": {
                     "ssh_proxy_host": "47.116.2.104",
                     "ssh_remote_host": "rm-uf6seazei9e71x831.mysql.rds.aliyuncs.com",

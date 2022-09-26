@@ -59,8 +59,22 @@ class RepayServiceFactory(object):
         return getattr(meta_class, country.title() + "RepayService")(env, environment)
 
 
+class CleanServiceFactory(object):
+    @classmethod
+    def get_clean(cls, country, env, environment):
+        meta_class = importlib.import_module('app.services.{0}.clean.service'.format(country))
+        return getattr(meta_class, country.title() + "CleanService")(env, environment)
+
+
 class BizCentralServiceFactory(object):
     @classmethod
     def get_biz_central(cls, country, env, environment):
         if country == 'china':
             return ChinaBizCentralService(env, environment)
+
+
+class GrantServiceFactory(object):
+    @classmethod
+    def get_grant(cls, country, env, environment):
+        meta_class = importlib.import_module('app.services.{0}.grant.service'.format(country))
+        return getattr(meta_class, country.title() + "GrantService")(env, environment)

@@ -22,6 +22,8 @@ class ChinaGrantService(GrantBaseService):
         self.cmdb_host = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
         super(ChinaGrantService, self).__init__('china', env, run_env, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, check_req, return_req)
+        self.task_url = self.grant_host + '/task/run?orderNo={0}'
+        self.msg_url = self.grant_host + '/msg/run?orderNo={0}'
 
     def add_msg(self, msg):
         new_msg = Sendmsg()
@@ -40,6 +42,71 @@ class ChinaGrantService(GrantBaseService):
 
     def get_irr36_total_amount(self, principal_amount, period_count):
         return self.get_total_amount(principal_amount, period_count, 36, "acpi")
+
+    def delete_row_data(self, del_id, del_type):
+        obj = eval(del_type.title().replace("_", ""))
+        self.db_session.query(obj).filter(getattr(obj, 'id') == del_id).delete()
+        self.db_session.flush()
+        self.db_session.commit()
+
+    def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
+        req_name = 'get_{0}'.format(refresh_type)
+        ret = getattr(self, req_name)(item_no)
+        return ret
+
+    def update_task_next_run_at_forward_by_order_no(self, order_no):
+        clean_task = self.db_session.query(Task).filter(Task.task_order_no == order_no).all()
+        if not clean_task:
+            raise ValueError("not found the clean_task info with clean_task'id: {0}".format(order_no))
+        for task in clean_task:
+            task.task_next_run_at = self.get_date(minutes=1)
+            self.db_session.add(task)
+        self.db_session.commit()
+
+    def run_task_by_task_order_no(self, item_no):
+        self.update_task_next_run_at_forward_by_order_no(item_no)
+        url = self.task_url.format(item_no)
+        ret = Http.http_get(url)
+        return ret
+
+    def operate_action(self, item_no, extend, op_type, table_name, loading_key):
+        loading_key_first = loading_key.split("_")[0]
+        extend_name = '{0}_create_at'.format(loading_key_first)
+        max_create_at = extend[extend_name] if extend_name in extend else None
+        real_req = {}
+        if op_type == 'run_task_by_task_order_no':
+            real_req['order_no'] = item_no
+        if op_type == "del_row_data":
+            real_req['del_id'] = extend['id']
+            real_req['item_no'] = item_no
+            real_req['refresh_type'] = table_name
+            real_req['max_create_at'] = max_create_at
+        ret = getattr(self, op_type)(**real_req)
+        if max_create_at is not None:
+            return self.info_refresh(item_no, max_create_at, refresh_type=table_name)
+        return ret
+
+    def get_grant_info(self, item_no):
+        ret = {}
+        ret.update(self.get_task(item_no))
+        ret.update(self.get_sendmsg(item_no))
+        ret.update(self.get_asset_loan_record(item_no))
+        return ret
+
+    def get_task(self, item_no):
+        task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
+        return {'task': list(map(lambda x: x.to_spec_dict, task))}
+
+    def get_sendmsg(self, item_no):
+        msg = self.db_session.query(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no).order_by(
+            desc(Sendmsg.sendmsg_id)).all()
+        return {'sendmsg': list(map(lambda x: x.to_spec_dict, msg))}
+
+    def get_asset_loan_record(self, item_no):
+        asset_loan_record = self.db_session.query(AssetLoanRecord).filter(
+            AssetLoanRecord.asset_loan_record_asset_item_no == item_no).order_by(
+            desc(AssetLoanRecord.asset_loan_record_id)).all()
+        return {'asset_loan_record': list(map(lambda x: x.to_spec_dict, asset_loan_record))}
 
     def get_total_amount(self, principal_amount, period_count, interest_rate, repay_type):
         """
@@ -173,7 +240,6 @@ class ChinaGrantService(GrantBaseService):
         capital_asset = self.db_session.queyr(CapitalAsset).filter(CapitalAsset.capital_asset_item_no == item_no).frist()
         capital_tran = self.db_session.queyr(CapitalTransaction).filter(CapitalTransaction.capital_transaction_item_no == item_no).all()
         return None
-
 
     def get_asset_item_info(self, channel, source_type, from_system_name, item_no=None):
         item_no = item_no if item_no else self.create_item_no()

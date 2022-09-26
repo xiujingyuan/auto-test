@@ -39,6 +39,9 @@ def create_app():
     from app.api.repay import api_repay as api_repay_blueprint
     app.register_blueprint(api_repay_blueprint, url_prefix='/api/repay/')
 
+    from app.api.clean import api_clean as api_clean_blueprint
+    app.register_blueprint(api_clean_blueprint, url_prefix='/api/clean/')
+
     from app.api.test_case import api_test_case as api_test_case_blueprint
     app.register_blueprint(api_test_case_blueprint, url_prefix='/api/test_case/')
 
