@@ -16,6 +16,7 @@ def clean_tools(tool):
     env = '7'
     environment = req.pop('environment', 'dev')
     period = req.pop("period", None)
+    mock_name = req.pop("mock_name")
     req.pop('run_date', None)
     if period is not None:
         req['period'] = period
@@ -25,7 +26,7 @@ def clean_tools(tool):
                 req['period'] = period.split('-')[0]
                 req['days'] = int(period.split('-')[1])
     try:
-        repay = CleanServiceFactory.get_clean(country, env, environment)
+        repay = CleanServiceFactory.get_clean(country, env, environment, mock_name)
         if tool == "run_xxl_job":
             req.pop('item_no')
         if not hasattr(repay, tool):

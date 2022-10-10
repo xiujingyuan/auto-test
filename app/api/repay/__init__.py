@@ -22,6 +22,7 @@ def repay_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
+    mock_name = req.pop('mock_name')
     period = req.pop("period", None)
     loading_key = req.pop('loading_key', None)
     if period is not None:
@@ -39,7 +40,7 @@ def repay_tools(tool):
                 ret['code'] = 1
                 ret['message'] = 'need from environment'
             else:
-                from_repay = RepayServiceFactory.get_repay(country, env, environment)
+                from_repay = RepayServiceFactory.get_repay(country, env, environment, mock_name)
                 from_req = {'item_no': req.get('item_no')}
                 req_param = getattr(from_repay, 'get_exist_asset_request')(**from_req)
                 if not req_param['biz_task']:
@@ -50,10 +51,10 @@ def repay_tools(tool):
                 req['withdraw_success'] = req_param['biz_task'][-1]
                 req['grant_msg'] = req_param['grant_msg']
                 for e in to_env:
-                    repay = RepayServiceFactory.get_repay(country, e, environment)
+                    repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
                     ret['data'].append({e: getattr(repay, tool)(**req)})
         else:
-            repay = RepayServiceFactory.get_repay(country, env, environment)
+            repay = RepayServiceFactory.get_repay(country, env, environment, mock_name)
             if tool == "run_xxl_job":
                 item_no = req.pop('item_no')
             if not hasattr(repay, tool):

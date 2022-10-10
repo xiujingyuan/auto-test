@@ -22,9 +22,10 @@ RET = {
 
 class EasyMockFactory(object):
     @classmethod
-    def get_easy_mock(cls, country, program, check_req, return_req):
+    def get_easy_mock(cls, country, program, project_name, check_req, return_req):
         meta_class = importlib.import_module('app.services.{0}.{1}.easy_mock'.format(country, program))
-        return getattr(meta_class, country.title() + program.title().replace("_", "") + "EasyMock")(check_req,
+        return getattr(meta_class, country.title() + program.title().replace("_", "") + "EasyMock")(project_name,
+                                                                                                    check_req,
                                                                                                     return_req)
 
 
@@ -54,27 +55,27 @@ class AutoFactory(object):
 
 class RepayServiceFactory(object):
     @classmethod
-    def get_repay(cls, country, env, environment):
+    def get_repay(cls, country, env, environment, project_name):
         meta_class = importlib.import_module('app.services.{0}.repay.service'.format(country))
-        return getattr(meta_class, country.title() + "RepayService")(env, environment)
+        return getattr(meta_class, country.title() + "RepayService")(env, environment, project_name)
 
 
 class CleanServiceFactory(object):
     @classmethod
-    def get_clean(cls, country, env, environment):
+    def get_clean(cls, country, env, environment, project_name):
         meta_class = importlib.import_module('app.services.{0}.clean.service'.format(country))
-        return getattr(meta_class, country.title() + "CleanService")(env, environment)
+        return getattr(meta_class, country.title() + "CleanService")(env, environment, project_name)
 
 
 class BizCentralServiceFactory(object):
     @classmethod
-    def get_biz_central(cls, country, env, environment):
+    def get_biz_central(cls, country, env, environment, project_name):
         if country == 'china':
-            return ChinaBizCentralService(env, environment)
+            return ChinaBizCentralService(env, environment, project_name)
 
 
 class GrantServiceFactory(object):
     @classmethod
-    def get_grant(cls, country, env, environment):
+    def get_grant(cls, country, env, environment, project_name):
         meta_class = importlib.import_module('app.services.{0}.grant.service'.format(country))
-        return getattr(meta_class, country.title() + "GrantService")(env, environment)
+        return getattr(meta_class, country.title() + "GrantService")(env, environment, project_name)

@@ -1,8 +1,12 @@
 import json
+from random import random
+
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 import re
 from jsonpath_ng import parse
+import datetime
+from dateutil.relativedelta import relativedelta
 
 BASE_URL = "http://easy-mock.k8s-ingress-nginx.kuainiujinke.com"
 CD_BIZ_PROJECT_ID = '5b555fbc3a0f770020651dda'
@@ -40,18 +44,33 @@ class EasyMock(object):
     create_api_url = "{0}/api/mock/create".format(BASE_URL)
     create_project_url = "{0}/api/project/create".format(BASE_URL)
 
-    def __init__(self, project=None, check_req=True, return_req=False):
+    def __init__(self, mock_name, check_req=True, return_req=False):
         """
         :param project: 项目名，easymock_config.mock_project的key
         :param check_req: bool，是否检查_req请求数据
         :param return_req:  bool，是否返回_req请求数据，返回到"origin_req"
         """
         self.token = ""
-        self.project_name = project
+        self.project_name = mock_name
         self.project_id = None
         self.header = None
         self.check_req = check_req
         self.return_req = return_req
+
+    @staticmethod
+    def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):
+        date = date if date is not None else datetime.datetime.now(timezone)
+        new_data = date + relativedelta(**kwargs)
+        return new_data.strftime(fmt) if is_str else new_data
+
+    @staticmethod
+    def cal_days(str1, str2):
+        date1 = datetime.datetime.strptime(str1[0:10], "%Y-%m-%d") if isinstance(str1, str) else str1
+        date2 = datetime.datetime.strptime(str2[0:10], "%Y-%m-%d") if isinstance(str2, str) else str2
+        date1 = date1.date() if isinstance(date1, datetime.datetime) else date1
+        date2 = date2.date() if isinstance(date2, datetime.datetime) else date2
+        num = (date2 - date1).days
+        return num
 
     @staticmethod
     def __get_new_value__(content, json_path_dict):
@@ -344,41 +363,7 @@ class EasyMock(object):
 
 
 if __name__ == "__main__":
-    # test = EasyMock()
-    # print(test.copy_increment_project('rbiz_manual_test', 'rbiz_auto_test'))
+    test = EasyMock()
+    print(test.copy_increment_project('rbiz_manual_test', 'rbiz_auto_test'))
     # test.delete_project('test51213')
 
-    a = "({0}, 'weipin_zhongwei', 0, 'direct', 'lateinterest', {1}, {1}, 0.180, 0, 360, '{2}', '{3}', '{4}', '{5}', 'finished', 'N', '1000-01-01 00:00:00', 0, 'offline', 1, 'weipin_zhongwei', 'success', {1}, '{6}'),"
-    a1 = []
-    ret = []
-
-    with open('test', 'r+') as a11:
-        for item in a11.readlines():
-            a = {
-                "outOrderNo": "",
-                "repayId": "",
-                "busiType": "01",
-                "repayType": "1",
-                "reserveTime": "",
-                "tranAmt": "",
-                "payTime": "",
-                "succAmt": "",
-                "repayStatus": "1",
-                "contractStatus": None
-            }
-            item = item.strip()
-            item_list = item.split('\t')
-            item_new = [x for x in item_list[0].split(" ") if x]
-            if item_new:
-                a['outOrderNo'] = item_new[4]
-                a['repayId'] = item_new[1]
-                a['reserveTime'] = "{0} 20:09:01".format(item_new[2].replace("/", '-'))
-                a['payTime'] = "{0} 20:09:01".format(item_new[2].replace("/", '-'))
-                a['succAmt'] = item_new[3]
-                ret.append(a)
-    print(json.dumps(ret))
-    # with open('test1', 'r+') as a2:
-    #     for index, item in enumerate(a2.readlines()):
-    #         item = item.strip()
-    #         ret += a.format(item, a1[index][1], a1[index][2], a1[index][3], a1[index][0])
-    print(ret)

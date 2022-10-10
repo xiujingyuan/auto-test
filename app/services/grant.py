@@ -14,8 +14,8 @@ from app.services.phl.grant.Model import Asset, AssetBorrower
 
 
 class GrantBaseService(BaseService):
-    def __init__(self, country, env, run_env, check_req, return_req):
-        super(GrantBaseService, self).__init__(country, 'grant', env, run_env, check_req, return_req)
+    def __init__(self, country, env, run_env, mock_name, check_req, return_req):
+        super(GrantBaseService, self).__init__(country, 'grant', env, run_env, mock_name, check_req, return_req)
         self.asset_import_url = self.grant_host + '/paydayloan/asset-sync-new'
         self.repay_capital_asset_import_url = self.repay_host + '/capital-asset/grant'
         self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset-withdraw-success"
@@ -315,8 +315,8 @@ GbizManualTaskAutoProcessConfig = {
 
 
 class OverseaGrantService(GrantBaseService):
-    def __init__(self, country, env, run_env, check_req=False, return_req=False):
-        super(OverseaGrantService, self).__init__(country, env, run_env, check_req, return_req)
+    def __init__(self, country, env, run_env, mock_name, check_req=False, return_req=False):
+        super(OverseaGrantService, self).__init__(country, env, run_env, mock_name, check_req, return_req)
         self.asset_import_url = self.grant_host + '/paydayloan/asset-sync'
         self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset/from-grant"
         self.capital_asset_success_url = self.repay_host + "/capital-asset/grant"

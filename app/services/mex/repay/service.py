@@ -11,10 +11,10 @@ from app.services.repay import OverseaRepayService, TIMEZONE
 
 
 class MexRepayService(OverseaRepayService):
-    def __init__(self, env, run_env, check_req=False, return_req=False):
+    def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
         self.repay_host = "http://repay{0}-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai." \
                           "alicontainer.com".format(env)
-        self.grant = MexGrantService(env, run_env, check_req, return_req)
+        self.grant = MexGrantService(env, run_env, mock_name, check_req, return_req)
         super(MexRepayService, self).__init__('mex', env, run_env, check_req, return_req)
 
 

@@ -67,15 +67,16 @@ class MyScopedSession(scoped_session):
 
 class BaseService(object):
 
-    def __init__(self, country, program, env, run_env, check_req, return_req):
+    def __init__(self, country, program, env, run_env, mock_name, check_req, return_req):
         self.env = env
         self.run_env = run_env
         self.country = country
+        self.mock_name = mock_name
         self.encrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/encrypt/'
         self.decrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/decrypt/plain/'
         self.job_url = getattr(self, 'biz_host' if program ==
                                                    'biz_central' else '{0}_host'.format(program)) + "/job/run"
-        self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
+        self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, mock_name, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
         db_key = '{0}_{1}_{2}'.format(country, env, program)

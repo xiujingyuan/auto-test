@@ -18,8 +18,8 @@ from app.services.china.repay import query_withhold
 
 
 class RepayBaseService(BaseService):
-    def __init__(self, country, env, run_env, check_req, return_req):
-        super(RepayBaseService, self).__init__(country, 'repay', env, run_env, check_req, return_req)
+    def __init__(self, country, env, run_env, mock_name, check_req, return_req):
+        super(RepayBaseService, self).__init__(country, 'repay', env, run_env, mock_name, check_req, return_req)
         self.decrease_url = self.repay_host + "/asset/bill/decrease"
         self.offline_recharge_url = self.repay_host + "/account/recharge-encrypt"
         self.offline_repay_url = self.repay_host + "/asset/repayPeriod"
@@ -662,8 +662,8 @@ TIMEZONE = {
 
 class OverseaRepayService(RepayBaseService):
 
-    def __init__(self, country, env, run_env, check_req=False, return_req=False):
-        super(OverseaRepayService, self).__init__(country, env, run_env, check_req, return_req)
+    def __init__(self, country, env, run_env, mock_name, check_req=False, return_req=False):
+        super(OverseaRepayService, self).__init__(country, env, run_env, mock_name, check_req, return_req)
         self.encrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/encrypt/'
         self.capital_asset_success_url = self.repay_host + '/capital-asset/grant'
         self.online_refund_url = self.repay_host + '/page/asset/repeated-withhold/online-refund'

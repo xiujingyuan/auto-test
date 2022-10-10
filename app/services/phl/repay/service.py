@@ -3,11 +3,11 @@ from app.services.phl.grant.service import PhlGrantService
 
 
 class PhlRepayService(OverseaRepayService):
-    def __init__(self, env, run_env, check_req=False, return_req=False):
+    def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
         self.repay_host = "http://repay{0}-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer." \
                           "com".format(env)
-        self.grant = PhlGrantService(env, run_env, check_req, return_req)
-        super(PhlRepayService, self).__init__('phl', env, run_env, check_req, return_req)
+        self.grant = PhlGrantService(env, run_env, mock_name, check_req, return_req)
+        super(PhlRepayService, self).__init__('phl', env, run_env, mock_name, check_req, return_req)
 
     # def auto_loan(self, channel, period, amount, source_type='fee_30_normal', from_app='jasmine',
     #               withdraw_type='online', days=0):

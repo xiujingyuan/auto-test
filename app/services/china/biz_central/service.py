@@ -16,9 +16,10 @@ from app.test_cases import CaseException
 
 class ChinaBizCentralService(BaseService):
 
-    def __init__(self, env, run_env, check_req=False, return_req=False):
+    def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
         self.biz_host = "http://biz-central-{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        super(ChinaBizCentralService, self).__init__('china', 'biz_central', env, run_env, check_req, return_req)
+        super(ChinaBizCentralService, self).__init__('china', 'biz_central', env, run_env, mock_name,
+                                                     check_req, return_req)
         self.central_task_url = self.biz_host + "/job/runTaskById?id={0}"
         self.central_msg_url = self.biz_host + "/job/sendMsgById?id={0}"
         self.asset_import_url = self.biz_host + "/asset/import"

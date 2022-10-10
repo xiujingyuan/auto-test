@@ -21,14 +21,15 @@ def easy_mock_change():
     country = req.get('country', 'china')
     check_req = req.get("check_req", False)
     return_req = req.get("return_req", False)
+    project_name = req.get("project_name", None)
     program = req.get('program', 'repay')
     params = req.get('params', None)
     url = req.get('url', None)
-    if url is None or params is None:
+    if url is None or params is None or project_name is None:
         get_ret['code'] = 1
         get_ret['message'] = 'params或url没有传递'
     else:
-        easy_mock = EasyMockFactory.get_easy_mock(country, program, check_req, return_req)
+        easy_mock = EasyMockFactory.get_easy_mock(country, program, project_name, check_req, return_req)
         easy_mock.update(url, params)
     return jsonify(get_ret)
 

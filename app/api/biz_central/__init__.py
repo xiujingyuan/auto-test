@@ -19,6 +19,7 @@ def biz_central_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
+    mock_name = req.pop('mock_name')
     item_no = req.pop('item_no') if tool in ('run_xxl_job',
                                              'add_and_update_holiday',
                                              'run_central_task_by_task_id',
@@ -28,7 +29,7 @@ def biz_central_tools(tool):
     asset = repay.get_asset(item_no)
     request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order = \
             repay.get_withhold_key_info(item_no, max_create_at=max_create_at)
-    central = BizCentralServiceFactory.get_biz_central(country, env, environment)
+    central = BizCentralServiceFactory.get_biz_central(country, env, environment, mock_name)
     central.get_withhold_key_info = [request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple,
                                      withhold_order]
     central.asset = asset
