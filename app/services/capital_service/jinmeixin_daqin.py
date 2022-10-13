@@ -4,8 +4,8 @@ from app.services.capital_service import BusinessMock
 class JinmeixindaqinMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
-        super(JinmeixindaqinMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.channel = 'jinmeixin_daqin'
+        super(JinmeixindaqinMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.trail_url = '/chongtian/{0}/repay/calc'.format(self.channel)
         self.trail_query_url = ''
         self.repay_plan_url = ''
@@ -61,7 +61,7 @@ class JinmeixindaqinMock(BusinessMock):
     def repay_apply_mock(self):
         pass
 
-    def repay_apply_query_mock(self, withhold, success_type='PART'):
+    def repay_apply_query_mock(self, withhold, withhold_detail, success_type='PART'):
         principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
         fee_amount = fee_amount if success_type == 'SUCCESS' else 0
         repayPlanList = []
@@ -90,4 +90,4 @@ class JinmeixindaqinMock(BusinessMock):
                 "repayPlanList": repayPlanList
             }
         }
-        self.easy_mock.update_by_value(self.repay_apply_query_url, req_data)
+        self.update_by_value(self.repay_apply_query_url, req_data)

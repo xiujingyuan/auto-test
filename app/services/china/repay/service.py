@@ -162,11 +162,11 @@ class ChinaRepayService(RepayBaseService):
         :param period_start: 还款开始期次
         :param period_end: 还款到期期次
         :param channel: 资方
+        :param success_type: PART
         :return: 无返回
         """
-        project = ''
         asset, asset_extend, at_list = self.get_asset_info_record(item_no, period_start, period_end)
-        capital_mock = self.get_mock_obj(project, channel, asset, asset_extend, at_list, period_start, period_end)
+        capital_mock = self.get_mock_obj(self.mock_name, channel, asset, asset_extend, at_list, period_start, period_end)
         withhold = self.db_session.query(Withhold) \
             .join(WithholdOrder, WithholdOrder.withhold_order_request_no == Withhold.withhold_request_no) \
             .filter(WithholdOrder.withhold_order_reference_no == item_no,
@@ -185,10 +185,29 @@ class ChinaRepayService(RepayBaseService):
         :param channel: 资方
         :return: 无返回
         """
-        project = ''
         asset, asset_extend, at_list = self.get_asset_info_record(item_no, 1, None)
-        capital_mock = self.get_mock_obj(project, channel, asset, asset_extend, at_list, 1, None)
+        capital_mock = self.get_mock_obj(self.mock_name, channel, asset, asset_extend, at_list, 1, None)
         return capital_mock.repay_plan_mock()
+
+    def card_bind_query(self, item_no, period_start, period_end, channel, success_type='PART'):
+        """
+        设置微神马试算金额
+        :param item_no:资产编号
+        :param period_start: 还款开始期次
+        :param period_end: 还款到期期次
+        :param channel: 资方
+        :param success_type: PART
+        :return: 无返回
+        """
+        asset, asset_extend, at_list = self.get_asset_info_record(item_no, period_start, period_end)
+        capital_mock = self.get_mock_obj(self.mock_name, channel, asset, asset_extend, at_list, period_start,
+                                         period_end)
+        withhold = self.db_session.query(Withhold) \
+            .join(WithholdOrder, WithholdOrder.withhold_order_request_no == Withhold.withhold_request_no) \
+            .filter(WithholdOrder.withhold_order_reference_no == item_no,
+                    Withhold.withhold_channel == channel,
+                    Withhold.withhold_status.in_(('process', 'ready'))).first()
+        return capital_mock.card_bind_query_mock(withhold, success_type=success_type)
 
     def fix_id_num(self, item_no):
         individual = self.db_session.query(Individual.individual_id_num_encrypt, Individual.individual_name_encrypt,

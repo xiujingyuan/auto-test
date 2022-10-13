@@ -5,9 +5,10 @@ from app.services.capital_service import BusinessMock
 class LanzhouhaoyueqinjiaMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
-        super(LanzhouhaoyueqinjiaMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.channel = 'lanzhou_haoyue_qinjia'
-        self.trail_url = '/zhongzhirong/zhongyuan_zunhao/repayTrial'
+        super(LanzhouhaoyueqinjiaMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start,
+                                                      period_end)
+        self.trail_url = '/qingjia/lanzhou_haoyue_qinjia/repayTrial'
         self.trail_query_url = ''
         self.repay_plan_url = ''
         self.repay_apply_url = ''
@@ -19,4 +20,4 @@ class LanzhouhaoyueqinjiaMock(BusinessMock):
         interest = round(float(interest_amount / 100), 2)
         value = dict(zip(('$.data.repaytotal', '$.data.repaycapital', '$.data.repayinterest'),
                          (principal + interest, principal, interest)))
-        return self.easy_mock.update_by_json_path(self.trail_url, value, method='post')
+        return self.update_by_json_path(self.trail_url, value, method='post')

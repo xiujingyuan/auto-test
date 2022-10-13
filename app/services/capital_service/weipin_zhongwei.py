@@ -7,13 +7,14 @@ from app.services.capital_service import BusinessMock
 class WeipinzhongweiMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
+
         super(WeipinzhongweiMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.channel = 'weipin_zhongwei'
-        self.trail_url = '/zhongzhirong/weipin_zhongwei/repay_apl_trial'
+        self.trail_url = '/zhongzhirong/{0}/repay_apl_trial'.format(self.channel)
         self.trail_query_url = ''
-        self.repay_plan_url = '/zhongzhirong/weipin_zhongwei/repayplan_query'
-        self.repay_apply_url = '/zhongzhirong/weipin_zhongwei/repay_apl_query'
-        self.repay_apply_query_url = ''
+        self.repay_plan_url = '/zhongzhirong/{0}/repayplan_query'.format(self.channel)
+        self.repay_apply_url = '/zhongzhirong/{0}/repay_apl_query'.format(self.channel)
+        self.repay_apply_query_url = '/zhongzhirong/{0}/transQuery'.format(self.channel)
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, late_amount, repayPlanDict = self.__get_trail_amount__()
@@ -22,7 +23,7 @@ class WeipinzhongweiMock(BusinessMock):
         for period in list(range(self.period_start, self.period_end + 1)):
             interest = repayPlanDict[period]['interest']
             principal = repayPlanDict[period]['principal']
-            total_amount += reduce(lambda x, y: x+y, repayPlanDict[period], 0)
+            total_amount += reduce(lambda x, y: x+y, repayPlanDict[period].values(), 0)
             if principal_over:
                 principal = principal - 1
             if interest_type == 'less':
@@ -54,15 +55,15 @@ class WeipinzhongweiMock(BusinessMock):
                     }]
             }
         }
-        return self.easy_mock.update_by_value(self.trail_url, req_data)
+        return self.update_by_value(self.trail_url, req_data)
 
-    def repay_apply_query_mock(self, withhold, success_type='PART'):
+    def repay_apply_query_mock(self, withhold, withhold_detail, success_type='PART'):
         principal_amount, interest_amount, fee_amount, late_amount, repayPlanDict = self.__get_trail_amount__()
         success_type == 'SUCCESS'
         repayPlanList = []
         total_amount = 0
         for period in list(range(self.period_start, self.period_end + 1)):
-            total_amount += reduce(lambda x, y: x + y, repayPlanDict[period], 0)
+            total_amount += reduce(lambda x, y: x + y, repayPlanDict[period].values(), 0)
             repayPlanList.append({
                 "tenor": period,
                 "principalAmount": repayPlanDict[period]['principal'],
@@ -94,7 +95,7 @@ class WeipinzhongweiMock(BusinessMock):
                     }]
             }
         }
-        return self.easy_mock.update_by_value(self.repay_apply_query_url, req_data)
+        return self.update_by_value(self.repay_apply_query_url, req_data)
 
     def repay_plan_mock(self):
         principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
@@ -140,4 +141,4 @@ class WeipinzhongweiMock(BusinessMock):
                 "planList": repayPlanList
             }
         }
-        return self.easy_mock.update_by_value(self.repay_plan_url, req_data)
+        return self.update_by_value(self.repay_plan_url, req_data)

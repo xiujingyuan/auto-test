@@ -1,3 +1,4 @@
+import importlib
 from copy import deepcopy
 from app.common import RET
 from flask import Blueprint, current_app, jsonify, request
@@ -28,6 +29,6 @@ def run_cases():
     program = req.get('program')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    obj = eval('{0}{1}AutoTest'.format(case_group.title(), program.title()))(env, environment)
+    obj = eval('{0}{1}AutoTest'.format(case_group.title(), program.replace('_', '').title()))(env, environment)
     obj.run_cases(case_id, case_group, case_scene)
     return jsonify(ret)

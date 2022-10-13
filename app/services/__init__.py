@@ -30,7 +30,6 @@ from app.services.ind.repay.Model import Task, CapitalTransaction, CapitalAsset,
 from app.test_cases import CaseException
 from resource.config import AutoTestConfig
 
-ENCRYPT_URL = "http://kong-api-test.kuainiujinke.com/encryptor-test/encrypt/"
 ENCRYPT_DICT = {
     "idnum": 2,
     "mobile": 1,
@@ -51,7 +50,7 @@ def wait_timeout(func):
             print('begin diff, ', (self.get_date() - begin).seconds)
             if ret:
                 break
-            elif (self.get_date() - begin).seconds >= 1:
+            elif (self.get_date() - begin).seconds >= timeout:
                 raise CaseException('not found the record')
         return ret
 
@@ -65,6 +64,11 @@ class MyScopedSession(scoped_session):
         return [dict(zip(result.keys(), result)) for result in ret]
 
 
+ENCRYPT_URL = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/encrypt/'
+
+DECRYPT_URL = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/decrypt/plain/'
+
+
 class BaseService(object):
 
     def __init__(self, country, program, env, run_env, mock_name, check_req, return_req):
@@ -72,8 +76,6 @@ class BaseService(object):
         self.run_env = run_env
         self.country = country
         self.mock_name = mock_name
-        self.encrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/encrypt/'
-        self.decrypt_url = 'http://encryptor-test.k8s-ingress-nginx.kuainiujinke.com/decrypt/plain/'
         self.job_url = getattr(self, 'biz_host' if program ==
                                                    'biz_central' else '{0}_host'.format(program)) + "/job/run"
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, mock_name, check_req, return_req)
@@ -132,6 +134,7 @@ class BaseService(object):
         get_param = self.xxljob.get_job_info(job_type)[0]['executorParam']
         param = param if param else get_param
         if invoke_type == 'api':
+            param = param if isinstance(param, dict) else json.loads(param)
             return self.run_job_by_api(job_type, param)
         else:
             return self.xxljob.trigger_job(job_type, executor_param=param)
@@ -417,24 +420,27 @@ class BaseService(object):
         result += str(0 if t == 10 else t)
         return result
 
-    def encrypt_data(self, data_type, value):
+    @staticmethod
+    def encrypt_data(data_type, value):
         data = {"type": ENCRYPT_DICT[data_type], "plain": value} if data_type in ENCRYPT_DICT else None
         headers = {'content-type': 'application/json'}
-        req = Http.http_post(self.encrypt_url, [data], headers=headers)
+        req = Http.http_post(ENCRYPT_URL, [data], headers=headers)
         return req['data'][0]['hash'] if req['code'] == 0 else req
 
-    def decrypt_data_list(self, value_list):
+    @staticmethod
+    def decrypt_data_list(value_list):
         ret = {}
         if isinstance(value_list, list) and value_list:
             for value in value_list:
-                ret[value] = self.decrypt_data(value)
+                ret[value] = BaseService.decrypt_data(value)
         return {'decrypt_data_list': ret}
 
-    def decrypt_data(self, value):
+    @staticmethod
+    def decrypt_data(value):
         req = {"hash": value}
         headers = {'content-type': 'application/json'}
         try:
-            req = Http.http_post(self.decrypt_url, [req], headers=headers)
+            req = Http.http_post(DECRYPT_URL, [req], headers=headers)
         except ValueError:
             return '解密失败'
         return req['data'][value] if req['code'] == 0 else req

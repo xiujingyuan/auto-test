@@ -1,4 +1,5 @@
 import json
+import time
 from random import random
 
 from app.common.http_util import Http
@@ -71,6 +72,10 @@ class EasyMock(object):
         date2 = date2.date() if isinstance(date2, datetime.datetime) else date2
         num = (date2 - date1).days
         return num
+
+    @staticmethod
+    def __create_req_key__(item_no, prefix=''):
+        return "{0}{1}_{2}".format(prefix, item_no, int(time.time()))
 
     @staticmethod
     def __get_new_value__(content, json_path_dict):

@@ -55,6 +55,3 @@ class BusinessMock(EasyMock):
 
     def repay_apply_mock(self):
         pass
-
-    def repay_apply_query_mock(self):
-        pass

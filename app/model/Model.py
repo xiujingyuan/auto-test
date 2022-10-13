@@ -110,6 +110,7 @@ class TestCase(db.Model, BaseToDict):
     test_cases_country = db.Column(db.String(20), nullable=False, index=True, server_default=db.FetchedValue(), info='所在国家')
     test_cases_group = db.Column(db.String(50), nullable=False, index=True, server_default=db.FetchedValue(), info='项目组')
     test_cases_channel = db.Column(db.String(50), nullable=False, index=True, server_default=db.FetchedValue(), info='资方通道')
+    test_cases_mock_name = db.Column(db.String(50), nullable=False, index=True, server_default=db.FetchedValue(), info='资方通道')
     test_cases_scene = db.Column(db.String(20), nullable=False, index=True, server_default=db.FetchedValue(), info='用例场景（大）')
     test_cases_asset_info = db.Column(db.Text, nullable=False, info='资产信息')
     test_cases_repay_info = db.Column(db.Text, nullable=False, info='还款信息')

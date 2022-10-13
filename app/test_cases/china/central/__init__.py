@@ -12,15 +12,15 @@ from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
 
 class BizCentralTest(BaseAutoTest):
 
-    def __init__(self, env, environment):
-        super().__init__(env, environment)
-        self.central = ChinaBizCentralService(env, environment)
-        self.repay = ChinaRepayService(env, environment)
+    def __init__(self, env, environment, mock_name):
+        super(BizCentralTest, self).__init__(env, environment)
+        self.central = ChinaBizCentralService(env, environment, mock_name)
+        self.repay = ChinaRepayService(env, environment, mock_name)
         self.repay_info = None
         self.x_item_no = None
         self.capital_notify_id = None
         self.serial_no = None
-        self.channel = 'qinnong'
+        self.channel = None
         self.repay_period_start = None
         self.repay_period_end = None
         self.serial_no_asset = None
@@ -61,10 +61,41 @@ class BizCentralTest(BaseAutoTest):
     def run_single_case(self, case):
         # 资产准备
         self.prepare_asset(case)
-        # 还款
+        # 还款按照场景 - 消息先后
         self.repay_asset(case)
         # 执行本次业务逻辑
-        getattr(self, 'run_{0}_scene'.format(case.test_cases_scene))(case)
+        return getattr(self, 'run_scene')(case)
+
+    def run_scene(self, case):
+        """还款场景"""
+        # 执行UserRepay任务
+        # 先检查代扣结果任务是否已经执行成功
+        if case.test_cases_check_capital_notify == 'compensate':
+            user_repay_task = self.central.get_central_task_info(self.item_no, task_type='UserRepay')
+            if user_repay_task is None:
+                raise CaseException("not found the UserRepay task!")
+        for user_repay in user_repay_task:
+            task_data = json.loads(user_repay.task_request_data)['data']
+            # 检查capital_tran
+            self.check_settlement_repay(task_data)
+
+            if not self.is_principal_finish(task_data):
+                continue
+
+            # 检查生成的资方推送
+            self.check_capital_notify(case)
+
+            # 检查资方推送
+            self.check_interface(case)
+
+            # 检查settlement状态
+            self.check_capital_tran_status(case)
+
+            # 检查生成新的推送
+            self.check_dcs_push(case)
+
+            # 检查生成新的推送
+            self.check_capital_notify_exist()
 
     def get_real_plan_at(self, plan_at, plan_period_start):
         ret_plan_at = ''
@@ -107,23 +138,32 @@ class BizCentralTest(BaseAutoTest):
                                 (finish_time, withhold_detail['withhold_amount'], withhold_detail['withhold_amount'],
                                  withhold['channel']))))
 
-    def check_interface(self):
+    def check_interface(self, case):
         # 检查资方推送
-        pass
+        # 捞取推送
+        except_capital_notify = json.loads(case.test_cases_check_capital_notify)
+        real_plan_at = self.get_real_plan_at(except_capital_notify['plan_at'],
+                                             except_capital_notify['period_start'])
+        real_plan_at = self.modify_plan_at(real_plan_at)
+        self.run_capital_push(real_plan_at.strftime("%Y-%m-%d"))
+        self.central.run_central_task_by_order_no(self.item_no, task_type=case.test_cases_push_type)
 
-    def check_settlement_repay(self, except_capital_tran, serial_no):
+    def check_settlement_repay(self, user_repay):
         """
         落库时检查capital_tran
-        :param except_capital_tran:
-        :param serial_no:
+        :param user_repay:
         :return:
         """
+        task_data = json.loads(user_repay.task_request_data)['data']
+        serial_no = task_data['recharges'][0]['serial_no']
+        self.central.run_central_task_by_order_no(serial_no, task_type='WithholdResultImport', status='close')
+        self.central.run_central_task_by_order_no(self.item_no, task_type='UserRepay')
         withhold = self.repay.get_withhold(serial_no, record_type='obj')
         repay_time = withhold.withhold_finish_at
         channel = withhold.withhold_channel
         channel = channel if channel == self.channel else 'qsq'
         amount_key = []
-        for except_item in except_capital_tran:
+        for except_item in task_data['repays']:
             except_item['withhold_result_channel'] = channel
             except_item['user_repay_time'] = repay_time
             except_item['repaid_amount'] = except_item['total_repaid_amount']
@@ -134,8 +174,10 @@ class BizCentralTest(BaseAutoTest):
                                                                  'grant',
                                                                  'unfinished',
                                                                  amount_key)
+        except_capital_tran = 'actual_capital_tran'
+        return actual_capital_tran == except_capital_tran
 
-    def check_settlement(self, case):
+    def check_capital_tran_status(self, case):
         # 推送后检查settlement状态
         # {
         #     "expect_finished_at": "push+D",
@@ -191,17 +233,26 @@ class BizCentralTest(BaseAutoTest):
             raise CaseException('capital_notify status error ,need success,but {0} found'.format(
                 capital_notify.capital_notify_status))
 
-    def check_capital_notify(self, check_capital_notify, item_no):
+    def check_capital_notify(self, case):
+        # 执行notify任务
+        self.run_capital_notify_task()
+        # check capital_notify 时间，类型，期次
+        except_capital_notify = json.loads(case.test_cases_check_capital_notify)
+        real_plan_at = self.get_real_plan_at(except_capital_notify['plan_at'],
+                                             except_capital_notify['period_start'])
+        real_plan_at = self.modify_plan_at(real_plan_at)
+        except_capital_notify['plan_at'] = real_plan_at.strftime("%Y-%m-%d %H:%M:00")
+        except_capital_notify['asset_item_no'] = self.item_no
         # 检查生成新的推送
-        capital_notify = self.central.get_capital_notify_info(item_no)
+        capital_notify = self.central.get_capital_notify_info(self.item_no)
         if len(capital_notify) > 1:
             raise CaseException('only one record, but found two!')
         self.capital_notify_id = capital_notify[0].capital_notify_id
-        check_key = list(check_capital_notify.keys())
+        check_key = list(except_capital_notify.keys())
         capital_notify_dict = capital_notify[0].to_spec_dict
         capital_notify_dict['plan_at'] = capital_notify_dict['plan_at'][:-2] + '00'
         df_actual_capital_notify = pd.DataFrame.from_records(data=[capital_notify_dict], columns=check_key)
-        df_expect_capital_notify = pd.DataFrame.from_records([check_capital_notify])
+        df_expect_capital_notify = pd.DataFrame.from_records([except_capital_notify])
         pd_con = df_expect_capital_notify.compare(df_actual_capital_notify,
                                                   align_axis=0)\
             .rename(index={'self': '期望值', 'other': '实际值'}, level=-1)

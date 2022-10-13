@@ -6,8 +6,8 @@ from app.services.capital_service import BusinessMock
 class ZhongkehegangMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
-        super(ZhongkehegangMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.channel = 'zhongke_hegang'
+        super(ZhongkehegangMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.trail_url = '/hegang/repayTrialQuery/{0}'.format(asset.asset_product_code)
         self.trail_query_url = ''
         self.repay_plan_url = ''
@@ -21,9 +21,9 @@ class ZhongkehegangMock(BusinessMock):
         value = dict(zip(('$.tradeCapital', '$.tradeInt', '$.tradeAmt'),
                          (principal, interest, principal + interest)))
         trail_url = '/hegang/repayTrialQuery/{0}'.format(self.asset.asset_product_code)
-        return self.easy_mock.update_by_json_path(trail_url, value, method='post')
+        return self.update_by_json_path(trail_url, value, method='post')
 
-    def repay_apply_query_mock(self, withhold, success_type='PART'):
+    def repay_apply_query_mock(self, withhold, withhold_detail, success_type='PART'):
         total = 0
         interest = 0
         principal = 0
@@ -37,4 +37,4 @@ class ZhongkehegangMock(BusinessMock):
             total += withhold_amount
         total = float(Decimal(total).quantize(Decimal("0.00")))
         value = dict(zip(('$.rpyTotalAmt', '$.prinAmt', '$.intAmt'), (total, principal, interest)))
-        return self.easy_mock.update_by_json_path(self.repay_apply_query_url, value, method='post')
+        return self.update_by_json_path(self.repay_apply_query_url, value, method='post')

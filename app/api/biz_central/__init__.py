@@ -24,7 +24,7 @@ def biz_central_tools(tool):
                                              'add_and_update_holiday',
                                              'run_central_task_by_task_id',
                                              'run_central_msg_by_msg_id') else req.get('item_no')
-    repay = RepayServiceFactory.get_repay(country, env, environment)
+    repay = RepayServiceFactory.get_repay(country, env, environment, mock_name)
     max_create_at = repay.get_date(is_str=True, days=-3)
     asset = repay.get_asset(item_no)
     request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order = \

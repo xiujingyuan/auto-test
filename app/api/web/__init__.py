@@ -1,14 +1,14 @@
+import importlib
 import json
 from copy import deepcopy
 
 from flask import Blueprint, request, jsonify
 from flask import current_app
+from sqlalchemy import or_, and_
 
 from app import db
 from app.common import RET
 from app.model.Model import Menu, TestCase, BackendKeyValue, AutoAsset
-from app.test_cases.china.biz_central.QinnongPushAutoTest import QinnongCentralAutoTest
-
 
 api_web = Blueprint('api_web', __name__)
 
@@ -21,8 +21,8 @@ def hello_world():
 
 @api_web.route('/menu', methods=["GET"])
 def get_menu():
-    menu_list = Menu.query.filter(Menu.menu_parent_id == 0,
-                                  Menu.menu_active == 1).order_by(Menu.menu_order).all()
+    menu_list = Menu.query.filter(or_(and_(Menu.menu_parent_id == 0, Menu.menu_active == 1),
+                                  Menu.menu_id == 16)).order_by(Menu.menu_order).all()
     ret = deepcopy(RET)
     ret['data'] = get_all_menu(menu_list)
     return jsonify(ret)
@@ -89,7 +89,7 @@ def get_table():
 
 @api_web.route('/cases', methods=["GET"])
 def get_case():
-    case_list = TestCase.query.filter(TestCase.test_cases_channel == 'qinnong').order_by(TestCase.test_cases_id).all()
+    case_list = TestCase.query.order_by(TestCase.test_cases_id).all()
     ret = deepcopy(RET)
     ret['data'] = {'case': list(map(lambda x: x.to_spec_dict, case_list))}
     return jsonify(ret)
@@ -121,8 +121,11 @@ def run_case():
         ret['message'] = "not fount the case with case's {0}".format(case_id)
         ret['code'] = 1
     channel = find_case.test_cases_channel
+    mock_name = find_case.test_cases_mock_name
     program = find_case.test_cases_group.lower()
-    obj = eval('{0}{1}AutoTest'.format(channel.title(), program.title()))(env, environment)
+    obj_name = '{0}{1}AutoTest'.format(channel.replace('_', '').title(), program.title())
+    meta_class = importlib.import_module('app.test_cases.china.{0}.{1}'.format(program, obj_name))
+    obj = getattr(meta_class, obj_name)(env, environment, mock_name)
     obj.run_single_case(find_case)
     return jsonify(ret)
 

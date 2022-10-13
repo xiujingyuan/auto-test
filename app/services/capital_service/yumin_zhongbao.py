@@ -4,8 +4,8 @@ from app.services.capital_service import BusinessMock
 class YuminzhongbaoMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
-        super(YuminzhongbaoMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.channel = 'yumin_zhongbao'
+        super(YuminzhongbaoMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.trail_url = '/zhongzhirong/yumin_zhongbao/ym.repay.trial'
         self.trail_query_url = ''
         self.repay_plan_url = ''
