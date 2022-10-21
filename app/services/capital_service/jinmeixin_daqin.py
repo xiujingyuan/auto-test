@@ -4,13 +4,13 @@ from app.services.capital_service import BusinessMock
 class JinmeixindaqinMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
-        self.channel = 'jinmeixin_daqin'
         super(JinmeixindaqinMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
+        self.channel = 'jinmeixin_daqin'
         self.trail_url = '/chongtian/{0}/repay/calc'.format(self.channel)
         self.trail_query_url = ''
         self.repay_plan_url = ''
-        self.repay_apply_url = '/chongtian/{0}/repay/queryStatus'.format(self.channel)
-        self.repay_apply_query_url = ''
+        self.repay_apply_url = '/chongtian/{0}/repay/request'.format(self.channel)
+        self.repay_apply_query_url = '/chongtian/{0}/repay/queryStatus'.format(self.channel)
 
     def repay_plan_mock(self):
         pass
@@ -53,7 +53,7 @@ class JinmeixindaqinMock(BusinessMock):
             }
         }
 
-        return self.easy_mock.update_by_value(self.trail_url, req_data)
+        return self.update_by_value(self.trail_url, req_data)
 
     def repay_trail_query_mock(self):
         pass
@@ -72,8 +72,8 @@ class JinmeixindaqinMock(BusinessMock):
                 "payOrderId": "R103" + self.__create_req_key__(self.asset.asset_item_no),
                 "repayStatus": success_type,
                 "repayResult": "part",
-                "repayAmt": repayPlanDict[period] + interest_amount + fee_amount,
-                "repayPrin": repayPlanDict[period],
+                "repayAmt": repayPlanDict[period]['principal'] * 100 + interest_amount + fee_amount,
+                "repayPrin": repayPlanDict[period]['principal'] * 100,
                 "repayInt": interest_amount,
                 "repayPen": 0,
                 "repayFee": fee_amount,

@@ -6,6 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from app.common.http_util import Http, FORM_HEADER
+from app.model.Model import BackendKeyValue
 from app.services.repay import RepayBaseService
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant.service import ChinaGrantService
@@ -209,6 +210,24 @@ class ChinaRepayService(RepayBaseService):
                     Withhold.withhold_status.in_(('process', 'ready'))).first()
         return capital_mock.card_bind_query_mock(withhold, success_type=success_type)
 
+    def msg_send(self, item_no, period_start, period_end, channel, success_type='PART'):
+        """
+        设置微神马试算金额
+        :param item_no:资产编号
+        :param period_start: 还款开始期次
+        :param period_end: 还款到期期次
+        :param channel: 资方
+        :param success_type: PART
+        :return: 无返回
+        """
+        asset, asset_extend, at_list = self.get_asset_info_record(item_no, period_start, period_end)
+        capital_mock = self.get_mock_obj(self.mock_name, channel, asset, asset_extend, at_list, period_start,
+                                         period_end)
+        backend_config = BackendKeyValue.query.filter(
+            BackendKeyValue.backend_key == 'send_msg_code_config').first()
+        backend_info = json.loads(backend_config.backend_value)[channel]
+        return capital_mock.msg_send_mock(backend_info, success_type=success_type)
+
     def fix_id_num(self, item_no):
         individual = self.db_session.query(Individual.individual_id_num_encrypt, Individual.individual_name_encrypt,
                                            Individual.individual_tel_encrypt).join(IndividualAsset,
@@ -236,7 +255,7 @@ class ChinaRepayService(RepayBaseService):
         super(ChinaRepayService, self).remove_buyback(item_no, channel)
         return self.biz_central.remove_buyback(item_no, channel)
 
-    def set_asset_tran_status(self, period, item_no, refresh_type, status='finish'):
+    def set_asset_tran_status(self, period, item_no, refresh_type=None, status='finish'):
         self.biz_central.set_capital_tran_status(item_no, period, operate_type='compensate')
         return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, refresh_type, status=status)
 
@@ -296,6 +315,7 @@ class ChinaRepayService(RepayBaseService):
             agree_request_data['data']['verify_code'] = verify_code
             # agree_request_data['data']['verify_seq'] = verify_seq if protocol else 'error_test'
             agree_request_data['data']['verify_seq'] = 'error_test'
+            time.sleep(2)
             agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
             # 执行协议签约任务
             request_data = [request_data, agree_request_data]

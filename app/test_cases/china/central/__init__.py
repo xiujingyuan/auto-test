@@ -52,8 +52,10 @@ class BizCentralTest(BaseAutoTest):
         return False
 
     def prepare_asset(self, case):
-        # 放款新资产
-        self.item_no, self.x_item_no = self.repay.auto_loan(**(json.loads(case.test_cases_asset_info)))
+        self.channel = case.test_cases_channel
+        asset_info = json.loads(case.test_cases_asset_info)
+        asset_info['channel'] = case.test_cases_channel
+        self.item_no, self.x_item_no = self.repay.auto_loan(**asset_info)
         # 存入本次使用资产
         self.run_case_log.run_case_log_case_run_item_no = self.item_no
 
@@ -70,8 +72,8 @@ class BizCentralTest(BaseAutoTest):
         """还款场景"""
         # 执行UserRepay任务
         # 先检查代扣结果任务是否已经执行成功
-        if case.test_cases_check_capital_notify == 'compensate':
-            user_repay_task = self.central.get_central_task_info(self.item_no, task_type='UserRepay')
+        user_repay_task = self.central.get_central_task_info(self.item_no, task_type='UserRepay')
+        if case.test_cases_check_capital_notify != 'compensate':
             if user_repay_task is None:
                 raise CaseException("not found the UserRepay task!")
         for user_repay in user_repay_task:
@@ -281,7 +283,7 @@ class BizCentralTest(BaseAutoTest):
             raise CaseException("the case channel is error!")
         channel_config = self.central.get_kv(self.channel)
         self.central.check_and_add_push_channel(case.test_cases_channel)
-        if 'compensate_config' not in channel_config or 'push_guarantee_config' not in channel_config:
+        if 'compensate_config' not in channel_config:
             raise CaseException("config is not new config!")
         service_url = self.central.get_system_url()
         if 'gate{0}.k8s-ingress-nginx.kuainiujinke.com'.format(self.env) in service_url:
@@ -307,7 +309,7 @@ class BizCentralTest(BaseAutoTest):
         # 还款准备-kv
         self.prepare_kv(case, mock_name)
         # 调整还款计划日期
-        self.repay.change_asset(self.item_no, '', 0, -self.repay_period_start)
+        self.repay.change_asset(self.item_no, '', 0, -self.repay_period_start, True)
         # 发起代扣并执行成功
         resp = getattr(self.repay, repay_type)(item_no=self.item_no,
                                                period_start=self.repay_period_start,

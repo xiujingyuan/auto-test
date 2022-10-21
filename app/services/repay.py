@@ -234,7 +234,7 @@ class RepayBaseService(BaseService):
             return info_ret
         return dict(zip(('request', 'response', 'request_url'), (req_data, self.refresh_url, resp)))
 
-    def set_asset_tran_status(self, period, item_no, refresh_type, status='finish'):
+    def set_asset_tran_status(self, period, item_no, refresh_type=None, status='finish'):
         if not period or not item_no:
             raise ValueError('period or item_no can not be none!')
         if status not in ('finish', 'nofinish'):
