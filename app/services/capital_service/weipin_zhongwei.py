@@ -90,7 +90,7 @@ class WeipinzhongweiMock(BusinessMock):
                 "guaranteeFee": float(Decimal(float(fee_amount / 100)).quantize(Decimal("0.00"))),
                 "repaymentList": [
                     {
-                        "totalAmount": total_amount,
+                        "totalAmount": float(Decimal(total_amount).quantize(Decimal("0.00"))),
                         "preFeeAmount": 0,
                         "planList": repayPlanList
                     }]

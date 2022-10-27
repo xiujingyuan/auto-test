@@ -1,18 +1,16 @@
-import json
-import random
-import time
-from copy import deepcopy
-from datetime import datetime
 
+import random
+from app import db
 from sqlalchemy import desc
 
-from app.common.log_util import LogUtil
+from app.model.Model import AutoAsset
+from app.services import time_print
 from app.services.grant import GrantBaseService
 from app.common.http_util import Http
 from app.services.china.biz_central.service import ChinaBizCentralService
-from app.services.china.grant import GRANT_ASSET_IMPORT_URL, FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
-from app.services.china.grant.Model import Asset, Task, Synctask, Sendmsg, RouterLoadRecord, AssetExtend, \
-    AssetTran, AssetCard, CapitalAsset, AssetLoanRecord, CapitalTransaction
+from app.services.china.grant import FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
+from app.services.china.grant.Model import Asset, Task, Sendmsg, AssetExtend, \
+    AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan
 
 
 class ChinaGrantService(GrantBaseService):
@@ -24,6 +22,13 @@ class ChinaGrantService(GrantBaseService):
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
         self.task_url = self.grant_host + '/task/run?orderNo={0}'
         self.msg_url = self.grant_host + '/msg/run?orderNo={0}'
+
+    @time_print
+    def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
+        asset = self.asset
+        ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
+        ret.update(asset)
+        return ret
 
     def add_msg(self, msg):
         new_msg = Sendmsg()
@@ -50,9 +55,7 @@ class ChinaGrantService(GrantBaseService):
         self.db_session.commit()
 
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
-        req_name = 'get_{0}'.format(refresh_type)
-        ret = getattr(self, req_name)(item_no)
-        return ret
+        return getattr(self, 'get_{0}'.format(refresh_type))(item_no)
 
     def update_task_next_run_at_forward_by_order_no(self, order_no):
         clean_task = self.db_session.query(Task).filter(Task.task_order_no == order_no).all()
@@ -93,14 +96,27 @@ class ChinaGrantService(GrantBaseService):
         ret.update(self.get_asset_loan_record(item_no))
         return ret
 
-    def get_task(self, item_no):
+    def get_grant_task(self, item_no):
         task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
-        return {'task': list(map(lambda x: x.to_spec_dict, task))}
+        return {'grant_task': list(map(lambda x: x.to_spec_dict, task))}
 
-    def get_sendmsg(self, item_no):
+    def get_router_capital_plan(self, item_no):
+        router_capital_plan = self.db_session.query(RouterCapitalPlan).order_by(
+            desc(RouterCapitalPlan.router_capital_plan_date)).all()
+        return {'router_capital_plan': list(map(lambda x: x.to_spec_dict, router_capital_plan))}
+
+    def get_capital_account(self, item_no):
+        capital_account = self.db_session.query(CapitalAccount).filter(CapitalAccount.capital_account_item_no == item_no).all()
+        return {'capital_account': list(map(lambda x: x.to_spec_dict, capital_account))}
+
+    def get_asset_tran(self, item_no):
+        asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
+        return {'asset_tran': list(map(lambda x: x.to_spec_dict, asset_tran))}
+
+    def get_grant_sendmsg(self, item_no):
         msg = self.db_session.query(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no).order_by(
             desc(Sendmsg.sendmsg_id)).all()
-        return {'sendmsg': list(map(lambda x: x.to_spec_dict, msg))}
+        return {'grant_sendmsg': list(map(lambda x: x.to_spec_dict, msg))}
 
     def get_asset_loan_record(self, item_no):
         asset_loan_record = self.db_session.query(AssetLoanRecord).filter(
@@ -255,6 +271,37 @@ class ChinaGrantService(GrantBaseService):
         x_order_no = '{0}_right'.format(item_no) if x_right else ''
         ref_order_no = '{0}_noloan'.format(item_no) if x_source_type else ''
         return item_no, ref_order_no, x_order_no, source_type, x_source_type, x_right, from_system
+
+    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount):
+        item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
+            self.get_asset_item_info(channel, source_type, from_system_name)
+        element = self.get_four_element() if element == 1 else element
+        ref_order_no = '{0}_noloan'.format(item_no)
+        from_system = FROM_SYSTEM_DICT[from_system_name]
+        self.asset_import(item_no, channel, element, count, amount, source_type,
+                                                  from_system_name, from_system, ref_order_no)
+        self.add_asset(item_no, 0)
+
+    def add_asset(self, name, source_type):
+        grant_asset = self.check_item_exist(name)
+        if grant_asset is None:
+            return '没有该资产'
+        exist_asset = AutoAsset.query.filter(AutoAsset.asset_name == name, AutoAsset.asset_env == self.env).first()
+        if exist_asset:
+            return '该资产已经存在'
+        asset = AutoAsset()
+        asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
+        asset.asset_channel = grant_asset.asset_loan_channel
+        asset.asset_descript = ''
+        asset.asset_name = name
+        asset.asset_period = grant_asset.asset_period_count
+        asset.asset_env = self.env
+        asset.asset_type = source_type
+        asset.asset_country = self.country
+        asset.asset_source_type = 1
+        asset.asset_days = int(grant_asset.asset_product_category)
+        db.session.add(asset)
+        db.session.flush()
 
     def asset_import(self, item_no, channel, element, count, amount, source_type, from_system_name, from_system,
                      ref_order_no, borrower_extend_district=None, sub_order_type='', route_uuid=None,
