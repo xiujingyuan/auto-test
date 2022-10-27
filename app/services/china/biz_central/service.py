@@ -204,18 +204,23 @@ class ChinaBizCentralService(BaseService):
         self.db_session.commit()
 
     def add_central_task(self, task, is_run=True):
-        new_task = CentralTask()
-        for key, value in task.items():
-            if key != 'task_id':
-                setattr(new_task, key, value)
-        new_task.task_next_run_at = self.get_date(is_str=True)
-        new_task.task_status = 'open'
-        self.db_session.add(new_task)
-        self.db_session.flush()
-        self.db_session.commit()
-        if is_run:
-            ret = self.run_central_task_by_task_id(new_task.task_id)
-        return new_task.task_id
+        central_task = self.db_session.query(CentralTask).filter(CentralTask.task_order_no == task['task_order_no'],
+                                                         CentralTask.task_type == task['task_type']).first()
+        if central_task is None:
+            new_task = CentralTask()
+            for key, value in task.items():
+                if key != 'task_id':
+                    setattr(new_task, key, value)
+            new_task.task_next_run_at = self.get_date(is_str=True)
+            new_task.task_status = 'open'
+            self.db_session.add(new_task)
+            self.db_session.flush()
+            self.db_session.commit()
+            if is_run:
+                ret = self.run_central_task_by_task_id(new_task.task_id)
+            return new_task.task_id
+        self.run_central_task_by_task_id(central_task.task_id)
+        return central_task.task_id
 
     @time_print
     def run_xxl_job(self, job_type, run_date, param={}):
