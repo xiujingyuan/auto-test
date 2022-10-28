@@ -609,7 +609,7 @@ class ChinaRepayService(RepayBaseService):
         :return:
         """
         self.clear_auto_withhold(item_no)
-        self.xxljob.run_auto_repay()
+        self.run_xxl_job('withholdAutoV1')
         start = self.get_date()
         while True:
             auto_task = self.db_session.query(Task).filter(Task.task_order_no == item_no,
