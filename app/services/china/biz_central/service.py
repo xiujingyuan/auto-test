@@ -371,13 +371,20 @@ class ChinaBizCentralService(BaseService):
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
         return capital_tran_list
 
-    def get_capital_tran_info(self, item_no, period_start, operation_type, status, fee_type):
-        capital_tran = self.db_session.query(CapitalTransaction).filter(
+    @biz_modify_return
+    def get_capital_tran_info(self, item_no, period_start, period_end, fee_type, operation_type=None, status=None):
+        capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no,
-            CapitalTransaction.capital_transaction_operation_type == operation_type,
-            CapitalTransaction.capital_transaction_status == status,
             CapitalTransaction.capital_transaction_period >= period_start,
+            CapitalTransaction.capital_transaction_period <= period_end,
             CapitalTransaction.capital_transaction_type.in_(fee_type)).all()
+        capital_tran = []
+        for capital_tran_item in capital_tran_list:
+            if operation_type is not None and capital_tran_item.capital_transaction_operation_type != operation_type:
+                continue
+            if status is not None and capital_tran_item.capital_transaction_status != status:
+                continue
+            capital_tran.append(capital_tran_item)
         return capital_tran
 
     @biz_modify_return
@@ -461,7 +468,7 @@ class ChinaBizCentralService(BaseService):
         return ret
 
     @time_print
-    def run_central_task_by_order_no(self, order_no, task_type, status='open', timeout=60):
+    def run_central_task_by_order_no(self, order_no, task_type, status=['open'], timeout=60):
         begin = datetime.now()
         while True:
             task = self.get_central_task_info(order_no, task_type, status=status)
@@ -470,13 +477,13 @@ class ChinaBizCentralService(BaseService):
             if (datetime.now() - begin).seconds >= timeout:
                 raise CaseException('not found the task with order no is {0}, type is {1} in 60s'.format(order_no,
                                                                                                          task_type))
-        return self.run_central_task_by_task_id(task.task_id)
+        return self.run_central_task_by_task_id(task[0].task_id)
 
     @wait_timeout
-    def get_central_task_info(self, order_no, task_type, status='open'):
+    def get_central_task_info(self, order_no, task_type, status=['open', 'close']):
         task = self.db_session.query(CentralTask).filter(CentralTask.task_order_no == order_no,
                                                          CentralTask.task_type == task_type,
-                                                         CentralTask.task_status == status).first()
+                                                         CentralTask.task_status.in_(tuple(status))).all()
         return task
 
     def get_asset_info(self, item_no):

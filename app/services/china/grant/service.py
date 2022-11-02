@@ -72,13 +72,16 @@ class ChinaGrantService(GrantBaseService):
         ret = Http.http_get(url)
         return ret
 
-    def operate_action(self, item_no, extend, op_type, table_name, loading_key):
-        loading_key_first = loading_key.split("_")[0]
-        extend_name = '{0}_create_at'.format(loading_key_first)
+    def operate_action(self, item_no, extend, op_type, table_name, run_date):
+        table_name = table_name[6:] if table_name.startswith('grant_') else table_name
+        extend_name = '{0}_create_at'.format(table_name)
         max_create_at = extend[extend_name] if extend_name in extend else None
+        max_create_at = extend['create_at'] if max_create_at is None else None
         real_req = {}
         if op_type == 'run_task_by_task_order_no':
             real_req['order_no'] = item_no
+        elif op_type == 'run_msg_by_id':
+            real_req['msg_id'] = extend['id']
         if op_type == "del_row_data":
             real_req['del_id'] = extend['id']
             real_req['item_no'] = item_no
@@ -96,7 +99,7 @@ class ChinaGrantService(GrantBaseService):
         ret.update(self.get_asset_loan_record(item_no))
         return ret
 
-    def get_grant_task(self, item_no):
+    def get_task(self, item_no):
         task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
         return {'grant_task': list(map(lambda x: x.to_spec_dict, task))}
 
@@ -113,7 +116,7 @@ class ChinaGrantService(GrantBaseService):
         asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
         return {'asset_tran': list(map(lambda x: x.to_spec_dict, asset_tran))}
 
-    def get_grant_sendmsg(self, item_no):
+    def get_sendmsg(self, item_no):
         msg = self.db_session.query(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no).order_by(
             desc(Sendmsg.sendmsg_id)).all()
         return {'grant_sendmsg': list(map(lambda x: x.to_spec_dict, msg))}

@@ -573,10 +573,10 @@ class RepayBaseService(BaseService):
             resp_x = Http.http_post(self.refresh_url, request_x_data)
             self.run_task_by_type_and_order_no('AssetAccountChangeNotify', asset_x)
             self.run_msg_by_order_no(asset_x, 'AssetChangeNotifyMQ')
-            self.run_msg_by_order_no(asset_x, 'assetFoxSync')
+            # self.run_msg_by_order_no(asset_x, 'assetFoxSync')
         self.run_task_by_type_and_order_no('AssetAccountChangeNotify', item_no)
         self.run_msg_by_order_no(item_no, 'AssetChangeNotifyMQ')
-        self.run_msg_by_order_no(item_no, 'assetFoxSync')
+        # self.run_msg_by_order_no(item_no, 'assetFoxSync')
         return [request_data, request_x_data] if asset_x else [request_data], self.refresh_url, [resp, resp_x] \
             if asset_x else [resp]
 

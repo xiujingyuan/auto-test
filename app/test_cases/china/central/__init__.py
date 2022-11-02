@@ -72,13 +72,14 @@ class BizCentralTest(BaseAutoTest):
         """还款场景"""
         # 执行UserRepay任务
         # 先检查代扣结果任务是否已经执行成功
-        user_repay_task = self.central.get_central_task_info(self.item_no, task_type='UserRepay')
+        user_repay_task = self.central.get_central_task_info(self.item_no, task_type='UserRepay', timeout=10)
         if case.test_cases_check_capital_notify != 'compensate':
             if user_repay_task is None:
                 raise CaseException("not found the UserRepay task!")
         for user_repay in user_repay_task:
             task_data = json.loads(user_repay.task_request_data)['data']
-            # 检查capital_tran
+
+            # 检查还款数据落库capital_tran是否正确
             self.check_settlement_repay(task_data)
 
             if not self.is_principal_finish(task_data):
@@ -150,34 +151,39 @@ class BizCentralTest(BaseAutoTest):
         self.run_capital_push(real_plan_at.strftime("%Y-%m-%d"))
         self.central.run_central_task_by_order_no(self.item_no, task_type=case.test_cases_push_type)
 
-    def check_settlement_repay(self, user_repay):
+    def check_settlement_repay(self, task_data):
         """
         落库时检查capital_tran
-        :param user_repay:
+        :param task_data:
         :return:
         """
-        task_data = json.loads(user_repay.task_request_data)['data']
         serial_no = task_data['recharges'][0]['serial_no']
-        self.central.run_central_task_by_order_no(serial_no, task_type='WithholdResultImport', status='close')
-        self.central.run_central_task_by_order_no(self.item_no, task_type='UserRepay')
-        withhold = self.repay.get_withhold(serial_no, record_type='obj')
+        self.central.run_central_task_by_order_no(serial_no, task_type='WithholdResultImport', status=['open', 'close'])
+        self.central.run_central_task_by_order_no(self.item_no, task_type='UserRepay', status=['open', 'close'])
+        withhold = self.repay.get_withhold((serial_no,), record_type='obj')[0]
         repay_time = withhold.withhold_finish_at
         channel = withhold.withhold_channel
         channel = channel if channel == self.channel else 'qsq'
-        amount_key = []
+        fee_type = []
+        except_capital_tran = []
         for except_item in task_data['repays']:
-            except_item['withhold_result_channel'] = channel
-            except_item['user_repay_time'] = repay_time
-            except_item['repaid_amount'] = except_item['total_repaid_amount']
-            except_item['amount'] = except_item['total_repaid_amount']
-            amount_key.append(except_item['tran_type'])
+            tran_type = except_item['tran_type'][5:] if \
+                except_item['tran_type'].startswith('repay') else except_item['tran_type']
+            fee_type.append(tran_type)
+            except_capital_tran.append({
+                'withhold_result_channel': channel,
+                'user_repay_at': repay_time.strftime("%Y-%m-%d %H:%M:%S"),
+                'repaid_amount': except_item['total_repaid_amount'],
+                'amount': except_item['total_repaid_amount'],
+                'type': tran_type,
+                'period': except_item['period']
+            })
         actual_capital_tran = self.central.get_capital_tran_info(self.item_no,
                                                                  self.repay_period_start,
-                                                                 'grant',
-                                                                 'unfinished',
-                                                                 amount_key)
-        except_capital_tran = 'actual_capital_tran'
-        return actual_capital_tran == except_capital_tran
+                                                                 self.repay_period_end,
+                                                                 fee_type,
+                                                                 record_type='to_spec_dict')['capital_tran_info']
+        return self.check_result(except_capital_tran, actual_capital_tran, 'capital_tran', ['type', 'period'])
 
     def check_capital_tran_status(self, case):
         # 推送后检查settlement状态
@@ -243,23 +249,33 @@ class BizCentralTest(BaseAutoTest):
         real_plan_at = self.get_real_plan_at(except_capital_notify['plan_at'],
                                              except_capital_notify['period_start'])
         real_plan_at = self.modify_plan_at(real_plan_at)
-        except_capital_notify['plan_at'] = real_plan_at.strftime("%Y-%m-%d %H:%M:00")
+        except_capital_notify['plan_at'] = real_plan_at.strftime("%Y-%m-%d 00:00:00")
         except_capital_notify['asset_item_no'] = self.item_no
         # 检查生成新的推送
         capital_notify = self.central.get_capital_notify_info(self.item_no)
         if len(capital_notify) > 1:
             raise CaseException('only one record, but found two!')
         self.capital_notify_id = capital_notify[0].capital_notify_id
-        check_key = list(except_capital_notify.keys())
         capital_notify_dict = capital_notify[0].to_spec_dict
         capital_notify_dict['plan_at'] = capital_notify_dict['plan_at'][:-2] + '00'
-        df_actual_capital_notify = pd.DataFrame.from_records(data=[capital_notify_dict], columns=check_key)
-        df_expect_capital_notify = pd.DataFrame.from_records([except_capital_notify])
+        return self.check_result(except_capital_notify, capital_notify_dict, 'capital_notify')
+
+    @staticmethod
+    def check_result(except_value, actual_value, fail_msg, index):
+        if isinstance(except_value, list):
+            check_key = list(except_value[0].keys())
+        elif isinstance(except_value, dict):
+            check_key = list(except_value[0].keys())
+            except_value = [except_value]
+            actual_value = [actual_value]
+        df_actual_capital_notify = pd.DataFrame.from_records(data=actual_value, columns=check_key, index=index).sort_values(by=index)
+        df_expect_capital_notify = pd.DataFrame.from_records(except_value, index=index).sort_values(by=index)
+
         pd_con = df_expect_capital_notify.compare(df_actual_capital_notify,
-                                                  align_axis=0)\
+                                                  align_axis=1)\
             .rename(index={'self': '期望值', 'other': '实际值'}, level=-1)
         if not pd_con.empty:
-            raise CaseException("the notify check fail with result is: \r\n{0} ".format(pd_con))
+            raise CaseException("the {1} check fail with result is: \r\n{0} ".format(pd_con, fail_msg))
 
     @wait_timeout
     def run_capital_push(self, plan_at):
