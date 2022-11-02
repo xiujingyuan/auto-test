@@ -55,6 +55,7 @@ class ChinaGrantService(GrantBaseService):
         self.db_session.commit()
 
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
+        refresh_type = refresh_type[6:] if refresh_type.startswith("grant_") else refresh_type
         return getattr(self, 'get_{0}'.format(refresh_type))(item_no)
 
     def update_task_next_run_at_forward_by_order_no(self, order_no):
