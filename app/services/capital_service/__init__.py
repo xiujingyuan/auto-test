@@ -37,11 +37,16 @@ class BusinessMock(EasyMock):
                 asset_tran_balance_amount = 0
             if at.asset_tran_period not in repayPlanDict:
                 repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0, 'late': 0}
-            repayPlanDict[at.asset_tran_period][at.asset_tran_category] += asset_tran_balance_amount
+            amt = repayPlanDict[at.asset_tran_period][at.asset_tran_category] + asset_tran_balance_amount
+            repayPlanDict[at.asset_tran_period][at.asset_tran_category] = float(Decimal(amt).quantize(Decimal("0.00")))
             if 'overdue' not in repayPlanDict[at.asset_tran_period]:
                 overdue = self.cal_days(at.asset_tran_due_at, datetime.now())
                 overdue = overdue if overdue >= 0 else 0
                 repayPlanDict[at.asset_tran_period]['overdue'] = overdue
+        principal_amount = float(Decimal(principal_amount).quantize(Decimal("0.00")))
+        interest_amount = float(Decimal(interest_amount).quantize(Decimal("0.00")))
+        fee_amount = float(Decimal(fee_amount).quantize(Decimal("0.00")))
+        late_amount = float(Decimal(late_amount).quantize(Decimal("0.00")))
         return principal_amount, interest_amount, fee_amount, late_amount, repayPlanDict
 
     def repay_plan_mock(self):

@@ -43,10 +43,10 @@ class JinmeixindaqinMock(BusinessMock):
                 "loanOrderNo": self.asset_extend.asset_extend_val,
                 "repayType ": "DO" if self.repay_type == 'normal' else 'PRE',
                 "repayTerm": list(range(self.period_start, self.period_end + 1)),
-                "repayAmt": principal_amount + interest_amount + fee_amount,
-                "repayPrin": principal_amount,
-                "repayInt": interest_amount,
-                "repayFee": fee_amount,
+                "repayAmt": (principal_amount + interest_amount + fee_amount) / 100,
+                "repayPrin": principal_amount / 100,
+                "repayInt": interest_amount  / 100,
+                "repayFee": fee_amount  / 100,
                 "repayPen": 0,
                 "bankCardList": [{}],
                 "repayPlanList": repayPlanList
@@ -62,21 +62,22 @@ class JinmeixindaqinMock(BusinessMock):
         pass
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='PART'):
-        principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
-        fee_amount = fee_amount if success_type == 'SUCCESS' else 0
+        principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
         repayPlanList = []
         for period in list(range(self.period_start, self.period_end + 1)):
+            fee = repayPlanDict[period]['fee'] if success_type == 'SUCCESS' and period == self.period_start else 0
+            interest = repayPlanDict[period]['interest'] if period == self.period_start else 0
             repayPlanList.append({
                 "loanOrderNo": self.asset_extend.asset_extend_val,
                 "termNo": period,
                 "payOrderId": "R103" + self.__create_req_key__(self.asset.asset_item_no),
                 "repayStatus": success_type,
                 "repayResult": "part",
-                "repayAmt": repayPlanDict[period]['principal'] * 100 + interest_amount + fee_amount,
-                "repayPrin": repayPlanDict[period]['principal'] * 100,
-                "repayInt": interest_amount,
+                "repayAmt": repayPlanDict[period]['principal'] + interest + fee,
+                "repayPrin": repayPlanDict[period]['principal'],
+                "repayInt": interest,
                 "repayPen": 0,
-                "repayFee": fee_amount,
+                "repayFee": fee,
                 "repayTime": self.get_date(is_str=True)
             })
         req_data = {
