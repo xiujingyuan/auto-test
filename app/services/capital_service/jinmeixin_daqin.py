@@ -45,8 +45,8 @@ class JinmeixindaqinMock(BusinessMock):
                 "repayTerm": list(range(self.period_start, self.period_end + 1)),
                 "repayAmt": (principal_amount + interest_amount + fee_amount) / 100,
                 "repayPrin": principal_amount / 100,
-                "repayInt": interest_amount  / 100,
-                "repayFee": fee_amount  / 100,
+                "repayInt": interest_amount / 100,
+                "repayFee": fee_amount / 100,
                 "repayPen": 0,
                 "bankCardList": [{}],
                 "repayPlanList": repayPlanList
