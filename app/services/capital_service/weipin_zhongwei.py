@@ -24,12 +24,15 @@ class WeipinzhongweiMock(BusinessMock):
             interest = repayPlanDict[period]['interest']
             principal = repayPlanDict[period]['principal']
             total_amount += reduce(lambda x, y: x+y, repayPlanDict[period].values(), 0)
-            if principal_over:
-                principal = principal - 1
-            if interest_type == 'less':
-                interest = interest - 1
-            elif interest_type == 'more':
-                interest = interest + 1
+            if period == self.period_start:
+                if principal_over:
+                    principal = principal - 1
+                if interest_type == 'less':
+                    interest = interest - 1
+                elif interest_type == 'more':
+                    interest = interest + 1
+                elif interest_type == 'zero':
+                    interest = 0
             repayPlanList.append({
                 "tenor": period,
                 "principalAmount": principal,
@@ -49,7 +52,7 @@ class WeipinzhongweiMock(BusinessMock):
                 "userId": "16545892470612460068",
                 "repaymentList": [
                     {
-                        "totalAmount": total_amount,
+                        "totalAmount": float(Decimal(total_amount).quantize(Decimal("0.00"))),
                         "preFeeAmount": None,
                         "planList": repayPlanList
                     }]

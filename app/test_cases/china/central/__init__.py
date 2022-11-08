@@ -124,8 +124,7 @@ class BizCentralTest(BaseAutoTest):
     def get_real_amount(self, amount_type):
         amount = {}
         if amount_type == 'withhold':
-            withhold_detail = self.repay.get_withhold_detail(self.serial_no,
-                                                             max_create_at=self.get_date(fmt='%Y-%m-%d', is_str=True))
+            withhold_detail = self.repay.get_withhold_detail(self.serial_no)
             for withhold in withhold_detail['withhold_detail']:
                 amount[withhold['asset_tran_type'].replace("repay", "")] = withhold['withhold_amount']
         return amount
@@ -149,7 +148,8 @@ class BizCentralTest(BaseAutoTest):
                                              except_capital_notify['period_start'])
         real_plan_at = self.modify_plan_at(real_plan_at)
         self.run_capital_push(real_plan_at.strftime("%Y-%m-%d"))
-        self.central.run_central_task_by_order_no(self.item_no, task_type=case.test_cases_push_type)
+        push_type = ''.join(map(lambda x: x.title(), self.channel.split('_'))) + 'CapitalPush'
+        self.central.run_central_task_by_order_no(self.item_no, task_type=push_type)
 
     def check_settlement_repay(self, task_data):
         """
@@ -218,22 +218,16 @@ class BizCentralTest(BaseAutoTest):
             except_capital_tran_list.append(item_dict)
         actual_capital_tran = self.central.get_capital_tran_info(self.item_no,
                                                                  self.repay_period_start,
+                                                                 self.repay_period_end,
+                                                                 tuple(except_capital_tran['type']),
                                                                  except_capital_tran['operation_type'],
-                                                                 except_capital_tran['status'],
-                                                                 tuple(except_capital_tran['type']))
+                                                                 except_capital_tran['status'])['capital_tran_info']
         if not actual_capital_tran:
             raise CaseException('not found the expect capital tran!')
-        actual_period = set(map(lambda x: x.capital_transaction_period, actual_capital_tran))
+        actual_period = set(map(lambda x: x['period'], actual_capital_tran))
         if max(actual_period) > self.repay_period_end:
             raise CaseException('the capital tran change more then except!')
-        df_actual_capital_notify = pd.DataFrame.from_records(data=[actual_capital_tran],
-                                                             columns=except_capital_tran_key)
-        df_expect_capital_notify = pd.DataFrame.from_records([except_capital_tran_list])
-        pd_con = df_expect_capital_notify.compare(df_actual_capital_notify,
-                                                  align_axis=0)\
-            .rename(index={'self': '期望值', 'other': '实际值'}, level=-1)
-        if not pd_con.empty:
-            raise CaseException("the capital tran check fail with result is: \r\n{0} ".format(pd_con))
+        return self.check_result(except_capital_tran_list, actual_capital_tran, except_capital_tran_key, [])
 
     def check_capital_notify_exist(self):
         capital_notify = self.central.get_capital_notify_info_by_id(self.capital_notify_id)
@@ -258,14 +252,15 @@ class BizCentralTest(BaseAutoTest):
         self.capital_notify_id = capital_notify[0].capital_notify_id
         capital_notify_dict = capital_notify[0].to_spec_dict
         capital_notify_dict['plan_at'] = capital_notify_dict['plan_at'][:-2] + '00'
-        return self.check_result(except_capital_notify, capital_notify_dict, 'capital_notify')
+        return self.check_result(except_capital_notify, capital_notify_dict, 'capital_notify',
+                                 ['period_start', 'to_system', 'period_end'])
 
     @staticmethod
     def check_result(except_value, actual_value, fail_msg, index):
         if isinstance(except_value, list):
             check_key = list(except_value[0].keys())
         elif isinstance(except_value, dict):
-            check_key = list(except_value[0].keys())
+            check_key = list(except_value.keys())
             except_value = [except_value]
             actual_value = [actual_value]
         df_actual_capital_notify = pd.DataFrame.from_records(data=actual_value, columns=check_key, index=index).sort_values(by=index)
