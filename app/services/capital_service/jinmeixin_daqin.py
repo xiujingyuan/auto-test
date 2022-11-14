@@ -25,7 +25,7 @@ class JinmeixindaqinMock(BusinessMock):
             interest_amount = interest_amount + 1
         elif interest_type == 'zero':
             interest_amount = 0
-
+        interest_amount = interest_amount / 100
         repayPlanList = []
         for period in list(range(self.period_start, self.period_end + 1)):
             repayPlanList.append({
