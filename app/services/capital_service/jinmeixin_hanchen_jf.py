@@ -21,6 +21,8 @@ class JinmeixinhanchenjfMock(JinmeixindaqinMock):
             interest_amount -= 100
         elif interest_type == 'more':
             interest_amount += 100
+        elif interest_type == "zero":
+            interest_amount = 0
         value = dict(zip(('$.data.data.repaymentPrinciple', '$.data.data.repaymentInterest',
                           '$.data.data.repaymentTotalAmt'), (
                              principal_amount,
