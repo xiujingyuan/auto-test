@@ -39,5 +39,5 @@ class JinmeixinhanchenjfMock(JinmeixindaqinMock):
                           '$.data.data.repayList[0].status'),
                           (self.asset.asset_due_bill_no, period, self.get_date(is_str=True, fmt='%Y%m%d'),
                            interest_amount,
-                           principal_amount, principal_amount + interest_amount, code)))
+                           principal_amount, withhold.withhold_amount, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
