@@ -23,15 +23,17 @@ class JinmeixindaqinMock(BusinessMock):
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
             interest_amount = interest_amount + 1
+        elif interest_type == 'zero':
+            interest_amount = 0
 
         repayPlanList = []
         for period in list(range(self.period_start, self.period_end + 1)):
             repayPlanList.append({
                 "termNo": period,
                 "repayDate": self.get_date(is_str=True, fmt="%Y%m%d"),
-                "repayAmt": repayPlanDict[period]['principal'] + repayPlanDict[period]['interest'] + repayPlanDict[period]['fee'],
+                "repayAmt": repayPlanDict[period]['principal'] + interest_amount + repayPlanDict[period]['fee'],
                 "repayPrin": repayPlanDict[period]['principal'],
-                "repayInt": repayPlanDict[period]['interest'],
+                "repayInt": interest_amount,
                 "repayPen": 0,
                 "repayFee": repayPlanDict[period]['fee']
             })
