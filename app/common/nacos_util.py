@@ -7,10 +7,11 @@ from app.model.Model import NacosConfig
 
 NACOS_DOMAIN_DICT = {
     "china": "nacos.k8s-ingress-nginx.kuainiujinke.com",
-    "tha": "biz-nacos-tha.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
-    "phl": "nacos-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
-    "mex": "nacos-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com",
-    "ind": "biz-nacos-ind.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com"
+    "tha": "nacos-test-tha.starklotus.com",
+    "phl": "nacos-test-phl.starklotus.com",
+    "mex": "nacos-test-mex.starklotus.com",
+    "ind": "nacos-test-ind.starklotus.com",
+    "pak": "nacos-test-pak.starklotus.com"
 }
 
 
