@@ -334,6 +334,8 @@ class BaseService(object):
     @staticmethod
     def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):
         date = date if date is not None else datetime.datetime.now(timezone)
+        date = date if isinstance(date, (datetime.datetime, datetime.date)) \
+            else datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
         new_data = date + relativedelta(**kwargs)
         return new_data.strftime(fmt) if is_str else new_data
 

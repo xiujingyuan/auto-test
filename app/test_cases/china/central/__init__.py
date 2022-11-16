@@ -100,7 +100,7 @@ class BizCentralTest(BaseAutoTest):
             # 检查生成新的推送
             self.check_capital_notify_exist()
 
-    def get_real_plan_at(self, plan_at, plan_period_start):
+    def get_real_plan_at(self, plan_at, plan_period_start, is_str=True):
         ret_plan_at = ''
         plan_at_list = plan_at.split("+")
         if len(plan_at_list) < 3:
@@ -118,7 +118,7 @@ class BizCentralTest(BaseAutoTest):
         if plan_at_type.upper() == "T":
             ret_plan_at = self.add_work_days(ret_plan_at, plan_at_day)
         elif plan_at_type.upper() == 'D':
-            ret_plan_at = self.get_date(date=ret_plan_at, days=plan_at_day, is_str=True)
+            ret_plan_at = self.get_date(date=ret_plan_at, days=plan_at_day, is_str=is_str)
         return ret_plan_at
 
     def get_real_amount(self, amount_type):
@@ -185,6 +185,25 @@ class BizCentralTest(BaseAutoTest):
                                                                  record_type='to_spec_dict')['capital_tran_info']
         return self.check_result(except_capital_tran, actual_capital_tran, 'capital_tran', ['type', 'period'])
 
+    def check_dcs_push(self, case):
+        # S20221668509675_normal_1_1
+        except_dcs_push = json.loads(case.test_cases_check_central_msg)
+        order_no = ''.join((self.item_no, except_dcs_push['push_type'], self.repay_period_start, self.repay_period_end))
+        dcs_msg = self.central.get_central_msg(order_no, record_type='obj')
+        if dcs_msg:
+            raise CaseException('not create push dcs msg!')
+        if len(dcs_msg) > 1:
+            raise CaseException('the create push dcs msg is too more!')
+        dcs_msg_content = json.loads(dcs_msg[0].sendmsg_content)['body']
+        if dcs_msg_content['type'] != 'CapitalTransactionClearing':
+            raise CaseException('the create push dcs msg is too more!')
+        if dcs_msg_content['data']['loan_channel'] != 'yumin_zhongbao':
+            raise CaseException('the create push dcs msg is too more!')
+        if dcs_msg_content['data']['repay_type'] != 'CapitalTransactionClearing':
+            raise CaseException('the create push dcs msg is too more!')
+        if dcs_msg_content['type'] != 'CapitalTransactionClearing':
+            raise CaseException('the create push dcs msg is too more!')
+
     def check_capital_tran_status(self, case):
         # 推送后检查settlement状态
         # {
@@ -198,12 +217,24 @@ class BizCentralTest(BaseAutoTest):
         # }
         except_capital_tran = json.loads(case.test_cases_check_capital_tran)
         except_capital_tran_key = list(except_capital_tran.keys())
-        except_capital_tran['expect_finished_at'] = self.get_real_plan_at(except_capital_tran['expect_finished_at'],
-                                                                          self.repay_period_start)
-        except_capital_tran['expect_operate_at'] = self.get_real_plan_at(except_capital_tran['expect_operate_at'],
-                                                                         self.repay_period_start)
-        except_capital_tran['actual_operate_at'] = self.get_real_plan_at(except_capital_tran['actual_operate_at'],
-                                                                         self.repay_period_start)
+        expect_finished_at = self.get_real_plan_at(except_capital_tran['expect_finished_at'],
+                                                   self.repay_period_start,
+                                                   is_str=False)
+        expect_operate_at = self.get_real_plan_at(except_capital_tran['expect_operate_at'],
+                                                  self.repay_period_start,
+                                                  is_str=False)
+        actual_operate_at = self.get_real_plan_at(except_capital_tran['actual_operate_at'],
+                                                  self.repay_period_start,
+                                                  is_str=False)
+        except_capital_tran['expect_finished_at'] = self.get_date(date=expect_finished_at,
+                                                                  fmt='%Y-%m-%d',
+                                                                  is_str=True)
+        except_capital_tran['expect_operate_at'] = self.get_date(date=expect_operate_at,
+                                                                 fmt='%Y-%m-%d 00:00:00',
+                                                                 is_str=True)
+        except_capital_tran['actual_operate_at'] = self.get_date(date=actual_operate_at,
+                                                                 fmt='%Y-%m-%d %H:%M:00',
+                                                                 is_str=True)
         amount = self.get_real_amount(except_capital_tran['amount'])
         except_capital_tran_list = []
         for item in except_capital_tran['type']:
@@ -227,7 +258,8 @@ class BizCentralTest(BaseAutoTest):
         actual_period = set(map(lambda x: x['period'], actual_capital_tran))
         if max(actual_period) > self.repay_period_end:
             raise CaseException('the capital tran change more then except!')
-        return self.check_result(except_capital_tran_list, actual_capital_tran, except_capital_tran_key, [])
+        return self.check_result(except_capital_tran_list, actual_capital_tran, except_capital_tran_key,
+                                 ['period', 'type'])
 
     def check_capital_notify_exist(self):
         capital_notify = self.central.get_capital_notify_info_by_id(self.capital_notify_id)
@@ -267,8 +299,8 @@ class BizCentralTest(BaseAutoTest):
         df_expect_capital_notify = pd.DataFrame.from_records(except_value, index=index).sort_values(by=index)
 
         pd_con = df_expect_capital_notify.compare(df_actual_capital_notify,
-                                                  align_axis=1)\
-            .rename(index={'self': '期望值', 'other': '实际值'}, level=-1)
+                                                  align_axis=1).rename(index={'self': '期望值', 'other': '实际值'},
+                                                                       level=-1)
         if not pd_con.empty:
             raise CaseException("the {1} check fail with result is: \r\n{0} ".format(pd_con, fail_msg))
 

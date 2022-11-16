@@ -27,6 +27,7 @@ class RepayBaseService(BaseService):
         self.fox_repay_url = self.repay_host + "/fox/manual-withhold-encrypt"
         self.refresh_url = self.repay_host + "/asset/refreshLateFee"
         self.send_msg_url = self.repay_host + "/paydayloan/repay/bindSms"
+        self.buyback_url = self.repay_host + "/asset/buy-back"
         self.pay_svr_callback_url = self.repay_host + "/paysvr/callback"
         self.pay_svr_offline_callback_url = self.repay_host + "/paysvr/offline-withhold/callback"
         self.reverse_url = self.repay_host + "/asset/repayReverse"
@@ -469,18 +470,22 @@ class RepayBaseService(BaseService):
         find_exist = self.db_session.query(Buyback).filter(Buyback.buyback_asset_item_no == item_no).first()
         if find_exist:
             return '已经在回购表中'
-        buy_back = self.db_session.query(Buyback).order_by(desc(Buyback.buyback_id)).first()
-        new_back = Buyback()
-        for attr in buy_back.__dict__:
-            if attr in ('buyback_id', '_sa_instance_state'):
-                continue
-            setattr(new_back, attr, getattr(buy_back, attr))
-        new_back.buyback_asset_item_no = item_no
-        new_back.buyback_asset_loan_channel = channel
-        new_back.buyback_min_period = period_start
-        self.db_session.add(new_back)
-        self.db_session.commit()
-        return '添加成功'
+        param = {
+            "from_system": "BIZ",
+            "key": self.__create_req_key__(item_no, prefix='Buyback'),
+            "type": "asset_buyback_notify",
+            "data": {
+                "asset_item_no": item_no,
+                "period_count": "12",
+                "granted_principal_amount": "300000",
+                "start_period": period_start,
+                "buyback_total_principal_amount": "251762",
+                "buyback_total_interest_amount": "2030",
+                "channel": channel,
+                "buyback_start_date": self.get_date(fmt='%Y-%m-%d 00:00:00', is_str=True)
+            }
+        }
+        return Http.http_post(self.buyback_url, param)
 
     def remove_buyback(self, item_no, channel):
         self.db_session.query(Buyback).filter(Buyback.buyback_asset_item_no == item_no,
