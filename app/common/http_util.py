@@ -61,6 +61,23 @@ class Http(object):
     @classmethod
     @modify_resp
     @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
+    def http_delete(cls, url, req_data, headers=None, cookies=None):
+        headers = JSON_HEADER if headers is None else headers
+        resp = None
+        try:
+            if 'application/json' in str(headers).lower():
+                resp = requests.delete(url=url, json=req_data, headers=headers, cookies=cookies, timeout=150)
+            elif 'application/x-www-form-urlencoded' in str(headers).lower():
+                resp = requests.delete(url=url, data=req_data, headers=headers, cookies=cookies, timeout=150)
+            elif 'multipart/form-data' in str(headers).lower():
+                resp = requests.delete(url, headers=headers, cookies=cookies, data=req_data, files=[])
+        except Exception as e:
+            LogUtil.log_info("http request error: %s" % e)
+        return url, req_data, resp
+
+    @classmethod
+    @modify_resp
+    @retry(stop=stop_after_attempt(5), wait=wait_fixed(2))
     def http_get(cls, url, req_data=None, headers=None, cookies=None):
         headers = JSON_HEADER if headers is None else headers
         try:

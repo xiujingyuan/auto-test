@@ -6,6 +6,9 @@ from app.test_cases.china.central import BizCentralTest
 
 
 class YuminzhongbaoCentralAutoTest(BizCentralTest):
+    
+    def __init__(self, env, environment, mock_name):
+        super(YuminzhongbaoCentralAutoTest, self).__init__(env, environment, mock_name)
 
     def modify_plan_at(self, plan_at):
         plan_at = datetime.strptime(plan_at, "%Y-%m-%d %H:%M:%S")

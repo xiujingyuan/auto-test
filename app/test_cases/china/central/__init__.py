@@ -13,7 +13,7 @@ from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
 class BizCentralTest(BaseAutoTest):
 
     def __init__(self, env, environment, mock_name):
-        super(BizCentralTest, self).__init__(env, environment)
+        super(BizCentralTest, self).__init__(env, environment, 'biz-central-{0}')
         self.central = ChinaBizCentralService(env, environment, mock_name)
         self.repay = ChinaRepayService(env, environment, mock_name)
         self.repay_info = None
@@ -150,6 +150,9 @@ class BizCentralTest(BaseAutoTest):
         self.run_capital_push(real_plan_at.strftime("%Y-%m-%d"))
         push_type = ''.join(map(lambda x: x.title(), self.channel.split('_'))) + 'CapitalPush'
         self.central.run_central_task_by_order_no(self.item_no, task_type=push_type)
+        actual_request = self.get_capital_request_info(push_type, self.item_no)
+        except_request = json.loads(case.test_cases_check_interface)
+        return self.check_result(except_request, actual_request, 'check_interface', ['url', 'request'])
 
     def check_settlement_repay(self, task_data):
         """
@@ -186,35 +189,35 @@ class BizCentralTest(BaseAutoTest):
         return self.check_result(except_capital_tran, actual_capital_tran, 'capital_tran', ['type', 'period'])
 
     def check_dcs_push(self, case):
-        # S20221668509675_normal_1_1
+        # 检查推送dcs的推送
         except_dcs_push = json.loads(case.test_cases_check_central_msg)
-        order_no = ''.join((self.item_no, except_dcs_push['push_type'], self.repay_period_start, self.repay_period_end))
+        order_no = ''.join((self.item_no, '_',
+                            except_dcs_push['push_type'], '_',
+                            str(self.repay_period_start), '_',
+                            str(self.repay_period_end)))
         dcs_msg = self.central.get_central_msg(order_no, record_type='obj')
-        if dcs_msg:
+        if not dcs_msg:
             raise CaseException('not create push dcs msg!')
         if len(dcs_msg) > 1:
             raise CaseException('the create push dcs msg is too more!')
         dcs_msg_content = json.loads(dcs_msg[0].sendmsg_content)['body']
         if dcs_msg_content['type'] != 'CapitalTransactionClearing':
             raise CaseException('the create push dcs msg is too more!')
-        if dcs_msg_content['data']['loan_channel'] != 'yumin_zhongbao':
-            raise CaseException('the create push dcs msg is too more!')
-        if dcs_msg_content['data']['repay_type'] != 'CapitalTransactionClearing':
-            raise CaseException('the create push dcs msg is too more!')
-        if dcs_msg_content['type'] != 'CapitalTransactionClearing':
-            raise CaseException('the create push dcs msg is too more!')
+        if dcs_msg_content['data']['loan_channel'] != self.channel:
+            raise CaseException('the loan_channel is error')
+        if dcs_msg_content['data']['repay_type'] != except_dcs_push['push_type']:
+            raise CaseException('the repay_type is error!')
+        actual_msg_content = dcs_msg_content['data']['capital_transactions']
+        except_msg_content = self.central.get_capital_tran_info(self.item_no,
+                                                                 self.repay_period_start,
+                                                                 self.repay_period_end,
+                                                                 tuple(except_dcs_push['type']),
+                                                                 except_dcs_push['push_type'])['capital_tran_info']
+        return self.check_result(actual_msg_content, except_msg_content, 'check_dcs_push',
+                                 ['period', 'amount_type'])
 
     def check_capital_tran_status(self, case):
         # 推送后检查settlement状态
-        # {
-        #     "expect_finished_at": "push+D",
-        #     "expect_operate_at": "push+D",
-        #     "actual_operate_at": "push+D",
-        #     "operation_type": "normal",
-        #     "status": "finished",
-        #     "amount": "withhold",
-        #     "type": ["principal", "interest"]
-        # }
         except_capital_tran = json.loads(case.test_cases_check_capital_tran)
         except_capital_tran_key = list(except_capital_tran.keys())
         expect_finished_at = self.get_real_plan_at(except_capital_tran['expect_finished_at'],
@@ -233,7 +236,7 @@ class BizCentralTest(BaseAutoTest):
                                                                  fmt='%Y-%m-%d 00:00:00',
                                                                  is_str=True)
         except_capital_tran['actual_operate_at'] = self.get_date(date=actual_operate_at,
-                                                                 fmt='%Y-%m-%d %H:%M:00',
+                                                                 fmt='%Y-%m-%d %H:00:00',
                                                                  is_str=True)
         amount = self.get_real_amount(except_capital_tran['amount'])
         except_capital_tran_list = []
@@ -258,7 +261,7 @@ class BizCentralTest(BaseAutoTest):
         actual_period = set(map(lambda x: x['period'], actual_capital_tran))
         if max(actual_period) > self.repay_period_end:
             raise CaseException('the capital tran change more then except!')
-        return self.check_result(except_capital_tran_list, actual_capital_tran, except_capital_tran_key,
+        return self.check_result(except_capital_tran_list, actual_capital_tran, 'check_capital_tran_status',
                                  ['period', 'type'])
 
     def check_capital_notify_exist(self):
@@ -295,14 +298,17 @@ class BizCentralTest(BaseAutoTest):
             check_key = list(except_value.keys())
             except_value = [except_value]
             actual_value = [actual_value]
-        df_actual_capital_notify = pd.DataFrame.from_records(data=actual_value, columns=check_key, index=index).sort_values(by=index)
-        df_expect_capital_notify = pd.DataFrame.from_records(except_value, index=index).sort_values(by=index)
+        df_actual_capital_notify = pd.DataFrame.from_records(data=actual_value,
+                                                             columns=check_key,
+                                                             index=index).sort_values(by=index)
+        df_expect_capital_notify = pd.DataFrame.from_records(except_value,
+                                                             index=index).sort_values(by=index)
 
-        pd_con = df_expect_capital_notify.compare(df_actual_capital_notify,
-                                                  align_axis=1).rename(index={'self': '期望值', 'other': '实际值'},
-                                                                       level=-1)
+        pd_con = df_expect_capital_notify.compare(df_actual_capital_notify, align_axis=1)
+
         if not pd_con.empty:
-            raise CaseException("the {1} check fail with result is: \r\n{0} ".format(pd_con, fail_msg))
+            raise CaseException("the {1} check fail with result is: \r\n{0} ".format(
+                pd_con.rename(columns={"self": "期望值", "other": "实际值"}), fail_msg))
 
     @wait_timeout
     def run_capital_push(self, plan_at):

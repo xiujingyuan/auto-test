@@ -388,7 +388,7 @@ class ChinaBizCentralService(BaseService):
             if str(capital_tran_item.capital_transaction_actual_operate_at) != '1000-01-01 00:00:00':
                 actual_operate_at = self.get_date(
                     date=capital_tran_item.capital_transaction_actual_operate_at,
-                    fmt='%Y-%m-%d %H:%M:00', is_str=True)
+                    fmt='%Y-%m-%d %H:00:00', is_str=True)
                 capital_tran_item.capital_transaction_actual_operate_at = self.get_date(
                     date=actual_operate_at)
             capital_tran.append(capital_tran_item)

@@ -5,6 +5,7 @@ import traceback
 from dateutil.relativedelta import relativedelta
 
 from app import db
+from app.common.es_util import ES
 from app.common.log_util import LogUtil
 from app.model.Model import TestCase, RunCaseLog
 
@@ -35,11 +36,15 @@ class CaseException(Exception):
 
 
 class BaseAutoTest(object):
-    def __init__(self, env, environment):
+    def __init__(self, env, environment, service):
         self.env = env
         self.environment = environment
         self.run_case_log = RunCaseLog()
         self.item_no = None
+        self.es = ES(service.format(env))
+
+    def get_capital_request_info(self, task_type, order_no):
+        return self.es.get_request_child_info(task_type, orderNo=order_no)
 
     @staticmethod
     def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):

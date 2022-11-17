@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
-import requests
+import datetime
+import json
+
 from elasticsearch import Elasticsearch
-from tenacity import retry, wait_fixed, stop_after_attempt
-import common.global_const as gc
-from biztest.util.tools.tools import get_date
 
 from app.common.http_util import Http
-from app.common.log_util import LogUtil
+from app.common.tools import get_date
 
 
 class ES(object):
@@ -15,10 +14,16 @@ class ES(object):
         ".": "__"
     }
 
-    def __init__(self, service_name, service_index=None):
-        self.service = service_name
-        self.es = Elasticsearch(gc.ES_URL)
-        self.index = service_index if index else 'jaeger-span-*'
+    def __init__(self, services, indexs="jaeger-span-*"):
+        """
+        初始化
+        :param services:
+        :param indexs:
+        """
+        self.services = services
+        self.es_url = "http://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com:80"
+        self.es = Elasticsearch(self.es_url)
+        self.index = indexs
 
     @staticmethod
     def parse_tag(tag):
@@ -28,20 +33,19 @@ class ES(object):
         return tag
 
     @staticmethod
-    def deparse_tag(tag):
+    def de_parse_tag(tag):
         for key, value in ES.tag_delimiter_mapping.items():
             if value in tag:
                 tag = tag.replace(value, key)
         return tag
 
     @staticmethod
-    def search_trace_body(service_name, operation_type, order, **kwargs):
+    def search_trace_body(services, operate, order, **tags):
         """
         组装查询语句：根据service、操作、标签搜索
-        :param service_name:
-        :param operation_type:
+        :param services:
+        :param operate:
         :param order:
-        :param kwargs:
         :return:
         """
         body = {
@@ -49,14 +53,14 @@ class ES(object):
             "query": {
                 "bool": {
                     "must": [
-                        {"match": {"process.serviceName": service_name}},
-                        {"match": {"operationName": operation_type}}
+                        {"match": {"process.serviceName": services}},
+                        {"match": {"operationName": operate}}
                     ]
                 }
             }
         }
-        for tag_key, tag_value in kwargs.items():
-            tag_key = ES.deparse_tag(tag_key)
+        for tag_key, tag_value in tags.items():
+            tag_key = ES.de_parse_tag(tag_key)
             body["query"]["bool"]["must"].append({
                 "nested": {
                     "path": "tags",
@@ -73,10 +77,41 @@ class ES(object):
         return body
 
     @staticmethod
-    def search_span_body(service_name, trace_id, operation_lt, order):
+    def search_all_child_body(services, trace_id, order):
+        body = {
+            "sort": {"startTime": {"order": order}},
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"process.serviceName": services}},
+                        {"match": {"traceID": trace_id}},
+                        {
+                            "nested": {
+                                "path": "references",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {"match": {"references.spanID": trace_id}}
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "should": [
+                        {"match_all": {}}
+                    ],
+                    "minimum_should_match": 1
+                }
+            }
+        }
+        return body
+
+    @staticmethod
+    def search_span_body(services, trace_id, operation_lt, order):
         """
         组装查询语句：根据service、trace_id和具体操作列表搜索
-        :param service_name:
+        :param services:
         :param trace_id:
         :param operation_lt:
         :param order:
@@ -87,7 +122,7 @@ class ES(object):
             "query": {
                 "bool": {
                     "must": [
-                        {"match": {"process.serviceName": service_name}},
+                        {"match": {"process.serviceName": services}},
                         {"match": {"traceID": trace_id}},
                         {
                             "nested": {
@@ -109,17 +144,17 @@ class ES(object):
                 }
             }
         }
+
         return body
 
-    @retry(stop=stop_after_attempt(10), wait=wait_fixed(3))
-    def get_request_log(self, operation_type, child_operation_lt, order='desc', operation_index=0, **kwargs):
+    def get_request_log(self, operate, child_operate_lt, order='desc', operation_index=0, **tags):
         """
         从es获取请求日志，获取多条
-        :param order_no: 资产编号
-        :param operation_type: 业务节点
-        :param child_operation_lt: 子业务节点list
+        :param operate: 业务节点
+        :param child_operate_lt: 子业务节点list
         :param order: 按时间排序 desc/asc
         :param operation_index: 业务节点索引号
+        :param tags：搜索条件比如 orderNo=xxxxxx, reqDto__key=xxxxxx
         :return: 请求日志json：
         {
             '子业务节点1': [{
@@ -133,40 +168,83 @@ class ES(object):
             ...]
         }
         """
-        ret_data_dt = {x:[] for x in child_operation_lt}
+        ret_data_dt = {}
         # 1.查到trace_id
-        resp = self.es.search(index=self.index, body=self.search_trace_body(self.service, operation_type, order,
-                                                                            **kwargs))
-        LogUtil.log_info("hits trace: %s" % resp)
-        trace_id = resp['hits']['hits'][operation_index]['_source']['traceID']
+        param = self.search_trace_body(self.services, operate, order, **tags)
+        resp = self.es.search(index=self.index, body=param)
+        print("hits trace: %s" % resp)
+        hits = resp['hits']['hits']
+        if hits:
+            trace_id = hits[operation_index]['_source']['traceID']
+            # 2.查询具体span
+            # param = self.search_span_body(self.services, trace_id, child_operate_lt, order)
+            param = self.search_all_child_body(self.services, trace_id, order)
+            resp = self.es.search(index=self.index, body=param)
+            print("hits spans: %s" % resp)
+
+            for span in hits:
+                operate_name = span['_source']['operationName']
+                if operate_name not in hits:
+                    ret_data_dt[operate_name] = []
+                req_dt = {}
+                for tag in span['_source']['tags']:
+                    req_dt[tag['key']] = tag['value']
+                for log in span['_source']['logs']:
+                    req_dt[log['fields'][0]['key']] = log['fields'][0]['value']
+                ret_data_dt[operate_name].append(req_dt)
+
+            print("hits es log: %s" % ret_data_dt)
+            return ret_data_dt
+        return None
+
+    def get_request_child_info(self, operate, order='desc', operation_index=0, **tags):
+        """
+        获取请求地址，参数和返回
+        :param operate:
+        :param order:
+        :param operation_index:
+        :param tags:
+        :return:
+        """
+        ret_data_dt = {}
+        # 1.查到trace_id
+        param = self.search_trace_body(self.services, operate, order, **tags)
+        resp = self.es.search(index=self.index, body=param)
+        print("hits trace: %s" % resp)
+        hits = resp['hits']['hits']
+        if not hits:
+            return None
+        trace_id = hits[operation_index]['_source']['traceID']
         # 2.查询具体span
-        resp = self.es.search(index=self.index, body=self.search_span_body(self.service, trace_id, child_operation_lt,
-                                                                           order))
-        LogUtil.log_info("hits spans: %s" % resp)
-        hits_spans = resp['hits']['hits']
-        for span in hits_spans:
-            req_dt = {}
+        param = self.search_all_child_body(self.services, trace_id, order)
+        resp = self.es.search(index=self.index, body=param)
+        for span in resp['hits']['hits']:
+            operate_time = datetime.datetime.fromtimestamp(
+                span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            if operate_time not in hits:
+                ret_data_dt[operate_time] = []
+            req_dt = {'operate_time': operate_time}
             for tag in span['_source']['tags']:
-                req_dt[ES.parse_tag(tag['key'])] = tag['value']
+                req_dt[tag['key']] = tag['value']
             for log in span['_source']['logs']:
-                req_dt[ES.parse_tag(log['fields'][0]['key'])] = log['fields'][0]['value']
-            ret_data_dt[span['_source']['operationName']].append(req_dt)
-        LogUtil.log_info("hits es log: %s" % ret_data_dt)
-        return ret_data_dt
+                req_dt[log['fields'][0]['key']] = log['fields'][0]['value']
+            ret_data_dt[operate_time].append(req_dt)
+        log_info = [x for x in ret_data_dt.values()][0]
+        return [{'url': info['http.url'], 'operate_time': info['operate_time'],
+                'request': json.loads(info['feign.request']), 'response': json.loads(info['feign.response'])}
+                for info in log_info]
 
     @classmethod
     def clear_log(cls, last_day):
-        for i in range(last_day, last_day+3):
+        for i in range(last_day, last_day+5):
             date = get_date(day=-i, fmt="%Y-%m-%d")
             Http.http_delete("http://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com/*{}*".format(date))
 
 
 if __name__ == '__main__':
-    index = "jaeger-span-2021-03-11"
-    service = "repay1"
-    order_no = "10025423"
+    service = "repay2"
+    order_no = "10071889"
     operation = "execute_combine_withhold"
-    child_operation_lt = ["/mock/5de5d515d1784d36471d6041/rbiz_auto_test/gbiz/user-id-query",
-                          "/mock/5de5d515d1784d36471d6041/rbiz_auto_test/lanzhou/repaymentApply"]
     es = ES(service)
-    req2 = es.get_request_log(order_no, operation, child_operation_lt, order='desc', operation_index=0)
+    req2 = es.get_request_child_info(operation, order='desc', operation_index=0, orderNo=order_no)
+    print(req2)
