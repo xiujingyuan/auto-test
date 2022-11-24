@@ -7,7 +7,7 @@ from app.common.assert_util import Assert
 from app.services import wait_timeout
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.repay.service import ChinaRepayService
-from app.test_cases import BaseAutoTest, run_case_prepare, CaseException
+from app.test_cases import BaseAutoTest, run_case_prepare, CaseException, print_step
 
 
 class BizCentralTest(BaseAutoTest):
@@ -51,6 +51,7 @@ class BizCentralTest(BaseAutoTest):
             return True
         return False
 
+    @print_step
     def prepare_asset(self, case):
         self.channel = case.test_cases_channel
         asset_info = json.loads(case.test_cases_asset_info)
@@ -151,9 +152,17 @@ class BizCentralTest(BaseAutoTest):
         push_type = ''.join(map(lambda x: x.title(), self.channel.split('_'))) + 'CapitalPush'
         self.central.run_central_task_by_order_no(self.item_no, task_type=push_type)
         actual_request = self.get_capital_request_info(push_type, self.item_no)
+        if not actual_request:
+            return 'success'
+        if actual_request is None:
+            return 'trace service is error!'
         except_request = json.loads(case.test_cases_check_interface)
-        return self.check_result(except_request, actual_request, 'check_interface', ['url', 'request'])
+        if except_request:
+            if except_request['url'] is None:
+                return 'success'
+            return self.check_result(except_request, actual_request, 'check_interface', ['url', 'request'])
 
+    @print_step
     def check_settlement_repay(self, task_data):
         """
         落库时检查capital_tran
@@ -188,6 +197,7 @@ class BizCentralTest(BaseAutoTest):
                                                                  record_type='to_spec_dict')['capital_tran_info']
         return self.check_result(except_capital_tran, actual_capital_tran, 'capital_tran', ['type', 'period'])
 
+    @print_step
     def check_dcs_push(self, case):
         # 检查推送dcs的推送
         except_dcs_push = json.loads(case.test_cases_check_central_msg)
@@ -208,14 +218,20 @@ class BizCentralTest(BaseAutoTest):
         if dcs_msg_content['data']['repay_type'] != except_dcs_push['push_type']:
             raise CaseException('the repay_type is error!')
         actual_msg_content = dcs_msg_content['data']['capital_transactions']
+
         except_msg_content = self.central.get_capital_tran_info(self.item_no,
                                                                  self.repay_period_start,
                                                                  self.repay_period_end,
                                                                  tuple(except_dcs_push['type']),
                                                                  except_dcs_push['push_type'])['capital_tran_info']
-        return self.check_result(actual_msg_content, except_msg_content, 'check_dcs_push',
+        for item in except_msg_content:
+            item['expect_finish_at'] = '{0} 00:00:00'.format(item['expect_finished_at'])
+            item['amount_type'] = item['type']
+            item['withhold_channel'] = item['channel']
+        return self.check_result(actual_msg_content, except_msg_content , 'check_dcs_push',
                                  ['period', 'amount_type'])
 
+    @print_step
     def check_capital_tran_status(self, case):
         # 推送后检查settlement状态
         except_capital_tran = json.loads(case.test_cases_check_capital_tran)
@@ -264,12 +280,14 @@ class BizCentralTest(BaseAutoTest):
         return self.check_result(except_capital_tran_list, actual_capital_tran, 'check_capital_tran_status',
                                  ['period', 'type'])
 
+    @print_step
     def check_capital_notify_exist(self):
         capital_notify = self.central.get_capital_notify_info_by_id(self.capital_notify_id)
         if not capital_notify.capital_notify_status == 'success':
             raise CaseException('capital_notify status error ,need success,but {0} found'.format(
                 capital_notify.capital_notify_status))
 
+    @print_step
     def check_capital_notify(self, case):
         # 执行notify任务
         self.run_capital_notify_task()
@@ -339,6 +357,7 @@ class BizCentralTest(BaseAutoTest):
             self.central.update_service_url(mock_name)
             raise CaseException("the gate config is error,need mock!")
 
+    @print_step
     def repay_asset(self, case):
         self.repay_info = json.loads(case.test_cases_repay_info)
         self.repay_period_start = self.repay_info['period_start']
@@ -348,6 +367,8 @@ class BizCentralTest(BaseAutoTest):
         mock_name = self.repay_info['mock_name']
         withhold_channel = self.repay_info['withhold_channel']
         repay_type = self.repay_info['repay_type']
+        day = self.repay_info['day'] if 'day' in self.repay_info else 0
+        day = -day if case.test_cases_scene == 'overdue' else day
         # 修改还款计划状态
         self.repay.set_asset_tran_status(self.repay_period_start, self.item_no)
         # 修改资方还款计划状态
@@ -358,7 +379,7 @@ class BizCentralTest(BaseAutoTest):
         # 还款准备-kv
         self.prepare_kv(case, mock_name)
         # 调整还款计划日期
-        self.repay.change_asset(self.item_no, '', 0, -self.repay_period_start, True)
+        self.repay.change_asset(self.item_no, '', day, -self.repay_period_start, True)
         # 发起代扣并执行成功
         resp = getattr(self.repay, repay_type)(item_no=self.item_no,
                                                period_start=self.repay_period_start,

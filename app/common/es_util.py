@@ -219,20 +219,20 @@ class ES(object):
         param = self.search_all_child_body(self.services, trace_id, order)
         resp = self.es.search(index=self.index, body=param)
         for span in resp['hits']['hits']:
+            operate_name = span['_source']['operationName']
             operate_time = datetime.datetime.fromtimestamp(
                 span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
             if operate_time not in hits:
-                ret_data_dt[operate_time] = []
+                ret_data_dt[operate_name] = {'count': 1}
+            else:
+                ret_data_dt[operate_name]['count'] += 1
             req_dt = {'operate_time': operate_time}
             for tag in span['_source']['tags']:
                 req_dt[tag['key']] = tag['value']
             for log in span['_source']['logs']:
                 req_dt[log['fields'][0]['key']] = log['fields'][0]['value']
-            ret_data_dt[operate_time].append(req_dt)
-        log_info = [x for x in ret_data_dt.values()][0]
-        return [{'url': info['http.url'], 'operate_time': info['operate_time'],
-                'request': json.loads(info['feign.request']), 'response': json.loads(info['feign.response'])}
-                for info in log_info]
+            ret_data_dt[operate_name].update(req_dt)
+        return ret_data_dt
 
     @classmethod
     def clear_log(cls, last_day):

@@ -2,12 +2,23 @@
 from datetime import datetime
 
 import traceback
+
+import elasticsearch
 from dateutil.relativedelta import relativedelta
 
 from app import db
 from app.common.es_util import ES
 from app.common.log_util import LogUtil
 from app.model.Model import TestCase, RunCaseLog
+
+
+def print_step(func):
+    def wrapper(self, case, **kwargs):
+        print('step {0} begin'.format(func.__name__))
+        ret = func(self, case, **kwargs)
+        print('step {0} end'.format(func.__name__))
+        return ret
+    return wrapper
 
 
 def run_case_prepare(func):
@@ -44,7 +55,14 @@ class BaseAutoTest(object):
         self.es = ES(service.format(env))
 
     def get_capital_request_info(self, task_type, order_no):
-        return self.es.get_request_child_info(task_type, orderNo=order_no)
+        try:
+            ret = self.es.get_request_child_info(task_type, orderNo=order_no)
+        except elasticsearch.exceptions.TransportError as e:
+            ret = None
+        except Exception as e:
+            ret = e
+        finally:
+            return ret
 
     @staticmethod
     def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):

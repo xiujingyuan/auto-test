@@ -35,8 +35,6 @@ class Nacos(object):
         self.tenant = tenant
         self.old_value = {}
 
-        self.login()
-
     def login(self):
         try:
             url = self.login_url.format(self.domain)

@@ -12,7 +12,7 @@ class JinmeixinhanchenjfMock(JinmeixindaqinMock):
         self.trail_url = '/jingfa/{0}/kuainiu/apply/repayTrial'.format(self.channel)
         self.trail_query_url = ''
         self.repay_plan_url = ''
-        self.repay_apply_url = '/jingfa/{0}/kuainiu/apply/repayTrial'.format(self.channel)
+        self.repay_apply_url = '/jingfa/{0}/kuainiu/apply/repayApply'.format(self.channel)
         self.repay_apply_query_url = '/jingfa/{0}/kuainiu/query/repayResultQuery'.format(self.channel)
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
