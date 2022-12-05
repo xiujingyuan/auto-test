@@ -29,7 +29,7 @@ spec:
       terminationGracePeriodSeconds: 45
       containers:
         - name: auto-test
-          image: registry.kuainiujinke.com/cd_biz/auto-vue:v1.1
+          image: registry.kuainiujinke.com/cd_biz/auto-vue:v3.0.11
           imagePullPolicy: Always
           env:
             - name: aliyun.logs.auto-test
