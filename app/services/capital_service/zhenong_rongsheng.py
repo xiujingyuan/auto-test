@@ -16,6 +16,10 @@ class ZhenongrongshengMock(BusinessMock):
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
+        principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
+        principal_amount = principal_amount[0]
+        interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
+        interest_amount = interest_amount[0]
         value = dict(zip(('$.data.data.capital', '$.data.data.interest'),
                          (principal_amount, interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')
