@@ -21,8 +21,15 @@ class ZhenongrongshengMock(BusinessMock):
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
         principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
         code = 0 if success_type.lower() == 'success' else 90000
-        status = 'SUCCESS' if success_type.lower() == 'success' else 'FAIL'
-        value = dict(zip(('$.data.repayAmount', '$.data.repayStatus', '$.code'), (
+        status = 'S' if success_type.lower() == 'success' else 'F'
+        value = dict(zip(('$.data.applyRepayAmount',
+                          '$.data.realRepayAmount',
+                          '$.data.realCapital',
+                          '$.data.realInterest',
+                          '$.status'), (
             principal_amount + interest_amount,
+            principal_amount + interest_amount,
+            principal_amount,
+            interest_amount,
             status, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
