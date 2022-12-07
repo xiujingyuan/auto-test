@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from app.services.capital_service import BusinessMock
 
 
@@ -20,6 +22,10 @@ class ZhenongrongshengMock(BusinessMock):
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
         principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
+        principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
+        principal_amount = principal_amount[0]
+        interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
+        interest_amount = interest_amount[0]
         code = 0 if success_type.lower() == 'success' else 90000
         status = 'S' if success_type.lower() == 'success' else 'F'
         value = dict(zip(('$.data.data.applyRepayAmount',
@@ -27,9 +33,9 @@ class ZhenongrongshengMock(BusinessMock):
                           '$.data.data.realCapital',
                           '$.data.data.realInterest',
                           '$.data.data.status'), (
-            principal_amount + interest_amount,
-            principal_amount + interest_amount,
-            principal_amount,
-            interest_amount,
+            str(principal_amount + interest_amount),
+            str(principal_amount + interest_amount),
+            str(principal_amount),
+            str(interest_amount),
             status, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
