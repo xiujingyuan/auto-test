@@ -20,6 +20,7 @@ class ZhenongrongshengMock(BusinessMock):
         principal_amount = principal_amount[0]
         interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
         interest_amount = interest_amount[0]
+        principal_amount = principal_amount - 1 if principal_over else principal_amount
         if interest_type == 'less':
             interest_amount = interest_amount - 1
         elif interest_type == 'more':
