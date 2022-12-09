@@ -20,16 +20,22 @@ class ZhenongrongshengMock(BusinessMock):
         principal_amount = principal_amount[0]
         interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
         interest_amount = interest_amount[0]
+        if interest_type == 'less':
+            interest_amount = interest_amount - 1
+        elif interest_type == 'more':
+            interest_amount = interest_amount + 1
+        elif interest_type == 'zero':
+            interest_amount = 0
         value = dict(zip(('$.data.data.capital', '$.data.data.interest'),
                          (principal_amount, interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
-        principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
+        principal_amount, _, _, _, _ = self.__get_trail_amount__()
         principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
         principal_amount = principal_amount[0]
-        interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
-        interest_amount = interest_amount[0]
+        interest_detail = tuple(filter(lambda x: x.withhold_detail_asset_tran_type == 'repayinterest', withhold_detail))
+        interest = interest_detail[0].withhold_detail_withhold_amount if interest_detail else 0
         code = 0 if success_type.lower() == 'success' else 90000
         status = 'S' if success_type.lower() == 'success' else 'F'
         value = dict(zip(('$.data.data.applyRepayAmount',
@@ -37,9 +43,9 @@ class ZhenongrongshengMock(BusinessMock):
                           '$.data.data.realCapital',
                           '$.data.data.realInterest',
                           '$.data.data.status'), (
-            str(principal_amount + interest_amount),
-            str(principal_amount + interest_amount),
+            str(principal_amount + interest),
+            str(principal_amount + interest),
             str(principal_amount),
-            str(interest_amount),
+            str(interest),
             status, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
