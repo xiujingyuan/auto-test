@@ -36,7 +36,8 @@ class ZhenongrongshengMock(BusinessMock):
         principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
         principal_amount = principal_amount[0]
         interest_detail = tuple(filter(lambda x: x.withhold_detail_asset_tran_type == 'repayinterest', withhold_detail))
-        interest = interest_detail[0].withhold_detail_withhold_amount if interest_detail else 0
+        interest = float(Decimal(interest_detail[0].withhold_detail_withhold_amount / 100).quantize(Decimal("0.00"))) \
+            if interest_detail else 0
         code = 0 if success_type.lower() == 'success' else 90000
         status = 'S' if success_type.lower() == 'success' else 'F'
         value = dict(zip(('$.data.data.applyRepayAmount',
