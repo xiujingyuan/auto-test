@@ -10,11 +10,11 @@ class WeipinzhongweiMock(BusinessMock):
 
         super(WeipinzhongweiMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start, period_end)
         self.channel = 'weipin_zhongwei'
-        self.trail_url = '/zhongzhirong/{0}/repay_apl_trial'.format(self.channel)
+        self.trail_url = '/zhongzhirong/{0}/repay.apl.trial'.format(self.channel)
         self.trail_query_url = ''
-        self.repay_plan_url = '/zhongzhirong/{0}/repayplan_query'.format(self.channel)
-        self.repay_apply_url = '/zhongzhirong/{0}/repay_apl'.format(self.channel)
-        self.repay_apply_query_url = '/zhongzhirong/{0}/repay_apl_query'.format(self.channel)
+        self.repay_plan_url = '/zhongzhirong/{0}/repayplan.query'.format(self.channel)
+        self.repay_apply_url = '/zhongzhirong/{0}/repay.apl'.format(self.channel)
+        self.repay_apply_query_url = '/zhongzhirong/{0}/repay.apl.query'.format(self.channel)
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, late_amount, repayPlanDict = self.__get_trail_amount__()
