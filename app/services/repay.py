@@ -123,13 +123,14 @@ class RepayBaseService(BaseService):
     @modify_return
     def get_withhold(self, withhold_serial_no):
         withhold_list = self.db_session.query(Withhold).filter(
-            Withhold.withhold_serial_no.in_(withhold_serial_no)).all()
+            Withhold.withhold_serial_no.in_(withhold_serial_no)).order_by(desc(Withhold.withhold_id)).all()
         return withhold_list
 
     @modify_return
     def get_withhold_request(self, withhold_request_no):
         withhold_request_list = self.db_session.query(WithholdRequest).filter(
-            WithholdRequest.withhold_request_no.in_(withhold_request_no)).all()
+            WithholdRequest.withhold_request_no.in_(withhold_request_no)).order_by(
+            desc(WithholdRequest.withhold_request_id)).all()
         return withhold_request_list
 
     @modify_return
@@ -137,7 +138,7 @@ class RepayBaseService(BaseService):
         meta_class = importlib.import_module('app.services.{0}.repay.Model'.format(self.country))
         CardBind = getattr(meta_class, "CardBind")
         card_bind_list = self.db_session.query(CardBind).filter(
-            CardBind.card_bind_serial_no.in_(withhold_serial_no)).all()
+            CardBind.card_bind_serial_no.in_(withhold_serial_no)).order_by(desc(CardBind.card_bind_id)).all()
         return card_bind_list
 
     @modify_return
@@ -145,7 +146,8 @@ class RepayBaseService(BaseService):
         meta_class = importlib.import_module('app.services.{0}.repay.Model'.format(self.country))
         WithholdDetail = getattr(meta_class, "WithholdDetail")
         withhold_detail_list = self.db_session.query(WithholdDetail).filter(
-            WithholdDetail.withhold_detail_serial_no.in_(withhold_serial_no)).all()
+            WithholdDetail.withhold_detail_serial_no.in_(withhold_serial_no)).order_by(
+            desc(WithholdDetail.withhold_detail_serial_no)).all()
         return withhold_detail_list
 
     def get_withhold_info(self, item_no, request_no=None, req_key=None):
