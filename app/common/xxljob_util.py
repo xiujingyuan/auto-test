@@ -83,6 +83,20 @@ XXL_JOB_DICT = {
             "1": 4
         }
     },
+"pak": {
+        'url': 'http://biz-job-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'username': 'admin',
+        'password': '123456',
+        'repay': {
+            "1": 4
+        },
+        'grant': {
+            "1": 4
+        },
+        'clean': {
+            "1": 4
+        }
+    },
     "mex": {
         'url': 'http://biz-job-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
         'username': 'admin',

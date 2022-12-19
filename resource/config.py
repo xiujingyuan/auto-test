@@ -42,6 +42,18 @@ class AutoTestConfig:
                     "ssh_bind_port": 3331
                 }
             },
+            'pak': {
+                "repay": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/pak_rbiz{0}",
+                "grant": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/pak_gbiz{0}",
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@127.0.0.1:{1}/capital{0}",
+                "ssh": {
+                    "ssh_proxy_host": "47.116.2.104",
+                    "ssh_remote_host": "rm-uf60ec1554fou12qk33150.mysql.rds.aliyuncs.com",
+                    "ssh_user_name": "ssh-proxy",
+                    "ssh_private_key": "./resource/dx_ssh_proxy",
+                    "ssh_bind_port": 3341
+                }
+            },
             'phl': {
                 "repay": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/phl_rbiz{0}",
                 "grant": "mysql+pymysql://troot:QZOzz46rUjs$$PIKL8@127.0.0.1:{1}/phl_gbiz{0}",

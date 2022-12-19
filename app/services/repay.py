@@ -2,6 +2,7 @@ import copy
 import importlib
 import json
 import random
+import time
 from functools import reduce
 
 from sqlalchemy import desc
@@ -655,7 +656,7 @@ class RepayBaseService(BaseService):
         if refresh_late:
             self.refresh_late_fee(item_no)
             self.refresh_late_fee(item_no_rights)
-        self.sync_plan_to_bc(item_no)
+        # self.sync_plan_to_bc(item_no)
         return "修改完成"
 
 
@@ -663,7 +664,8 @@ TIMEZONE = {
     'mex': 'Mexico/General',
     'tha': 'Asia/Bangkok',
     'phl': 'Asia/Shanghai',
-    'ind': 'Asia/Kolkata'
+    'ind': 'Asia/Kolkata',
+    'pak': 'Asia/Kolkata'
 }
 
 
@@ -677,6 +679,23 @@ class OverseaRepayService(RepayBaseService):
         self.offline_refund_url = self.repay_host + '/page/asset/repeated-withhold/offline-refund'
         self.repay_joint_debt_url = self.repay_host + '/asset/settleDebt'
         self.fox_repay_url = self.repay_host + '/fox/withhold'
+
+    def operate_action(self, item_no, extend, op_type, table_name, run_date):
+        req = {'max_create_at': extend['create_at'] if hasattr(extend, 'create_at') else None,
+                'item_no': item_no,
+               'refresh_type': table_name
+               }
+        if op_type == 'reverse_item_no':
+            req['serial_no'] = extend['serial_no']
+        elif op_type in ("run_task_by_id", "run_msg_by_id"):
+            req[op_type.split("_")[1] + '_id'] = extend['id']
+        elif op_type == "del_row_data":
+            req['del_id'] = extend['id']
+        elif op_type.startswith('repay_callback_'):
+            req['serial_no'] = extend['serial_no']
+            req['status'] = 3 if op_type.endswith('fail') else 2
+            op_type = 'repay_callback'
+        return getattr(self, op_type)(**req)
 
     @query_withhold
     def fox_repay(self, item_no, payment_type, amount=0, period_start=None, period_end=None):
@@ -822,38 +841,15 @@ class OverseaRepayService(RepayBaseService):
         return id_num_info[0] if id_num_info else ''
 
     def get_four_element(self):
-        four_element = super(OverseaRepayService, self).get_four_element()
-        response = {
-            "code": 0,
-            "message": "success",
-            "data": {
-                "bank_account": four_element["data"]["bank_code"],
-                "card_num": four_element["data"]["bank_code"],
-                "mobile": four_element["data"]["phone_number"],
-                "user_name": "Craltonliu",
-                "id_number": four_element["data"]["id_number"],
-                "address": "Floor 8 TaiPingYang Building TianFuSanGai Chengdu,Sichuan,China",
-                "email": four_element["data"]["phone_number"] + "@qq.com",
-                "upi": four_element["data"]["phone_number"] + "@upi"
-            }
+        four_element = {
+                "borrower_uuid": "400486{0}".format(time.time()).split(".")[0],
+                "id_num": "enc_02_4248611931357196288_648",
+                "mobile": "enc_01_4248611560530391040_253",
+                "borrower_card_uuid": "400488{0}".format(time.time()).split(".")[0],
+                "individual_uuid": "400488{0}".format(time.time()).split(".")[0],
         }
-        data = [{"type": 1, "plain": response["data"]["mobile"]},
-                {"type": 2, "plain": response["data"]["id_number"]},
-                {"type": 3, "plain": response["data"]["card_num"]},
-                {"type": 3, "plain": response["data"]["upi"]},
-                {"type": 4, "plain": response["data"]["user_name"]},
-                {"type": 5, "plain": response["data"]["email"]},
-                {"type": 6, "plain": response["data"]["address"]}]
-        resp = Http.http_post(url=self.encrypt_url, req_data=data)
-        response["data"]["mobile_encrypt"] = resp["data"][0]["hash"]
-        response["data"]["id_number_encrypt"] = resp["data"][1]["hash"]
-        response["data"]["card_num_encrypt"] = resp["data"][2]["hash"]
-        response["data"]["upi_encrypt"] = resp["data"][3]["hash"]
-        response["data"]["user_name_encrypt"] = resp["data"][4]["hash"]
-        response["data"]["email_encrypt"] = resp["data"][5]["hash"]
-        response["data"]["address_encrypt"] = resp["data"][6]["hash"]
-        response["data"]["bank_account_encrypt"] = resp["data"][2]["hash"]
-        return response
+
+        return four_element
 
     def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item='', x_item_no=False
                   , from_app='phi011', withdraw_type='online'):
