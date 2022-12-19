@@ -407,7 +407,7 @@ class RepayBaseService(BaseService):
     def get_msg(self, task_order_no, max_create_at, refresh_id):
         msg_list = self.db_session.query(SendMsg).filter(
             SendMsg.sendmsg_order_no.in_(task_order_no),
-            SendMsg.sendmsg_id >= max_create_at).order_by(desc(SendMsg.sendmsg_id)).all()
+            SendMsg.sendmsg_create_at >= max_create_at).order_by(desc(SendMsg.sendmsg_id)).all()
         msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
         return {'msg': msg_list}
 
