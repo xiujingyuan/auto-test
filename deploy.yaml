@@ -27,9 +27,13 @@ spec:
       imagePullSecrets:
         - name: kuainiujinke-registry
       terminationGracePeriodSeconds: 45
+      hostAliases:
+      - ip: "101.34.175.3"
+        hostnames:
+         - "oa.kuainiu.io"
       containers:
         - name: auto-test
-          image: registry.kuainiujinke.com/cd_biz/auto-vue:v3.0.11
+          image: registry.kuainiujinke.com/cd_biz/auto-vue:v3.1.1
           imagePullPolicy: Always
           env:
             - name: aliyun.logs.auto-test

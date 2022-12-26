@@ -73,9 +73,10 @@ class ChinaBizCentralService(BaseService):
         return ret
 
     def get_capital_principal(self, item_no, period):
-        capital_principal = self.db_session.query(CapitalTransaction.capital_transaction_asset_item_no == item_no,
-                                                  CapitalTransaction.capital_transaction_period == period,
-                                                  CapitalTransaction.capital_transaction_type == 'principal').first()
+        capital_principal = self.db_session.query(CapitalTransaction).filter(
+            CapitalTransaction.capital_transaction_asset_item_no == item_no,
+            CapitalTransaction.capital_transaction_period == period,
+            CapitalTransaction.capital_transaction_type == 'principal').first()
         return capital_principal
 
     def update_service_url(self, mock_name):

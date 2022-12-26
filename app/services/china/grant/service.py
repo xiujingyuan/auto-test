@@ -81,6 +81,8 @@ class ChinaGrantService(GrantBaseService):
         real_req = {}
         if op_type == 'run_task_by_task_order_no':
             real_req['order_no'] = item_no
+        elif op_type == 'run_task_by_id':
+            real_req['task_id'] = extend['id']
         elif op_type == 'run_msg_by_id':
             real_req['msg_id'] = extend['id']
         if op_type == "del_row_data":

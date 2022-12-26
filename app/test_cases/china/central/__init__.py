@@ -112,10 +112,10 @@ class BizCentralTest(BaseAutoTest):
             ret_plan_at = self.get_date()
         elif plan_at_base.lower() == 'user':
             ret_plan_at = self.central.get_capital_principal(self.item_no, plan_period_start)\
-                .capital_transaction_expect_finished_at
+                .capital_transaction_user_repay_at
         elif plan_at_base.lower() == 'due_at':
             ret_plan_at = self.central.get_capital_principal(self.item_no, plan_period_start)\
-                .capital_transaction_user_repay_at
+                .capital_transaction_expect_finished_at
         if plan_at_type.upper() == "T":
             ret_plan_at = self.add_work_days(ret_plan_at, plan_at_day)
         elif plan_at_type.upper() == 'D':
@@ -127,6 +127,8 @@ class BizCentralTest(BaseAutoTest):
         if amount_type == 'withhold':
             withhold_detail = self.repay.get_withhold_detail(self.serial_no)
             for withhold in withhold_detail['withhold_detail']:
+                if withhold.startswith("AUTO_C"):
+                    continue
                 amount[withhold['asset_tran_type'].replace("repay", "")] = withhold['withhold_amount']
         return amount
 

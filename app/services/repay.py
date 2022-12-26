@@ -539,24 +539,31 @@ class RepayBaseService(BaseService):
             return '没有该资产'
         exist_asset = AutoAsset.query.filter(AutoAsset.asset_name == name, AutoAsset.asset_env == self.env).first()
         if exist_asset:
+            exist_asset.asset_env = self.env
+            exist_asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
+            db.session.add(exist_asset)
+            db.session.flush()
             return '该资产已经存在'
-        asset = AutoAsset()
-        asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
-        asset.asset_channel = repay_asset.asset_loan_channel if repay_asset is not None else \
-            grant_asset.asset_loan_channel
-        asset.asset_descript = ''
-        asset.asset_name = name
-        asset.asset_period = repay_asset.asset_period_count if repay_asset is not None else \
-            grant_asset.asset_loan_channel
-        asset.asset_env = self.env
-        asset.asset_type = source_type
-        asset.asset_country = self.country
-        asset.asset_source_type = 1
-        asset.asset_days = int(repay_asset.asset_product_category)
-        db.session.add(asset)
-        db.session.flush()
-        return self.get_auto_asset(repay_asset.asset_loan_channel, repay_asset.asset_period_count, 0,
-                                   days=int(repay_asset.asset_product_category))
+        else:
+            if repay_asset is None:
+                pass
+            asset = AutoAsset()
+            asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
+            asset.asset_channel = grant_asset.asset_loan_channel if grant_asset is not None else \
+                grant_asset.asset_loan_channel
+            asset.asset_descript = ''
+            asset.asset_name = name
+            asset.asset_period = grant_asset.asset_period_count if grant_asset is not None else \
+                grant_asset.asset_loan_channel
+            asset.asset_env = self.env
+            asset.asset_type = source_type
+            asset.asset_country = self.country
+            asset.asset_source_type = 1
+            asset.asset_days = int(grant_asset.asset_product_category)
+            db.session.add(asset)
+            db.session.flush()
+            return self.get_auto_asset(grant_asset.asset_loan_channel, grant_asset.asset_period_count, 0,
+                                   days=int(grant_asset.asset_product_category))
 
     def refresh_late_fee(self, item_no):
         if not item_no:
