@@ -40,7 +40,7 @@ class ChangyinmingdonghuarlMock(BusinessMock):
             if interest_detail else 0
         code = 0 if success_type.lower() == 'success' else 90000
         status = 'S' if success_type.lower() == 'success' else 'F'
-        value = dict(zip(('$.data.applyRepayAmt', '$.data.applyRepayAmt', '$.data.billStatus'), (
+        value = dict(zip(('$.data.applyRepayAmt', '$.data.dealRepayAmt', '$.data.billStatus'), (
             principal_amount + interest, principal_amount + interest,
             status)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
