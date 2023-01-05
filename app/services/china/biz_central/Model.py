@@ -208,6 +208,7 @@ class CapitalTransaction(db.Model, BaseToDict):
     capital_transaction_withhold_result_channel = db.Column(db.String(50), nullable=False, server_default=db.FetchedValue(), info='代扣渠道')
     capital_transaction_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='创建时间')
     capital_transaction_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='更新时间')
+    capital_transaction_push_success_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='资方时间')
     capital_transaction_process_status = db.Column(db.String(32), server_default=db.FetchedValue(), info='状态：ready,process,fail,success')
     capital_transaction_origin_amount = db.Column(db.BigInteger, nullable=False, server_default=db.FetchedValue(), info='原始金额')
     capital_transaction_asset_item_no = db.Column(db.String(64), nullable=False, server_default=db.FetchedValue())
