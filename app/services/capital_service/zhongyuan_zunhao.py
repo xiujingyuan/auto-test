@@ -11,12 +11,12 @@ class ZhongyuanzunhaoMock(BusinessMock):
         super(ZhongyuanzunhaoMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start,
                                                   period_end)
         self.channel = 'zhongyuan_zunhao'
-        self.trail_url = '/zhongzhirong/{0}/repayTrial'.format(self.channel)
+        self.trail_url = '/zhongzhirong/{0}/repay.trial'.format(self.channel)
         self.trail_query_url = ''
         self.repay_plan_url = ''
-        self.repay_apply_url = '/zhongzhirong/{0}/repayApply'.format(self.channel)
-        self.repay_apply_query_url = '/zhongzhirong/{0}/transQuery'.format(self.channel)
-        self.card_bind_query_url = '/zhongzhirong/{0}/queryBindCard'.format(self.channel)
+        self.repay_apply_url = '/zhongzhirong/{0}/repay.apply'.format(self.channel)
+        self.repay_apply_query_url = '/zhongzhirong/{0}/trans.query'.format(self.channel)
+        self.card_bind_query_url = '/zhongzhirong/{0}/query.bind.card'.format(self.channel)
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
