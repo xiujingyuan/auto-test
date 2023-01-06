@@ -13,9 +13,18 @@ class YixinrongshengMock(BusinessMock):
         self.repay_apply_query_url = '/yixin/yixin_rongsheng/repay.result'
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
-        principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
+        _, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
+        principal_amount = repayPlanDict[min(repayPlanDict.keys())]['principal'] * 100
+        principal_amount = principal_amount + 1 if principal_over else principal_amount
+        if interest_type == 'less':
+            interest_amount = interest_amount - 1
+        elif interest_type == 'more':
+            interest_amount = interest_amount + 1
+        elif interest_type == 'zero':
+            interest_amount = 0
         value = dict(zip(('$.data.lnsCurAmt', '$.data.lnsCurInt'),
-                         (repayPlanDict[min(repayPlanDict.keys())]['principal'] * 100, interest_amount)))
+                         (principal_amount, interest_amount)))
+
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
