@@ -259,6 +259,26 @@ class ChinaRepayService(RepayBaseService):
         self.biz_central.set_capital_tran_status(item_no, period, operate_type='compensate')
         return super(ChinaRepayService, self).set_asset_tran_status(period, item_no, refresh_type, status=status)
 
+    def crm_trail(self, item_no, period_end):
+        asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        trial_type = 'SINGLE'
+        if asset is not None:
+            trial_type = 'SETTLEMENT' if period_end == asset.asset_period_count else 'SINGLE'
+        param = {
+            "from_system": "Dsq",
+            "key": self.__create_req_key__(item_no, 'CrmTrail'),
+            "type": "CapitalSettlementTrial",
+            "data": {
+                "asset_item_no": item_no,
+                "trial_type": trial_type
+            },
+            "sync_datetime": None,
+            "busi_key": "20201608032050274397"
+        }
+
+        resp = Http.http_post(self.crm_trail_url, param)
+        return param, self.crm_trail_url, resp
+
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
                      verify_code='', verify_seq=None, agree=False, protocol=False,

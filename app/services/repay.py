@@ -37,6 +37,7 @@ class RepayBaseService(BaseService):
         self.run_msg_id_url = self.repay_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
         self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
+        self.crm_trail_url = self.repay_host + '/asset/capital/SettlementTrial'
 
     def get_debt_item_card(self, joint_debt_item):
         element = self.get_four_element()
