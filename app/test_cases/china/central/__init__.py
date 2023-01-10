@@ -99,7 +99,7 @@ class BizCentralTest(BaseAutoTest):
             self.check_dcs_push(case)
 
             # 检查生成新的推送
-            self.check_capital_notify_exist()
+            self.check_capital_notify_exist(case)
 
     def get_real_plan_at(self, plan_at, plan_period_start, is_str=True):
         ret_plan_at = ''
@@ -127,7 +127,7 @@ class BizCentralTest(BaseAutoTest):
         if amount_type == 'withhold':
             withhold_detail = self.repay.get_withhold_detail(self.serial_no)
             for withhold in withhold_detail['withhold_detail']:
-                if withhold.startswith("AUTO_C"):
+                if withhold['serial_no'].startswith("AUTO_C"):
                     continue
                 amount[withhold['asset_tran_type'].replace("repay", "")] = withhold['withhold_amount']
         return amount
@@ -197,6 +197,8 @@ class BizCentralTest(BaseAutoTest):
                                                                  self.repay_period_end,
                                                                  fee_type,
                                                                  record_type='to_spec_dict')['capital_tran_info']
+        if not actual_capital_tran:
+            return None
         return self.check_result(except_capital_tran, actual_capital_tran, 'capital_tran', ['type', 'period'])
 
     @print_step
@@ -230,7 +232,8 @@ class BizCentralTest(BaseAutoTest):
             item['expect_finish_at'] = '{0} 00:00:00'.format(item['expect_finished_at'])
             item['amount_type'] = item['type']
             item['withhold_channel'] = item['channel']
-        return self.check_result(actual_msg_content, except_msg_content , 'check_dcs_push',
+            item['operate_type'] = except_dcs_push['push_type']
+        return self.check_result(actual_msg_content, except_msg_content, 'check_dcs_push',
                                  ['period', 'amount_type'])
 
     @print_step
@@ -283,7 +286,7 @@ class BizCentralTest(BaseAutoTest):
                                  ['period', 'type'])
 
     @print_step
-    def check_capital_notify_exist(self):
+    def check_capital_notify_exist(self, case):
         capital_notify = self.central.get_capital_notify_info_by_id(self.capital_notify_id)
         if not capital_notify.capital_notify_status == 'success':
             raise CaseException('capital_notify status error ,need success,but {0} found'.format(

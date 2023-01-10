@@ -108,9 +108,8 @@ class ChinaBizCentralService(BaseService):
         system_config = self.nacos.get_config('biz-central-{0}.properties'.format(self.env), group='SYSTEM')
         for content in system_config['content'].split("\n"):
             if content.startswith(self.gate_str):
-                service_url = content.strip().replace(self.gate_str, '')[1:]
-                break
-        return service_url
+                return content.strip().replace(self.gate_str, '')[1:]
+        return ''
 
     def check_and_add_push_channel(self, channel):
         account_import_config = json.loads(self.nacos.get_config('account_import_config')['content'])
