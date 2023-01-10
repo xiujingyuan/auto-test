@@ -9,7 +9,7 @@ class LanhaizhongshiqjMock(BusinessMock):
         self.channel = 'lanhai_zhongshi_qj'
         super(LanhaizhongshiqjMock, self).__init__(project, asset, asset_extend, asset_tran_list,
                                                    period_start, period_end)
-        self.trail_url = '/qingjia/lanhai_zhongshi_qj/trailApply'
+        self.trail_url = '/qingjia/lanhai_zhongshi_qj/repayTrial'
         self.trail_query_url = ''
         self.repay_plan_url = ''
         self.repay_apply_url = ''
