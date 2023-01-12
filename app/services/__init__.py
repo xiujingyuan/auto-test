@@ -226,8 +226,8 @@ class BaseService(object):
             capital_asset.capital_asset_granted_at = real_now
         add_day = 0
         update_capital_plan = []
+        update_capital_plan_key = {}
         if channel == 'lanhai_zhongshi_qj':
-            update_capital_plan_key = {}
             update_capital_grant = {
                 "channel": "KN10001",
                 "loanNo": "1047175727827218433",
