@@ -224,8 +224,12 @@ class ChinaBizCentralService(BaseService):
 
     @time_print
     def run_xxl_job(self, job_type, run_date, param={}):
-        get_param = self.xxljob.get_job_info(job_type)[0]['executorParam']
-        param = json.dumps(json.loads(param)) if param else get_param
+        try:
+            get_param = self.xxljob.get_job_info(job_type)[0]['executorParam']
+        except Exception as e:
+            get_param = {}
+        if not isinstance(param, dict):
+            param = json.dumps(json.loads(param)) if param else get_param
         url = self.run_job_by_date_url.format(job_type, param, run_date)
         return Http.http_get(url)
 

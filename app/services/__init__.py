@@ -213,14 +213,27 @@ class BaseService(object):
             real_now = self.get_date(months=advance_month, days=advance_day).date()
         else:
             real_now = self.get_date(days=(advance_day + interval_day * advance_month)).date()
+        channel, due_bill_no = None, None
         for asset in asset_list:
             asset.asset_actual_grant_at = real_now
+            if asset.asset_loan_channel != 'noloan':
+                channel = asset.asset_loan_channel
+                due_bill_no = asset.asset_due_bill_no
             if asset.asset_status == 'payoff':
                 asset.asset_actual_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
                 asset.asset_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
         if capital_asset is not None and capital_asset:
             capital_asset.capital_asset_granted_at = real_now
         add_day = 0
+        update_capital_plan = []
+        if channel == 'lanhai_zhongshi_qj':
+            update_capital_plan_key = {}
+            update_capital_grant = {
+                "channel": "KN10001",
+                "loanNo": "1047175727827218433",
+                "lenderTime": self.get_date(fmt='%Y%m%d%H%M%S', date=self.get_date(months=advance_month,
+                                                                                   days=advance_day), is_str=True)
+            }
         for asset_tran in asset_tran_list:
             if interval_day != 30:
                 asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
@@ -236,6 +249,14 @@ class BaseService(object):
                 asset_tran.asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, days=add_day)
             else:
                 add_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran_due_at)
+                if update_capital_plan_key is not None and asset_tran.asset_tran_period not in update_capital_plan_key:
+                    update_capital_plan_key[asset_tran.asset_tran_period] = True
+                    update_capital_plan.append({
+                        "channel": "KN10001",
+                        "num": "{0}".format(asset_tran.asset_tran_period),
+                        "loanNo": "{0}".format(due_bill_no),
+                        "dueDate": self.get_date(fmt='%Y%m%d', date=asset_tran_due_at, is_str=True)
+                    })
                 asset_tran.asset_tran_due_at = asset_tran_due_at
 
         for capital_tran in capital_tran_list:
@@ -285,6 +306,16 @@ class BaseService(object):
             self.db_session.add_all(capital_tran_list)
         self.db_session.add_all(asset_tran_list)
         self.db_session.commit()
+
+        if channel == 'lanhai_zhongshi_qj':
+            try:
+                current_app.logger.info(json.dumps(update_capital_plan))
+                current_app.logger.info(json.dumps(update_capital_grant))
+                Http.http_post(url='https://openapitest.qinjia001.com/mockUpdate/MC00001', req_data=update_capital_plan)
+                Http.http_post(url='https://openapitest.qinjia001.com/mockUpdate/MC00002', req_data=update_capital_grant)
+            except Exception as e:
+                print(e)
+                pass
 
     def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
         task = self.db_session.query(Task).filter(Task.task_order_no == order_no,
