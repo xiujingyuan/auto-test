@@ -105,10 +105,16 @@ class BaseService(object):
 
         self.db_session = MyScopedSession(sessionmaker())
         self.db_session.configure(bind=self.engine)
+        if country == 'china' and program == 'grant':
+            self.engine_contract = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country]['contract'].format(port),
+                                                 echo=False)
+            self.db_session_contract = MyScopedSession(sessionmaker())
+            self.db_session_contract.configure(bind=self.engine_contract)
         self.log = LogUtil()
 
     def run_job_by_api(self, job_type, job_params):
-        return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, json.dumps(job_params)))
+        # return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, json.dumps(job_params)))
+        return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, job_params))
 
     @staticmethod
     def get_port():

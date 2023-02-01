@@ -27,6 +27,7 @@ class AutoTestConfig:
             'china': {
                 "repay": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/rbiz{0}",
                 "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/gbiz{0}",
+                "contract": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{0}/contract",
                 "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}",
                 "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@" + DB_IP + ":3321/capital{0}"
             },

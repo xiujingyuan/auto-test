@@ -6,7 +6,7 @@
 #### flask-sqlacodegen  --outfile=app/program_business/china/biz_central/Model.py --table=capital_transaction,asset,asset_tran,central_sendmsg,central_task,capital_notify,central_synctask,withhold_history,withhold_result,holiday,capital_settlement_detail,capital_asset mysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz4 --flask
 #### flask-sqlacodegen  --outfile=app/program_business/china/biz_central/HolidayDb.py --table=holiday mysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz2 --flask
 #### flask-sqlacodegen  --outfile=app/services/china/clean/Model.py --table=clean_task,clean_clearing_trans,clean_capital_settlement_pending mysql://capital:piqXNdySXa2bLsbE@127.0.0.1:3321/capital7 --flask
-#### flask-sqlacodegen  --outfile=app/program_business/china/grant/Model.py mysql://root:Coh8Beyiusa7@127.0.0.1:3306/gbiz3 --flask
+#### flask-sqlacodegen  --outfile=app/services/china/grant/ContractModel.py mysql://root:Coh8Beyiusa7@127.0.0.1:3306/contract --flask
 
 ### flask-sqlacodegen  --outfile=app/program_business/china/biz_central/withhold_history.py --table=withhold_history mysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz2 --flask
 

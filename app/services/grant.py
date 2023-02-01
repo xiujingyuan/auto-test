@@ -189,7 +189,7 @@ class GrantBaseService(BaseService):
         # 进件前，在路由表插入一条记录
         router_record = RouterLoadRecord()
         router_record.router_load_record_key = item_no + channel
-        router_record.router_load_record_rule_code = (channel + "_" + str(count) + "month") if \
+        router_record.router_load_record_rule_code = (channel + "_" + str(count) + "m") if \
             types == 'month' else channel + "_" + str(count) + "_" + str(days) + types[:1]
         router_record.router_load_record_principal_amount = amount * 100 if self.country == 'china' else amount
         router_record.router_load_record_status = 'routed'

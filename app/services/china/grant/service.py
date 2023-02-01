@@ -11,16 +11,22 @@ from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.services.china.grant.Model import Asset, Task, Sendmsg, AssetExtend, \
     AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan
+from app.services.china.grant.ContractModel import Task as ContractTask
 
 
 class ChinaGrantService(GrantBaseService):
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
         self.grant_host = "http://grant{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.contract_host = "http://contract{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
         self.cmdb_host = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
         super(ChinaGrantService, self).__init__('china', env, run_env, mock_name, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
         self.task_url = self.grant_host + '/task/run?orderNo={0}'
+        self.contract_task_url = self.contract_host + '/task/run?orderNo={0}'
+        self.contract_msg_url = self.contract_host + '/msg/run?orderNo={0}'
+        self.run_contract_task_id_url = self.contract_host + '/task/run?taskId={0}'
+        self.run_contract_msg_id_url = self.contract_host + '/msg/run?msgId={0}'
         self.msg_url = self.grant_host + '/msg/run?orderNo={0}'
 
     @time_print
@@ -58,6 +64,16 @@ class ChinaGrantService(GrantBaseService):
         refresh_type = refresh_type[6:] if refresh_type.startswith("grant_") else refresh_type
         return getattr(self, 'get_{0}'.format(refresh_type))(item_no)
 
+    def run_contract_task_by_id(self, task_id, excepts={'code': 0}):
+        # self.update_task_next_run_at_forward_by_task_id(task_id)
+        ret = Http.http_get(self.run_contract_task_id_url.format(task_id))
+        ret = ret[0] if isinstance(ret, list) else ret
+        if not isinstance(ret, dict):
+            raise ValueError(ret)
+        elif not ret["code"] == 0:
+            raise ValueError("run task error, {0}".format(ret['message']))
+        return ret
+
     def update_task_next_run_at_forward_by_order_no(self, order_no):
         clean_task = self.db_session.query(Task).filter(Task.task_order_no == order_no).all()
         if not clean_task:
@@ -67,9 +83,24 @@ class ChinaGrantService(GrantBaseService):
             self.db_session.add(task)
         self.db_session.commit()
 
+    def update_contract_task_next_run_at_forward_by_order_no(self, order_no):
+        clean_task = self.db_session_contract.query(ContractTask).filter(ContractTask.task_order_no == order_no).all()
+        if not clean_task:
+            raise ValueError("not found the clean_task info with clean_task'id: {0}".format(order_no))
+        for task in clean_task:
+            task.task_next_run_at = self.get_date(minutes=1)
+            self.db_session_contract.add(task)
+        self.db_session_contract.commit()
+
     def run_task_by_task_order_no(self, item_no):
         self.update_task_next_run_at_forward_by_order_no(item_no)
         url = self.task_url.format(item_no)
+        ret = Http.http_get(url)
+        return ret
+
+    def run_contract_task_by_task_order_no(self, item_no):
+        self.update_contract_task_next_run_at_forward_by_order_no(item_no)
+        url = self.contract_task_url.format(item_no)
         ret = Http.http_get(url)
         return ret
 
@@ -79,11 +110,11 @@ class ChinaGrantService(GrantBaseService):
         max_create_at = extend[extend_name] if extend_name in extend else None
         max_create_at = extend['create_at'] if max_create_at is None else None
         real_req = {}
-        if op_type == 'run_task_by_task_order_no':
+        if op_type in ('run_task_by_task_order_no', 'run_contract_task_by_task_order_no'):
             real_req['order_no'] = item_no
-        elif op_type == 'run_task_by_id':
+        elif op_type in ('run_task_by_id', 'run_contract_task_by_id'):
             real_req['task_id'] = extend['id']
-        elif op_type == 'run_msg_by_id':
+        elif op_type in ('run_msg_by_id', 'run_contractmsg_by_id'):
             real_req['msg_id'] = extend['id']
         if op_type == "del_row_data":
             real_req['del_id'] = extend['id']
@@ -101,6 +132,11 @@ class ChinaGrantService(GrantBaseService):
         ret.update(self.get_sendmsg(item_no))
         ret.update(self.get_asset_loan_record(item_no))
         return ret
+
+    def get_contract_task(self, item_no):
+        task = self.db_session_contract.query(ContractTask).filter(ContractTask.task_order_no == item_no).order_by(
+            desc(ContractTask.task_id)).all()
+        return {'contract_task': list(map(lambda x: x.to_spec_dict, task))}
 
     def get_task(self, item_no):
         task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
@@ -278,15 +314,17 @@ class ChinaGrantService(GrantBaseService):
         ref_order_no = '{0}_noloan'.format(item_no) if x_source_type else ''
         return item_no, ref_order_no, x_order_no, source_type, x_source_type, x_right, from_system
 
-    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount):
+    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount, item_name):
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
             self.get_asset_item_info(channel, source_type, from_system_name)
         element = self.get_four_element() if element == 1 else element
+        item_no = item_no if item_name == 1 else item_name
         ref_order_no = '{0}_noloan'.format(item_no)
         from_system = FROM_SYSTEM_DICT[from_system_name]
-        self.asset_import(item_no, channel, element, count, amount, source_type,
+        asset_info, _ = self.asset_import(item_no, channel, element, count, amount, source_type,
                                                   from_system_name, from_system, ref_order_no)
-        self.add_asset(item_no, 0)
+        self.asset_import_success(asset_info)
+        self.add_asset(item_no, 2)
 
     def add_asset(self, name, source_type):
         grant_asset = self.check_item_exist(name)
@@ -328,6 +366,15 @@ class ChinaGrantService(GrantBaseService):
         if insert_router_record:
             self.insert_router_record(item_no, channel, amount, count, element, asset_info,
                                       sub_order_type=sub_order_type)
+        capital_plan = self.db_session.query(RouterCapitalPlan).filter(
+            RouterCapitalPlan.router_capital_plan_label.like('{0}%'.format(channel))).order_by(
+                desc(RouterCapitalPlan.router_capital_plan_date)).first()
+        now = self.get_date(fmt="%Y-%m-%d", is_str=True)
+        if not capital_plan.router_capital_plan_date == now:
+            capital_plan = RouterCapitalPlan()
+            capital_plan.router_capital_plan_date = now
+            self.db_session.add(capital_plan)
+            self.db_session.commit()
         return asset_info, old_asset
 
     def capital_asset_success(self, capital_asset):
