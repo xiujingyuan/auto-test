@@ -114,7 +114,7 @@ class ChinaGrantService(GrantBaseService):
             real_req['order_no'] = item_no
         elif op_type in ('run_task_by_id', 'run_contract_task_by_id'):
             real_req['task_id'] = extend['id']
-        elif op_type in ('run_msg_by_id', 'run_contractmsg_by_id'):
+        elif op_type in ('run_msg_by_id', 'run_contract_msg_by_id'):
             real_req['msg_id'] = extend['id']
         if op_type == "del_row_data":
             real_req['del_id'] = extend['id']
@@ -370,8 +370,7 @@ class ChinaGrantService(GrantBaseService):
             RouterCapitalPlan.router_capital_plan_label.like('{0}%'.format(channel))).order_by(
                 desc(RouterCapitalPlan.router_capital_plan_date)).first()
         now = self.get_date(fmt="%Y-%m-%d", is_str=True)
-        if not capital_plan.router_capital_plan_date == now:
-            capital_plan = RouterCapitalPlan()
+        if capital_plan is not None and not str(capital_plan.router_capital_plan_date) == now:
             capital_plan.router_capital_plan_date = now
             self.db_session.add(capital_plan)
             self.db_session.commit()
