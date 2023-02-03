@@ -314,7 +314,8 @@ class ChinaGrantService(GrantBaseService):
         ref_order_no = '{0}_noloan'.format(item_no) if x_source_type else ''
         return item_no, ref_order_no, x_order_no, source_type, x_source_type, x_right, from_system
 
-    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount, item_name):
+    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount, item_name, grant_way=2):
+
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
             self.get_asset_item_info(channel, source_type, from_system_name)
         element = self.get_four_element() if element == 1 else element
@@ -324,7 +325,14 @@ class ChinaGrantService(GrantBaseService):
         asset_info, _ = self.asset_import(item_no, channel, element, count, amount, source_type,
                                                   from_system_name, from_system, ref_order_no)
         self.asset_import_success(asset_info)
-        self.add_asset(item_no, 2)
+        if grant_way == 2:
+            #走资方
+            pass
+            # 检查地址
+            #开户查询
+            #开户
+
+        self.add_asset(item_no, grant_way)
 
     def add_asset(self, name, source_type):
         grant_asset = self.check_item_exist(name)
