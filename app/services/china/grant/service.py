@@ -261,6 +261,7 @@ class ChinaGrantService(GrantBaseService):
         asset_info['data']['repay_card']['account_num_encrypt'] = element['data']['bank_code_encrypt']
         asset_info['data']['repay_card']['individual_idnum_encrypt'] = element['data']['id_number_encrypt']
         asset_info['data']['repay_card']['credentials_num_encrypt'] = element['data']['id_number_encrypt']
+        asset_info['data']['repay_card']['bank_code'] = 'ICBC'
 
     @staticmethod
     def set_asset_receive_card(asset_info, element):
@@ -269,6 +270,7 @@ class ChinaGrantService(GrantBaseService):
         asset_info['data']['receive_card']['phone_encrypt'] = element['data']['phone_number_encrypt']
         asset_info['data']['receive_card']['owner_id_encrypt'] = element['data']['id_number_encrypt']
         asset_info['data']['receive_card']['num_encrypt'] = element['data']['bank_code_encrypt']
+        asset_info['data']['receive_card']['bank_code'] = 'ICBC'
 
     @staticmethod
     def set_asset_borrower(asset_info, element):
