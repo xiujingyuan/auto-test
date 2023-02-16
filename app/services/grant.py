@@ -9,8 +9,8 @@ from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.services import BaseService, CapitalAsset
 from app.services.china.grant.Model import AssetExtend
-from app.services.phl.grant.Model import RouterLoadRecord, Sendmsg, Task, Synctask, AssetTran
-from app.services.phl.grant.Model import Asset, AssetBorrower
+from app.services.china.grant.Model import RouterLoadRecord, Sendmsg, Task, Synctask, AssetTran
+from app.services.china.grant.Model import Asset
 
 
 class GrantBaseService(BaseService):
@@ -22,6 +22,15 @@ class GrantBaseService(BaseService):
         self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
         self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
+
+    def update_task_next_run_at_forward_by_task_id(self, task_id):
+        task = self.db_session.query(Task).filter(Task.task_id == task_id).first()
+        if not task:
+            raise ValueError("not fund the task info with task'id {0}".format(task))
+        task.task_status = 'open'
+        task.task_next_run_at = self.get_date(minutes=1)
+        self.db_session.add(task)
+        self.db_session.commit()
 
     def check_item_exist(self, item_no):
         asset = self.db_session.query(Asset).filter(

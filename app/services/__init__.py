@@ -338,7 +338,7 @@ class BaseService(object):
         self.db_session.commit()
 
     def run_task_by_id(self, task_id, excepts={'code': 0}):
-        # self.update_task_next_run_at_forward_by_task_id(task_id)
+        self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = Http.http_get(self.run_task_id_url.format(task_id))
         ret = ret[0] if isinstance(ret, list) else ret
         if not isinstance(ret, dict):
@@ -487,6 +487,7 @@ class BaseService(object):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
+        phone_number = '13980522295'
         user_name = fake.name()
         bank_code = self.get_bank_code(bank_name, bank_code_suffix)
         response = {

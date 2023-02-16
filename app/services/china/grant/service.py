@@ -1,4 +1,4 @@
-
+import json
 import random
 from app import db
 from sqlalchemy import desc
@@ -13,6 +13,12 @@ from app.services.china.grant.Model import Asset, Task, Sendmsg, AssetExtend, \
     AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan
 from app.services.china.grant.ContractModel import Task as ContractTask
 
+BANK_MAP = {"中国银行": "BOC",
+                    "工商银行": "ICBC",
+                    "招商银行": "CMB",
+                    "建设银行": "CCB",
+                    "民生银行": "CMBC"}
+
 
 class ChinaGrantService(GrantBaseService):
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
@@ -23,11 +29,14 @@ class ChinaGrantService(GrantBaseService):
         super(ChinaGrantService, self).__init__('china', env, run_env, mock_name, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
         self.task_url = self.grant_host + '/task/run?orderNo={0}'
+        self.account_query_url = self.grant_host + '/account/register-query'
+        self.account_register_url = self.grant_host + '/account/register-account'
         self.contract_task_url = self.contract_host + '/task/run?orderNo={0}'
         self.contract_msg_url = self.contract_host + '/msg/run?orderNo={0}'
         self.run_contract_task_id_url = self.contract_host + '/task/run?taskId={0}'
         self.run_contract_msg_id_url = self.contract_host + '/msg/run?msgId={0}'
         self.msg_url = self.grant_host + '/msg/run?orderNo={0}'
+        self.seq = ''
 
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
@@ -255,22 +264,22 @@ class ChinaGrantService(GrantBaseService):
         asset_info['data']['asset']['sub_order_type'] = sub_order_type
 
     @staticmethod
-    def set_asset_repay_card(asset_info, element):
+    def set_asset_repay_card(asset_info, element, bank_code='ICBC'):
         asset_info['data']['repay_card']['username_encrypt'] = element['data']['user_name_encrypt']
         asset_info['data']['repay_card']['phone_encrypt'] = element['data']['phone_number_encrypt']
         asset_info['data']['repay_card']['account_num_encrypt'] = element['data']['bank_code_encrypt']
         asset_info['data']['repay_card']['individual_idnum_encrypt'] = element['data']['id_number_encrypt']
         asset_info['data']['repay_card']['credentials_num_encrypt'] = element['data']['id_number_encrypt']
-        asset_info['data']['repay_card']['bank_code'] = 'ICBC'
+        asset_info['data']['repay_card']['bank_code'] = bank_code
 
     @staticmethod
-    def set_asset_receive_card(asset_info, element):
+    def set_asset_receive_card(asset_info, element, bank_code='ICBC'):
         asset_info['data']['receive_card']['owner_name_encrypt'] = element['data']['user_name_encrypt']
         asset_info['data']['receive_card']['account_name_encrypt'] = element['data']['user_name_encrypt']
         asset_info['data']['receive_card']['phone_encrypt'] = element['data']['phone_number_encrypt']
         asset_info['data']['receive_card']['owner_id_encrypt'] = element['data']['id_number_encrypt']
         asset_info['data']['receive_card']['num_encrypt'] = element['data']['bank_code_encrypt']
-        asset_info['data']['receive_card']['bank_code'] = 'ICBC'
+        asset_info['data']['receive_card']['bank_code'] = bank_code
 
     @staticmethod
     def set_asset_borrower(asset_info, element):
@@ -316,7 +325,8 @@ class ChinaGrantService(GrantBaseService):
         ref_order_no = '{0}_noloan'.format(item_no) if x_source_type else ''
         return item_no, ref_order_no, x_order_no, source_type, x_source_type, x_right, from_system
 
-    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount, item_name, grant_way=2):
+    def manual_asset_import(self, channel, source_type, from_system_name, element, count, amount, item_name,
+                            back_code, grant_way=2):
 
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
             self.get_asset_item_info(channel, source_type, from_system_name)
@@ -324,17 +334,88 @@ class ChinaGrantService(GrantBaseService):
         item_no = item_no if item_name == 1 else item_name
         ref_order_no = '{0}_noloan'.format(item_no)
         from_system = FROM_SYSTEM_DICT[from_system_name]
+        back_code = BANK_MAP[back_code]
         asset_info, _ = self.asset_import(item_no, channel, element, count, amount, source_type,
-                                                  from_system_name, from_system, ref_order_no)
+                                                  from_system_name, from_system, ref_order_no, back_code=back_code)
         self.asset_import_success(asset_info)
         if grant_way == 2:
-            #走资方
-            pass
-            # 检查地址
-            #开户查询
-            #开户
-
+            self.open_account(element, back_code, item_no, channel)
         self.add_asset(item_no, grant_way)
+
+    def apply_can_loan(self, item_no):
+        task = self.db_session.query(Task).filter(Task.task_order_no == item_no,
+                                                  Task.task_type == 'ApplyCanLoan').first()
+        task.task_status = 'open'
+        task.task_next_run_at = self.get_date(is_str=True)
+        self.db_session.add(task)
+        asset_loan_record = self.db_session.query(AssetLoanRecord).filter(
+            AssetLoanRecord.asset_loan_record_asset_item_no == item_no).first()
+        asset_loan_record.asset_loan_record_status = 0
+        self.db_session.add(asset_loan_record)
+        self.db_session.commit()
+
+    def open_account(self, element, bank_code, item_no, channel):
+        ret = self.account_query(element, bank_code, item_no, channel)
+        self.account_register(ret, channel, item_no, element, bank_code)
+
+    def account_register(self, ret, channel, item_no, element, bank_code):
+        if ret['code'] == 0 and ret['data']['status'] in (2, 4):
+            # 未开户
+            actions = ret['data']['steps'][0]['actions'] if 'steps' in ret['data'] else ret['data']['actions']
+            for act in actions:
+                if act['status'] != 0:
+                    param = {
+                        "from_system": "strawberry",
+                        "key": self.__create_req_key__(item_no, prefix=act['action_type']),
+                        "type": act['action_type'],
+                        "data": {
+                            "channel": channel,
+                            "step_type": "PROTOCOL",
+                            "interaction_type": "SMS",
+                            "action_type": act['action_type'],
+                            "way": channel,
+                            "item_no": item_no,
+                            "mobile_encrypt": element['data']['phone_number_encrypt'],
+                            "id_num_encrypt": element['data']['id_number_encrypt'],
+                            "username_encrypt": element['data']['user_name_encrypt'],
+                            "card_num_encrypt": element['data']['bank_code_encrypt'],
+                            "extend": {
+                                "code": "134679",
+                                "seq": self.seq,
+                                "bank_code": bank_code
+                            }
+                        }
+                    }
+                    act_ret = Http.http_post(self.account_register_url, param)
+                    if act_ret['code'] != 0:
+                        raise ValueError('开户失败, {0}'.format(json.dumps(act_ret)))
+                    elif act['action_type'] == 'GetSmsVerifyCode':
+                        for action in act_ret['data']['actions']:
+                            if action['action_type'] == 'GetSmsVerifyCode':
+                                self.seq = action['extra_data']['seq']
+                                break
+                    return self.account_register(act_ret, channel, item_no, element, bank_code)
+
+    def account_query(self, element, bank_code, item_no, channel):
+        param = {
+            "from_system": "DSQ",
+            "key": self.__create_req_key__(item_no, prefix='AccountQuery'),
+            "type": "AccountRegisterQuery",
+            "data": {
+                "channel": channel,
+                "mobile_encrypt": element['data']['phone_number_encrypt'],
+                "id_num_encrypt": element['data']['id_number_encrypt'],
+                "username_encrypt": element['data']['user_name_encrypt'],
+                "card_num_encrypt": element['data']['bank_code_encrypt'],
+                "item_no": item_no,
+                "extend": {
+                    "bank_code": bank_code
+                }
+            }
+        }
+        ret = Http.http_post(self.account_query_url, param)
+        print(ret)
+        return ret
 
     def add_asset(self, name, source_type):
         grant_asset = self.check_item_exist(name)
@@ -358,7 +439,7 @@ class ChinaGrantService(GrantBaseService):
         db.session.flush()
 
     def asset_import(self, item_no, channel, element, count, amount, source_type, from_system_name, from_system,
-                     ref_order_no, borrower_extend_district=None, sub_order_type='', route_uuid=None,
+                     ref_order_no, borrower_extend_district=None, sub_order_type='', route_uuid=None, back_code='ICBC',
                      insert_router_record=True):
         asset_info, old_asset = self.get_asset_info_from_db(channel)
         asset_info['key'] = "_".join((item_no, channel))
@@ -368,8 +449,8 @@ class ChinaGrantService(GrantBaseService):
             asset_info['data']['borrower_extend']['address_district_code'] = borrower_extend_district
         self.set_asset_asset_info(asset_info, item_no, count, channel, amount, source_type, from_system_name,
                                   ref_order_no, sub_order_type)
-        self.set_asset_receive_card(asset_info, element)
-        self.set_asset_repay_card(asset_info, element)
+        self.set_asset_receive_card(asset_info, element, back_code)
+        self.set_asset_repay_card(asset_info, element, back_code)
         self.set_asset_borrower(asset_info, element)
         self.set_asset_repayer(asset_info, element)
 
