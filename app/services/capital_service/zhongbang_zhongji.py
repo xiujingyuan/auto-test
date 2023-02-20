@@ -1,4 +1,5 @@
 from decimal import Decimal
+from functools import reduce
 
 from app.services.capital_service import BusinessMock
 
@@ -15,7 +16,7 @@ class ZhongbangzhongjiMock(BusinessMock):
         self.repay_apply_query_url = '/zhongbang/zhongbang_zhongji/NewRpyStsQry'
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
-        principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
+        principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
         principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
         principal_amount = principal_amount[0]
         interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
@@ -30,16 +31,18 @@ class ZhongbangzhongjiMock(BusinessMock):
         value = dict(zip(('$.data.result.actual_repay_amount',
                           '$.data.result.repay_principal',
                           '$.data.result.repay_interest'),
-                         (principal_amount + interest_amount + fee_amount, principal_amount, interest_amount)))
+                         (principal_amount + interest_amount, principal_amount, interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
-        principal_amount, _, _, _, _ = self.__get_trail_amount__()
-        principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
-        principal_amount = principal_amount[0]
-        interest_detail = tuple(filter(lambda x: x.withhold_detail_asset_tran_type == 'repayinterest', withhold_detail))
-        interest = float(Decimal(interest_detail[0].withhold_detail_withhold_amount / 100).quantize(Decimal("0.00"))) \
-            if interest_detail else 0
+        interest_detail = [x.withhold_detail_withhold_amount for x in withhold_detail if x.withhold_detail_type == 'interest']
+        principal_detail = [x.withhold_detail_withhold_amount for x in withhold_detail if x.withhold_detail_type == 'principal']
+        fee_detail = [x.withhold_detail_withhold_amount for x in withhold_detail if x.withhold_detail_type == 'fee']
+        principal = reduce(lambda x, y: x + y, principal_detail, 0)
+        principal = float(Decimal(principal / 100).quantize(Decimal("0.00")))
+        interest = float(Decimal(interest_detail[0] / 100).quantize(Decimal("0.00"))) if interest_detail else 0
+        fee_amount = reduce(lambda x, y: x + y, fee_detail, 0)
+        fee_amount = float(Decimal(fee_amount / 100).quantize(Decimal("0.00")))
         code = 0 if success_type.lower() == 'success' else 90000
         status = '1' if success_type.lower() == 'success' else '2'
         value = dict(zip(('$.data.result.actual_repay_amount',
@@ -47,8 +50,8 @@ class ZhongbangzhongjiMock(BusinessMock):
                           '$.data.result.repay_interest',
                           '$.data.result.repay_status',
                           '$.data.code'), (
-            str(principal_amount + interest),
-            str(principal_amount),
+            str(principal + interest + fee_amount),
+            str(principal),
             str(interest),
             status, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
