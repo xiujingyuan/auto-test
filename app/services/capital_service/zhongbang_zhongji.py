@@ -42,11 +42,11 @@ class ZhongbangzhongjiMock(BusinessMock):
             if interest_detail else 0
         code = 0 if success_type.lower() == 'success' else 90000
         status = '1' if success_type.lower() == 'success' else '2'
-        value = dict(zip(('$.data.actual_repay_amount',
-                          '$.data.repay_principal',
-                          '$.data.repay_interest',
-                          '$.data.repay_status',
-                          '$.code'), (
+        value = dict(zip(('$.data.result.actual_repay_amount',
+                          '$.data.result.repay_principal',
+                          '$.data.result.repay_interest',
+                          '$.data.result.repay_status',
+                          '$.data.code'), (
             str(principal_amount + interest),
             str(principal_amount),
             str(interest),
