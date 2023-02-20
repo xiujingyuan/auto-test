@@ -286,12 +286,18 @@ class ChinaGrantService(GrantBaseService):
         asset_info['data']['borrower']['name_encrypt'] = element['data']['user_name_encrypt']
         asset_info['data']['borrower']['tel_encrypt'] = element['data']['phone_number_encrypt']
         asset_info['data']['borrower']['idnum_encrypt'] = element['data']['id_number_encrypt']
+        asset_info['data']['borrower']['residence'] = "陕西省白水县北塬乡潘村二社"
+        asset_info['data']['borrower']['workplace'] = "山东省胶州市铺集镇吴家庄村45号"
+        asset_info['data']['borrower']['id_addr'] = "山东省胶州市铺集镇吴家庄村46号"
 
     @staticmethod
     def set_asset_repayer(asset_info, element):
         asset_info['data']['repayer']['name_encrypt'] = element['data']['user_name_encrypt']
         asset_info['data']['repayer']['tel_encrypt'] = element['data']['phone_number_encrypt']
         asset_info['data']['repayer']['idnum_encrypt'] = element['data']['id_number_encrypt']
+        asset_info['data']['repayer']['residence'] = "陕西省白水县北塬乡潘村二社"
+        asset_info['data']['repayer']['workplace'] = "山东省胶州市铺集镇吴家庄村45号"
+        asset_info['data']['repayer']['id_addr'] = "山东省胶州市铺集镇吴家庄村46号"
 
     def get_no_loan(self, item_no):
         asset_extend = self.db_session.query(AssetExtend).filter(
