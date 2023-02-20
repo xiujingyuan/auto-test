@@ -12,7 +12,7 @@ class ZhongbangzhongjiMock(BusinessMock):
         self.trail_query_url = ''
         self.repay_plan_url = ''
         self.repay_apply_url = ''
-        self.repay_apply_query_url = '/zhongbang/zhongbang_zhongji/NewRpyStsQr'
+        self.repay_apply_query_url = '/zhongbang/zhongbang_zhongji/NewRpyStsQry'
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
