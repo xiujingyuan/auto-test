@@ -15,7 +15,7 @@ class ZhongbangzhongjiMock(BusinessMock):
         self.repay_apply_query_url = '/zhongbang/zhongbang_zhongji/NewRpyStsQry'
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
-        principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
+        principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
         principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
         principal_amount = principal_amount[0]
         interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
@@ -30,7 +30,7 @@ class ZhongbangzhongjiMock(BusinessMock):
         value = dict(zip(('$.data.result.actual_repay_amount',
                           '$.data.result.repay_principal',
                           '$.data.result.repay_interest'),
-                         (principal_amount + interest_amount, principal_amount, interest_amount)))
+                         (principal_amount + interest_amount + fee_amount, principal_amount, interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
