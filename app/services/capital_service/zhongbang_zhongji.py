@@ -43,7 +43,7 @@ class ZhongbangzhongjiMock(BusinessMock):
         interest = float(Decimal(interest_detail[0] / 100).quantize(Decimal("0.00"))) if interest_detail else 0
         fee_amount = reduce(lambda x, y: x + y, fee_detail, 0)
         fee_amount = float(Decimal(fee_amount / 100).quantize(Decimal("0.00")))
-        code = 0 if success_type.lower() == 'success' else 90000
+        code = "000000" if success_type.lower() == 'success' else 90000
         status = '1' if success_type.lower() == 'success' else '2'
         value = dict(zip(('$.data.result.actual_repay_amount',
                           '$.data.result.repay_principal',
