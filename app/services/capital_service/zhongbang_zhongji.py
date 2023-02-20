@@ -50,7 +50,7 @@ class ZhongbangzhongjiMock(BusinessMock):
                           '$.data.result.repay_interest',
                           '$.data.result.repay_status',
                           '$.data.code'), (
-            str(principal + interest + fee_amount),
+            str(principal + interest),
             str(principal),
             str(interest),
             status, code)))
