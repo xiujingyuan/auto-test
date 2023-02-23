@@ -36,6 +36,6 @@ class DaxinganlingzhongyiMock(BusinessMock):
         principal = reduce(lambda x, y: x + y, principal_detail, 0)
         interest = interest_detail[0] if interest_detail else 0
         code = 2000 if success_type.lower() == 'success' else 30000
-        value = dict(zip(('$.data.state', '$.data.principal', '$.data.interest', '$.data.responseCode'),
-                         (code, principal, interest, success_type)))
+        value = dict(zip(('$.data.deductionSerialNo', '$.data.state', '$.data.principal', '$.data.interest', '$.data.responseCode'),
+                         (withhold.withhold_serial_no, code, principal, interest, success_type)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
