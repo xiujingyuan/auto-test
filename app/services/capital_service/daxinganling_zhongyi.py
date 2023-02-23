@@ -37,6 +37,6 @@ class DaxinganlingzhongyiMock(BusinessMock):
         interest = interest_detail[0] if interest_detail else 0
         code = 2000 if success_type.lower() == 'success' else 30000
         value = dict(zip(('$.data[0].deductionSerialNo', '$.data[0].state', '$.data[0].principal',
-                          '$.data[0].interest', '$.data[0].responseCode'),
+                          '$.data[0].interest', '$.code'),
                          (withhold.withhold_serial_no, success_type, principal, interest, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
