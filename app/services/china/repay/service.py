@@ -324,7 +324,7 @@ class ChinaRepayService(RepayBaseService):
                                                         rights_amount, repay_card, bank_code, verify_code=verify_code,
                                                         verify_seq=verify_seq, repay_card_num=repay_card_num)
         resp = Http.http_post(self.active_repay_url, request_data)
-        if resp['code'] == 0 and agree:
+        if resp['code'] == 0 and agree and 'type' in resp['data']:
             # 协议支付 发短信
             first_serial_no = resp['data']['project_list'][0]['order_no']
             agree_request_data = copy.deepcopy(request_data)

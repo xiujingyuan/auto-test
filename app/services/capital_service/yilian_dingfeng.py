@@ -15,9 +15,11 @@ class YiliandingfengMock(BusinessMock):
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
         if interest_type == 'less':
-            interest_amount -= 500
-        elif interest_type == 'less':
+            interest_amount -= 100
+        elif interest_type == 'more':
             interest_amount += 100
+        elif interest_type == "zero":
+            interest_amount = 0
         principal = round(float(principal_amount / 100), 2)
         interest = round(float(interest_amount / 100), 2)
         value = dict(zip(('$.data.repaytotal', '$.data.repaycapital', '$.data.repayinterest'),

@@ -4,11 +4,10 @@ from copy import deepcopy
 
 from flask import Blueprint, request, jsonify
 from flask import current_app
-from sqlalchemy import or_, and_
 
 from app import db
 from app.common import RET
-from app.model.Model import Menu, TestCase, BackendKeyValue, AutoAsset
+from app.model.Model import Menu, TestCase, BackendKeyValue, AutoAsset, CaseTask
 
 api_web = Blueprint('api_web', __name__)
 
@@ -91,6 +90,19 @@ def get_case():
     case_list = TestCase.query.order_by(TestCase.test_cases_id).all()
     ret = deepcopy(RET)
     ret['data'] = {'case': list(map(lambda x: x.to_spec_dict, case_list))}
+    return jsonify(ret)
+
+
+@api_web.route('/auto_task', methods=["POST"])
+def auto_task():
+    ret = deepcopy(RET)
+    req = request.json
+    program = req.get('program', 'total')
+    country = req.get('country', 'china')
+    record = CaseTask.query.filter(CaseTask.case_task_country == country).all()
+    if country != 'total':
+        record = [x for x in record if x.case_task_program == program]
+    ret['data'] = list(map(lambda x: x.to_spec_dict, record))
     return jsonify(ret)
 
 
