@@ -351,6 +351,12 @@ class BaseService(object):
 
     def run_msg_by_id(self, msg_id):
         ret = Http.http_get(self.run_msg_id_url.format(msg_id))
+        msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_id == msg_id).first()
+        msg_content = json.loads(msg.sendmsg_content)['body']
+        if msg.sendmsg_type == 'GrantCapitalAsset':
+            Http.http_post(self.biz_central.capital_asset_import_url, msg_content)
+        elif msg.sendmsg_type == 'AssetImportSync':
+            Http.http_post(self.biz_central.asset_import_url, msg_content)
         return ret
 
     def run_msg_by_order_no(self, order_no, sendmsg_type):
