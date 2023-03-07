@@ -249,6 +249,7 @@ class ChinaRepayService(RepayBaseService):
 
     def add_buyback(self, item_no, channel, period_start):
         super(ChinaRepayService, self).add_buyback(item_no, channel, period_start)
+        self.get_date()
         return self.biz_central.add_buyback(item_no, period_start)
 
     def remove_buyback(self, item_no, channel):
