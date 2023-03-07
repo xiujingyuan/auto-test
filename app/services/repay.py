@@ -208,14 +208,17 @@ class RepayBaseService(BaseService):
         ret = super(RepayBaseService, self).run_msg_by_id(msg_id)
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_id == msg_id).first()
         msg_content = json.loads(msg.sendmsg_content)['body']
-        if msg.sendmsg_type == 'account_change_tran_repay':
-            Http.http_post(self.biz_central.account_change_url, msg_content)
-        elif msg.sendmsg_type == 'WithholdResultImport':
-            Http.http_post(self.biz_central.withhold_sync_url, msg_content)
-        elif msg.sendmsg_type == "asset_change_tran_repay":
-            Http.http_post(self.biz_central.asset_change_url, msg_content)
-        elif msg.sendmsg_type == "AssetWithdrawSuccess":
-            Http.http_post(self.biz_central.withdraw_success_url, msg_content)
+        try:
+            if msg.sendmsg_type == 'account_change_tran_repay':
+                Http.http_post(self.biz_central.account_change_url, msg_content)
+            elif msg.sendmsg_type == 'WithholdResultImport':
+                Http.http_post(self.biz_central.withhold_sync_url, msg_content)
+            elif msg.sendmsg_type == "asset_change_tran_repay":
+                Http.http_post(self.biz_central.asset_change_url, msg_content)
+            elif msg.sendmsg_type == "AssetWithdrawSuccess":
+                Http.http_post(self.biz_central.withdraw_success_url, msg_content)
+        except:
+            pass
         if (max_create_at is not None or msg_id) and item_no is not None:
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=refresh_type, refresh_id=msg_id)
         return ret
