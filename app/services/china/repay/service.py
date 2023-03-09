@@ -519,6 +519,15 @@ class ChinaRepayService(RepayBaseService):
             if msg_list:
                 for msg in msg_list:
                     self.run_msg_by_id(msg.sendmsg_id)
+                    msg_content = json.loads(msg.sendmsg_content)['body']
+                    if sendmsg_type == 'account_change_tran_repay':
+                        Http.http_post(self.biz_central.account_change_url, msg_content)
+                    elif sendmsg_type == 'WithholdResultImport':
+                        Http.http_post(self.biz_central.withhold_sync_url, msg_content)
+                    elif sendmsg_type == "asset_change_tran_repay":
+                        Http.http_post(self.biz_central.asset_change_url, msg_content)
+                    elif sendmsg_type == "AssetWithdrawSuccess":
+                        Http.http_post(self.biz_central.withdraw_success_url, msg_content)
                 break
             time.sleep(1)
             num += 1
