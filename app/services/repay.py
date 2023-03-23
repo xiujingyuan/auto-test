@@ -196,8 +196,7 @@ class RepayBaseService(BaseService):
         return sum([x.asset_tran_repaid_amount for x in amount_list if x.asset_tran_category == amount_type])
 
     def run_task_by_id(self, task_id, refresh_type='task', max_create_at=None, item_no=None, excepts={'code': 0}):
-        if self.country == 'china':
-            self.update_task_next_run_at_forward_by_task_id(task_id)
+        self.update_task_next_run_at_forward_by_task_id(task_id)
         ret = super(RepayBaseService, self).run_task_by_id(task_id, excepts=excepts)
         if (task_id or max_create_at is not None) and item_no is not None:
             return self.info_refresh(item_no, max_create_at=max_create_at, refresh_type=refresh_type,

@@ -3,19 +3,31 @@ from app import db
 from app.common.db_util import BaseToDict
 
 
+class TaskRelativeCase(db.Model, BaseToDict):
+    __tablename__ = 'task_relative_case'
+
+    task_relative_case_id = db.Column(db.Integer, primary_key=True, info='自增ID')
+    task_relative_case_task_id = db.Column(db.Integer, info='任务id')
+    task_relative_case_case_id = db.Column(db.Integer, info='用例id')
+    task_relative_case_status = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='1:有效，0:无效')
+    task_relative_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    task_relative_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+
+
 class CaseTask(db.Model, BaseToDict):
     __tablename__ = 'case_task'
 
     case_task_id = db.Column(db.Integer, primary_key=True, info='自增ID')
     case_task_name = db.Column(db.String(256), info='任务名称')
     case_task_creator = db.Column(db.String(11), info='创建者')
-    case_task_updatoer = db.Column(db.String(11), info='最后更新人')
+    case_task_updater = db.Column(db.String(11), info='最后更新人')
     case_task_execute_time = db.Column(db.String(20), info='执行时间')
     case_task_create_at = db.Column(db.DateTime, info='创建时间')
     case_task_update_at = db.Column(db.DateTime, info='更新时间')
     case_task_country = db.Column(db.String(10), info='国家')
     case_task_program = db.Column(db.String(10), info='系统')
-    case_task_type = db.Column(db.String(1), info='任务类型，0:具体时间；1:cron')
+    case_task_type = db.Column(db.Integer, info='任务类型，0:具体时间；1:cron')
+
 
 class AutoAsset(db.Model, BaseToDict):
     __tablename__ = 'asset'

@@ -333,7 +333,10 @@ class BaseService(object):
         task = self.db_session.query(Task).filter(Task.task_id == task_id).first()
         if not task:
             raise ValueError("not fund the task info with task'id {0}".format(task))
-        task.task_next_run_at = get_date(minutes=1)
+        min_diff = 1
+        if self.country == 'mex':
+            min_diff = -14 * 60
+        task.task_next_run_at = get_date(minutes=min_diff)
         self.db_session.add(task)
         self.db_session.commit()
 

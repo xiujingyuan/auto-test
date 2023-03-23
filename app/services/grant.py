@@ -10,6 +10,7 @@ from app.common.log_util import LogUtil
 from app.services import BaseService, CapitalAsset
 from app.services.china.grant.Model import AssetExtend
 from app.services.china.grant.Model import RouterLoadRecord, Sendmsg, Task, Synctask, AssetTran
+from app.services.mex.grant.Model import Asset as OverseaAsset
 from app.services.china.grant.Model import Asset
 
 
@@ -329,6 +330,11 @@ class OverseaGrantService(GrantBaseService):
         self.asset_import_url = self.grant_host + '/paydayloan/asset-sync'
         self.repay_asset_withdraw_success_url = self.repay_host + "/sync/asset/from-grant"
         self.capital_asset_success_url = self.repay_host + "/capital-asset/grant"
+
+    def check_item_exist(self, item_no):
+        asset = self.db_session.query(OverseaAsset).filter(
+            OverseaAsset.asset_item_no == item_no).first()
+        return asset
 
     def capital_asset_success(self, capital_info):
         resp = Http.http_post(self.capital_asset_success_url, capital_info)
