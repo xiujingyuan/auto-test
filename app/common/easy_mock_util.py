@@ -83,7 +83,7 @@ class EasyMock(object):
         # 查找function
         for index in range(content.count('function')):
             a_index = content.find('function')
-            b_index = content.find('}', content.find('}') + 1)
+            b_index = content.find('}', content.find('})') + 1)
             spect_str = content[a_index:b_index + len('}')]
             spect_key = '"spect_str_' + str(index) + '"'
             replace_dict[spect_key] = spect_str
