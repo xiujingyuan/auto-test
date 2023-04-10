@@ -66,9 +66,16 @@ class ChinaBizCentralService(BaseService):
         ret = {}
         req_name = 'get_{0}'.format(refresh_type)
         if refresh_type == 'central_task':
-            ret = getattr(self, req_name)(task_order_no, item_no, channel, max_create_at)
+            ret = getattr(self, req_name)(task_order_no, item_no, channel, max_create_at,
+                                          record_type='to_spec_dict_obj',
+                                          exclude_col=[CentralTask.task_request_data,
+                                                       CentralTask.task_response_data,
+                                                       CentralTask.task_memo])
         elif refresh_type == 'central_msg':
-            ret = getattr(self, req_name)(item_no, max_create_at)
+            ret = getattr(self, req_name)(item_no, max_create_at, record_type='to_spec_dict_obj',
+                                          exclude_col=[CentralSendMsg.sendmsg_content,
+                                                       CentralSendMsg.sendmsg_response_data,
+                                                       CentralSendMsg.sendmsg_memo])
         elif refresh_type in ('capital', 'capital_transaction', 'capital_notify'):
             ret = getattr(self, req_name)(item_no)
         elif refresh_type == 'capital_settlement_detail':
@@ -343,6 +350,11 @@ class ChinaBizCentralService(BaseService):
 
     def add_capital_settlement_detail(self, item_no, period, due_at, principal, interest, settlement_type):
         asset = self.db_session.query(Asset).filter(Asset.asset_item_no == item_no).first()
+        asset_tran = self.db_session.query(AssetTran.asset_tran_type, AssetTran.asset_tran_amount).filter(
+            AssetTran.asset_tran_asset_item_no == item_no, AssetTran.asset_tran_period == period).all()
+        ret = {}
+        for item in asset_tran:
+            ret[item[0]] = item[1]
         if not asset:
             raise ValueError('not fount the asset with item_no is :{0}'.format(asset))
         compensate = self.db_session.query(CapitalSettlementDetail).filter(
@@ -359,6 +371,10 @@ class ChinaBizCentralService(BaseService):
         compensate.repay_total_amount = principal + interest
         compensate.repay_principal = principal
         compensate.repay_interest = interest
+        for item in CapitalSettlementDetail.__table__.columns:
+            if item.startswith("repay") and item.replace("repay_") not in ('principal', 'interest', 'lateinterest'):
+                setattr(compensate, item, ret[item.replace("repay_")] if item.replace("repay_") in ret else 0)
+        compensate.repay_lateinterest = 0
         compensate.contract_start_date = asset.asset_actual_grant_at
         compensate.contract_end_date = asset.asset_due_at
         compensate.type = settlement_type

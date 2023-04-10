@@ -31,6 +31,9 @@ class BaseToDict(object):
     def to_spec_dict(self):
         return self.change_dict(self, spec_type=True)
 
+    def to_spec_dict_obj(self, exclude_col):
+        return self.change_dict(self, spec_type=True, exclude_col=exclude_col)
+
     @staticmethod
     def get_dict_data(model, spec_type=False):
         gen = model.model_to_dict(model)
@@ -38,7 +41,7 @@ class BaseToDict(object):
             else dict((g[0], g[1]) for g in gen)
         return dit
 
-    def change_dict(self, models=None, spec_type=False):
+    def change_dict(self, models=None, spec_type=False, exclude_col=[]):
         models = models if models is not None else self
         if isinstance(models, list):
             if isinstance(models[0], Model):
@@ -52,11 +55,12 @@ class BaseToDict(object):
                 return res
         else:
             if isinstance(models, Model):
-                return self.get_dict_data(models, spec_type)
+                res = self.get_dict_data(models, spec_type)
             else:
                 res = dict(zip(models.keys(), models))
                 self.find_datetime(res)
-                return res
+            res = self.exclude_col(res, exclude_col)
+            return res
 
     # 当结果为result对象列表时，result有key()方法
     @staticmethod
@@ -85,6 +89,17 @@ class BaseToDict(object):
         for v in value:
             if isinstance(value[v], datetime):
                 value[v] = BaseToDict.convert_datetime(value[v])  # 这里原理类似，修改的字典对象，不用返回即可修改
+
+    @staticmethod
+    def exclude_col(value, exclude_col):
+        if exclude_col:
+            table_name = exclude_col[0].class_.__tablename__
+            exclude_col = list(map(lambda x: x.__dict__['key'].replace(table_name + "_", ''), exclude_col))
+        ret = {}
+        for v in value:
+            if v not in exclude_col:
+                ret[v] = value[v]
+        return ret
 
     @staticmethod
     def convert_datetime(value):

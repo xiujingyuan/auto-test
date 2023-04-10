@@ -149,7 +149,7 @@ class ChinaGrantService(GrantBaseService):
 
     def get_task(self, item_no):
         task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
-        return {'grant_task': list(map(lambda x: x.to_spec_dict, task))}
+        return {'grant_task': list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]), task))}
 
     def get_router_capital_plan(self, item_no):
         router_capital_plan = self.db_session.query(RouterCapitalPlan).order_by(
@@ -167,7 +167,9 @@ class ChinaGrantService(GrantBaseService):
     def get_sendmsg(self, item_no):
         msg = self.db_session.query(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no).order_by(
             desc(Sendmsg.sendmsg_id)).all()
-        return {'grant_sendmsg': list(map(lambda x: x.to_spec_dict, msg))}
+        return {'grant_sendmsg': list(map(lambda x: x.to_spec_dict_obj([Sendmsg.sendmsg_content,
+                                                                        Sendmsg.sendmsg_response_data,
+                                                                        Sendmsg.sendmsg_memo]), msg))}
 
     def get_asset_loan_record(self, item_no):
         asset_loan_record = self.db_session.query(AssetLoanRecord).filter(

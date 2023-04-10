@@ -413,7 +413,7 @@ class RepayBaseService(BaseService):
         task_list = self.db_session.query(Task).filter(
             Task.task_order_no.in_(task_order_no),
             Task.task_create_at >= max_create_at).order_by(desc(Task.task_id)).all()
-        task_list = list(map(lambda x: x.to_spec_dict, task_list))
+        task_list = list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]), task_list))
         return {'task': task_list}
 
     @time_print
@@ -421,7 +421,7 @@ class RepayBaseService(BaseService):
         msg_list = self.db_session.query(SendMsg).filter(
             SendMsg.sendmsg_order_no.in_(task_order_no),
             SendMsg.sendmsg_create_at >= max_create_at).order_by(desc(SendMsg.sendmsg_id)).all()
-        msg_list = list(map(lambda x: x.to_spec_dict, msg_list))
+        msg_list = list(map(lambda x: x.to_spec_dict_obj([SendMsg.sendmsg_content, SendMsg.sendmsg_memo]), msg_list))
         return {'msg': msg_list}
 
     @time_print
