@@ -13,7 +13,7 @@ from app.model.Model import AutoAsset
 from app.services import BaseService, Asset, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
 from app.services.china.repay import modify_return, WithholdOrder, wait_time
 from app.services.china.repay.Model import WithholdRequest, Withhold, SendMsg, \
-    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback, Card, CardAsset
+    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback, Card, CardAsset, CapitalRepayTran, BuybackTran
 import pytz
 from app.services.china.repay import query_withhold
 
@@ -506,6 +506,10 @@ class RepayBaseService(BaseService):
     def remove_buyback(self, item_no, channel):
         self.db_session.query(Buyback).filter(Buyback.buyback_asset_item_no == item_no,
                                               Buyback.buyback_asset_loan_channel == channel).delete()
+        self.db_session.query(CapitalRepayTran).filter(
+            CapitalRepayTran.capital_repay_tran_asset_item_no == item_no).delete()
+        self.db_session.query(BuybackTran).filter(
+            BuybackTran.buyback_tran_asset_item_no == item_no).delete()
         self.db_session.flush()
         self.db_session.commit()
         return '移除回购成功'
