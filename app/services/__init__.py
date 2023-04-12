@@ -224,7 +224,7 @@ class BaseService(object):
             asset.asset_actual_grant_at = real_now
             if asset.asset_loan_channel != 'noloan':
                 channel = asset.asset_loan_channel
-                due_bill_no = asset.asset_due_bill_no if 'asset_due_bill_no' in asset else None
+                due_bill_no = asset.asset_due_bill_no if hasattr(asset, 'asset_due_bill_no') else None
             if asset.asset_status == 'payoff':
                 asset.asset_actual_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
                 asset.asset_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
