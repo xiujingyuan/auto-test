@@ -454,7 +454,9 @@ class ChinaBizCentralService(BaseService):
             CapitalAsset.capital_asset_item_no == item_no).first()
         capital_tran_list = self.db_session.query(CapitalTransaction).filter(
             CapitalTransaction.capital_transaction_asset_item_no == item_no).all()
-        self.change_asset_due_at([], [], capital_asset, capital_tran_list, advance_day,
+        item_tuple = tuple([x for x in [item_no, item_no_x, item_no_rights] if x])
+        asset_list = self.db_session.query(Asset).filter(Asset.asset_item_no.in_(item_tuple)).all()
+        self.change_asset_due_at(asset_list, [], capital_asset, capital_tran_list, advance_day,
                                  advance_month, 30)
 
     def update_central_task_next_run_at_forward_by_task_id(self, task_id, re_run):
