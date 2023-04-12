@@ -83,12 +83,13 @@ class ChinaRepayService(RepayBaseService):
             import_asset_info = self.grant.asset_import_success(asset_info)
         except ValueError as e:
             url = 'http://framework-test.k8s-ingress-nginx.kuainiujinke.com/rbiz-auto-loan'
+            # url = 'http://127.0.0.1:5208/rbiz-auto-loan'
             param = {
                 "count": period,
                 "env": self.env,
                 "channel": channel,
                 "country": self.country,
-                "environment": "test"
+                "environment": "dev"
             }
             ret = Http.http_post(url, param)
             item_no = ret['data']['item_no']
@@ -356,7 +357,8 @@ class ChinaRepayService(RepayBaseService):
             resp = [resp, agree_resp]
         return request_data, self.active_repay_url, resp
 
-    def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg, source_type):
+    def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg,
+                   grant_sync_task, source_type):
         is_run = True
         for index, task in enumerate((asset_import, capital_import, withdraw_success)):
             if index == 2:
@@ -368,6 +370,7 @@ class ChinaRepayService(RepayBaseService):
             self.grant.capital_asset_success(capital_data)
 
         self.grant.add_msg(grant_msg)
+        self.grant.add_sync_task(grant_sync_task)
         self.grant.asset_withdraw_success(json.loads(grant_msg['sendmsg_content'])['body'])
         self.biz_central.run_central_task_by_task_id(task_id)
         asset = self.check_item_exist(item_no)
@@ -384,13 +387,13 @@ class ChinaRepayService(RepayBaseService):
         biz_task = self.biz_central.get_loan_asset_task(item_no)
         is_noloan = True if self.get_no_loan(item_no) else False
         grant_msg = self.grant.get_withdraw_success_info_from_db(item_no, get_type='msg')
-        grant_task = self.grant.get_withdraw_success_info_task(item_no)
+        grant_sync_task = self.grant.get_withdraw_success_info_sync_task(item_no)
         capital_data = []
         if grant_msg is None:
             grant_msg = self.get_withdraw_success_info(item_no, get_type='msg')
             capital_data = self.grant.get_capital_asset_data(item_no)
-        return dict(zip(('biz_task', 'grant_msg', 'is_noloan', 'capital_data'),
-                        (biz_task, grant_msg, is_noloan, capital_data)))
+        return dict(zip(('biz_task', 'grant_msg', 'is_noloan', 'capital_data', 'grant_sync_task'),
+                        (biz_task, grant_msg, is_noloan, capital_data, grant_sync_task)))
 
     def sync_withhold_to_history(self, item_no):
         return self.biz_central.sync_withhold_to_history(item_no)

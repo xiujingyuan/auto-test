@@ -50,6 +50,7 @@ def repay_tools(tool):
                 req['capital_data'] = req_param['capital_data']
                 req['withdraw_success'] = req_param['biz_task'][-1]
                 req['grant_msg'] = req_param['grant_msg']
+                req['grant_sync_task'] = req_param['grant_sync_task']
                 for e in to_env:
                     repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
                     ret['data'].append({e: getattr(repay, tool)(**req)})

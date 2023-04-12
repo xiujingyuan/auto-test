@@ -88,7 +88,7 @@ class RepayBaseService(BaseService):
         withhold_order_list = self.db_session.query(WithholdOrder).filter(
             WithholdOrder.withhold_order_reference_no.in_(item_no_tuple),
             WithholdOrder.withhold_order_create_at >= max_create_at). \
-            order_by(WithholdOrder.withhold_order_create_at).all()
+            order_by(desc(WithholdOrder.withhold_order_create_at)).paginate(page=1, per_page=10, error_out=False).items
         withhold_order = []
         if request_no is not None:
             withhold_order = list(filter(lambda x: x.withhold_order_request_no in request_no, withhold_order_list))
@@ -412,7 +412,8 @@ class RepayBaseService(BaseService):
     def get_task(self, task_order_no, max_create_at, refresh_id):
         task_list = self.db_session.query(Task).filter(
             Task.task_order_no.in_(task_order_no),
-            Task.task_create_at >= max_create_at).order_by(desc(Task.task_id)).all()
+            Task.task_create_at >= max_create_at).order_by(desc(Task.task_id)).paginate(
+            page=1,per_page=20,error_out=False).items
         task_list = list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]), task_list))
         return {'task': task_list}
 
@@ -420,7 +421,8 @@ class RepayBaseService(BaseService):
     def get_msg(self, task_order_no, max_create_at, refresh_id):
         msg_list = self.db_session.query(SendMsg).filter(
             SendMsg.sendmsg_order_no.in_(task_order_no),
-            SendMsg.sendmsg_create_at >= max_create_at).order_by(desc(SendMsg.sendmsg_id)).all()
+            SendMsg.sendmsg_create_at >= max_create_at).order_by(desc(SendMsg.sendmsg_id)).paginate(
+            page=1,per_page=20,error_out=False).items
         msg_list = list(map(lambda x: x.to_spec_dict_obj([SendMsg.sendmsg_content, SendMsg.sendmsg_memo]), msg_list))
         return {'msg': msg_list}
 

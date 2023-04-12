@@ -166,11 +166,11 @@ class GrantBaseService(BaseService):
             return None
         return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
 
-    def get_withdraw_success_info_task(self, old_asset):
-        task = self.db_session.query(Task).filter(
-            Task.task_order_no == old_asset,
-            Task.task_type == 'AssetImport'
-        ).first()
+    def get_withdraw_success_info_sync_task(self, old_asset):
+        task = self.db_session.query(Synctask).filter(
+            Synctask.synctask_order_no == old_asset,
+            Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))
+        ).frist()
         return task.to_dict
 
     def asset_import_success(self, asset_info):

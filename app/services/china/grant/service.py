@@ -10,7 +10,7 @@ from app.common.http_util import Http
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.services.china.grant.Model import Asset, Task, Sendmsg, AssetExtend, \
-    AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan
+    AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan, Synctask
 from app.services.china.grant.ContractModel import Task as ContractTask
 
 BANK_MAP = {"中国银行": "BOC",
@@ -56,6 +56,16 @@ class ChinaGrantService(GrantBaseService):
         self.db_session.flush()
         self.db_session.commit()
         self.run_msg_by_id(new_msg.sendmsg_id)
+
+    def add_sync_task(self, task):
+        new_task = Synctask()
+        for key, value in task.items():
+            if key != 'synctask_id':
+                setattr(new_task, key, value)
+        self.db_session.add(new_task)
+        self.db_session.flush()
+        self.db_session.commit()
+        # self.run_task_by_id(new_task.task_id)
 
     def get_apr36_total_amount(self, principal_amount, period_count):
         return self.get_total_amount(principal_amount, period_count, 36, "equal")

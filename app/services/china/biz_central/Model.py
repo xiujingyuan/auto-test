@@ -6,7 +6,6 @@ from app.common.db_util import BaseToDict
 db = SQLAlchemy()
 
 
-
 class Asset(db.Model, BaseToDict):
     __tablename__ = 'asset'
     __table_args__ = (

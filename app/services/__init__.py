@@ -11,6 +11,7 @@ import socket
 from dateutil.relativedelta import relativedelta
 from faker import Faker
 from flask import current_app
+from flask_sqlalchemy import BaseQuery
 
 from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -104,7 +105,7 @@ class BaseService(object):
         #     self.engine = current_app.global_data[db_key]['engine']
 
         self.db_session = MyScopedSession(sessionmaker())
-        self.db_session.configure(bind=self.engine)
+        self.db_session.configure(bind=self.engine, query_cls=BaseQuery)
         if country == 'china' and program == 'grant':
             self.engine_contract = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country]['contract'].format(port),
                                                  echo=False)
@@ -319,9 +320,9 @@ class BaseService(object):
                                                 capital_tran.capital_transaction_expect_operate_at)
                 cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
                                                     capital_tran.capital_transaction_expect_operate_at)
-                capital_tran.capital_transaction_expect_operate_at = self.get_date(
-                    date=expect_finished_at, months=cal_advance_month,
-                    days=cal_advance_day)
+                capital_tran.capital_transaction_expect_operate_at = self.get_date(date=expect_finished_at,
+                                                                                   months=cal_advance_month,
+                                                                                   days=cal_advance_day)
             capital_tran.capital_transaction_expect_finished_at = expect_finished_at
         self.db_session.add_all(asset_list)
         if capital_asset is not None and capital_asset:

@@ -298,7 +298,7 @@ class ChinaBizCentralService(BaseService):
                 CentralTask.task_order_no.like('{0}%'.format(channel)),
                 CentralTask.task_order_no.like('{0}%'.format(item_no))),
             CentralTask.task_update_at >= max_create_at) \
-            .order_by(desc(CentralTask.task_id)).all()
+            .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=20, error_out=False).items
 
         return task_list
 
@@ -308,7 +308,9 @@ class ChinaBizCentralService(BaseService):
         msg_list = self.db_session.query(CentralSendMsg). \
             filter(CentralSendMsg.sendmsg_order_no.like('{0}%'.format(item_no)),
                    CentralSendMsg.sendmsg_update_at >= max_create_at) \
-            .order_by(desc(CentralSendMsg.sendmsg_id)).all()
+            .order_by(desc(CentralSendMsg.sendmsg_id)).paginate(page=1,
+                                                                per_page=20,
+                                                                error_out=False).items
         return msg_list
 
     def get_capital_info(self, item_no, channel):
