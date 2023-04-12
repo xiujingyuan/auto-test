@@ -9,16 +9,11 @@ class PhlRepayService(OverseaRepayService):
         self.grant = PhlGrantService(env, run_env, mock_name, check_req, return_req)
         super(PhlRepayService, self).__init__('phl', env, run_env, mock_name, check_req, return_req)
 
-    # def auto_loan(self, channel, period, amount, source_type='fee_30_normal', from_app='jasmine',
-    #               withdraw_type='online', days=0):
-    #     element = self.get_four_element()
-    #     asset_info, old_asset, item_no = self.grant.asset_import(channel, period, days, "day", 500000, self.country,
-    #                                                              from_app, source_type, element, withdraw_type)
-    #     # withdraw_success_data, asset, x_item_no
-    #     withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, '', asset_info)
-    #     self.grant.asset_withdraw_success(withdraw_success_data)
-    #     self.add_asset(item_no, 0)
-    #     return item_no, ''
+    def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item='', from_app='phi011'):
+        x_item_no = False if channel == 'pico_qr' else True
+        return super(PhlRepayService, self).auto_loan(channel, period, days, amount, source_type,
+                                                      joint_debt_item=joint_debt_item,
+                                                      x_item_no=x_item_no, from_app=from_app)
 
     @time_print
     def sync_plan_to_bc(self, item_no):

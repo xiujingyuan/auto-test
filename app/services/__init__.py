@@ -233,6 +233,9 @@ class BaseService(object):
         add_day = 0
         update_capital_plan = []
         update_capital_plan_key = {}
+        finish_time = {}
+        user_repay_time = {}
+        operate_time = {}
         if channel == 'lanhai_zhongshi_qj':
             update_capital_grant = {
                 "channel": "KN10001",
@@ -245,12 +248,20 @@ class BaseService(object):
                 asset_tran_due_at = self.get_date(date=real_now, days=asset_tran.asset_tran_period * interval_day)
             else:
                 asset_tran_due_at = self.get_date(date=real_now, months=asset_tran.asset_tran_period)
-            # if asset_tran.asset_tran_finish_at != '1000-01-01 00:00:00':
-            #     cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-            #     cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-            #     asset_tran.asset_tran_finish_at = self.get_date(date=asset_tran.asset_tran_finish_at,
-            #                                                     months=cal_advance_month,
-            #                                                     days=cal_advance_day)
+            if str(asset_tran.asset_tran_finish_at) != '1000-01-01 00:00:00':
+                if str(asset_tran.asset_tran_finish_at) not in finish_time:
+                    cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                    cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
+                    finish_at = self.get_date(date=asset_tran_due_at,
+                                                                    months=cal_advance_month,
+                                                                    days=cal_advance_day,
+                                                                    hours=asset_tran.asset_tran_finish_at.hour,
+                                                                    minutes=asset_tran.asset_tran_finish_at.minute,
+                                                                    seconds=asset_tran.asset_tran_finish_at.second)
+                    finish_time[str(asset_tran.asset_tran_finish_at)] = finish_at
+                    asset_tran.asset_tran_finish_at = finish_at
+                else:
+                    asset_tran.asset_tran_finish_at = finish_time[str(asset_tran.asset_tran_finish_at)]
             if asset_tran.asset_tran_type == 'lateinterest':
                 asset_tran.asset_tran_due_at = self.get_date(date=asset_tran.asset_tran_due_at, days=add_day)
             else:
@@ -271,31 +282,38 @@ class BaseService(object):
                                                    days=capital_tran.capital_transaction_period * interval_day)
             else:
                 expect_finished_at = self.get_date(date=real_now, months=capital_tran.capital_transaction_period)
-            if isinstance(capital_tran.capital_transaction_user_repay_at, datetime.datetime) \
-                    and capital_tran.capital_transaction_user_repay_at.year != 1000:
-                cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
-                                                capital_tran.capital_transaction_user_repay_at)
-                cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+            if str(capital_tran.capital_transaction_user_repay_at) != '1000-01-01 00:00:00':
+                if str(capital_tran.capital_transaction_user_repay_at) not in user_repay_time:
+                    cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                     capital_tran.capital_transaction_user_repay_at)
-                user_repay_at = capital_tran.capital_transaction_user_repay_at
-                capital_tran.capital_transaction_user_repay_at = self.get_date(date=expect_finished_at,
-                                                                               months=cal_advance_month,
-                                                                               days=cal_advance_day,
-                                                                               hour=user_repay_at.hour,
-                                                                               minute=user_repay_at.minute,
-                                                                               second=user_repay_at.second)
+                    cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+                                                        capital_tran.capital_transaction_user_repay_at)
+                    user_repay_at = self.get_date(date=expect_finished_at,
+                                                  months=cal_advance_month,
+                                                  days=cal_advance_day,
+                                                  hour=capital_tran.capital_transaction_user_repay_at.hour,
+                                                  minute=capital_tran.capital_transaction_user_repay_at.minute,
+                                                  second=capital_tran.capital_transaction_user_repay_at.second)
+                    user_repay_time[str(capital_tran.capital_transaction_user_repay_at)] = user_repay_at
+                    capital_tran.capital_transaction_user_repay_at = user_repay_at
+                else:
+                    capital_tran.capital_transaction_user_repay_at = user_repay_time[str(capital_tran.capital_transaction_user_repay_at)]
             actual_operate_at = 'capital_transaction_actual_operate_at' if \
                 hasattr(capital_tran, 'capital_transaction_actual_operate_at') \
                 else 'capital_transaction_actual_finished_at'
-            if isinstance(getattr(capital_tran, actual_operate_at), datetime.datetime) and \
-                    getattr(capital_tran, actual_operate_at).year != 1000:
-                cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
-                                                getattr(capital_tran, actual_operate_at))
-                cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+            if str(getattr(capital_tran, actual_operate_at)) != '1000-01-01 00:00:00':
+                if str(getattr(capital_tran, actual_operate_at)) not in operate_time:
+                    cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                     getattr(capital_tran, actual_operate_at))
-                setattr(capital_tran, actual_operate_at, self.get_date(date=expect_finished_at,
-                                                                       months=cal_advance_month,
-                                                                       days=cal_advance_day))
+                    cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
+                                                        getattr(capital_tran, actual_operate_at))
+                    actual_operate_time = self.get_date(date=expect_finished_at,
+                                                                           months=cal_advance_month,
+                                                                           days=cal_advance_day)
+                    operate_time[str(getattr(capital_tran, actual_operate_at))] = actual_operate_time
+                    setattr(capital_tran, actual_operate_at, actual_operate_time)
+                else:
+                    setattr(capital_tran, actual_operate_at, operate_time[str(getattr(capital_tran, actual_operate_at))])
             if hasattr(capital_tran, 'capital_transaction_expect_operate_at'):
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_expect_operate_at)
@@ -336,6 +354,8 @@ class BaseService(object):
         min_diff = 1
         if self.country == 'mex':
             min_diff = -14 * 60
+        elif self.country == "tha":
+            min_diff = -1 * 60
         task.task_next_run_at = get_date(minutes=min_diff)
         self.db_session.add(task)
         self.db_session.commit()

@@ -29,7 +29,12 @@ class GrantBaseService(BaseService):
         if not task:
             raise ValueError("not fund the task info with task'id {0}".format(task))
         task.task_status = 'open'
-        task.task_next_run_at = self.get_date(minutes=1)
+        min_diff = 1
+        if self.country == 'mex':
+            min_diff = -14 * 60
+        elif self.country == "tha":
+            min_diff = -1 * 60
+        task.task_next_run_at = self.get_date(minutes=min_diff)
         self.db_session.add(task)
         self.db_session.commit()
 
@@ -211,7 +216,7 @@ class GrantBaseService(BaseService):
         if sub_order_type is not None:
             router_record.router_load_record_sub_order_type = sub_order_type
         router_record.router_load_record_route_day = self.get_date(fmt="%Y-%m-%d")
-        router_record.router_load_record_idnum = element['data']['id_number_encrypt']
+        router_record.router_load_record_idnum = element['data']['id_number_encrypt'] if 'data' in element else element['id_num']
         router_record.router_load_record_from_system = asset_info['from_system']
         self.db_session.add(router_record)
         self.db_session.commit()
@@ -404,11 +409,16 @@ class OverseaGrantService(GrantBaseService):
 
     @staticmethod
     def set_asset_borrower(asset_info, element, withdraw_type=''):
-        asset_info['data']['borrower']['id_num'] = element["data"]["id_number_encrypt"]
-        asset_info['data']['borrower']['borrower_uuid'] = element["data"]["id_number"] + "0"
-        asset_info['data']['borrower']['borrower_card_uuid'] = element["data"]["card_num"]
-        asset_info['data']['borrower']['mobile'] = element["data"]["mobile_encrypt"]
-        asset_info['data']['borrower']['individual_uuid'] = element["data"]["id_number"] + "1"
+        if 'data' in element:
+            asset_info['data']['borrower']['id_num'] = element["data"]["id_number_encrypt"]
+            asset_info['data']['borrower']['borrower_uuid'] = element["data"]["id_number"] + "0"
+            asset_info['data']['borrower']['borrower_card_uuid'] = element["data"]["card_num"]
+            asset_info['data']['borrower']['mobile'] = element["data"]["mobile_encrypt"]
+            asset_info['data']['borrower']['individual_uuid'] = element["data"]["id_number"] + "1"
+        else:
+            for key in element:
+                asset_info['data']['borrower'][key] = element[key]
+
         if withdraw_type:
             asset_info['data']['borrower']['withdraw_type'] = withdraw_type
 
