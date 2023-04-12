@@ -77,30 +77,43 @@ class ChinaRepayService(RepayBaseService):
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
             self.grant.get_asset_item_info(channel, source_type, from_system_name)
         # 大单
-        asset_info, old_asset = self.grant.asset_import(item_no, channel, element, period, amount, source_type,
-                                                        from_system_name, from_system, x_item_no)
-        import_asset_info = self.grant.asset_import_success(asset_info)
-        withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info)
-        self.grant.asset_withdraw_success(withdraw_success_data)
-        self.run_msg_by_type_and_order_no(item_no, 'AssetWithdrawSuccess', timeout=1)
-        capital_data = self.grant.get_capital_asset_data(item_no)
-        self.grant.capital_asset_success(capital_data)
-
-        # 小单
         try:
-            x_list = (x_source_type, x_right)
-            for index, x_asset in enumerate((x_item_no, x_rights)):
-                if x_asset:
-                    no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
-                                                                                  x_asset, x_list[index])
-                    self.grant.asset_import_success(no_asset_info)
-                    withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, item_no,
-                                                                                    no_asset_info)
-                    self.grant.asset_withdraw_success(withdraw_success_data_no)
-                    self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
-        except Exception as e:
-            print(e)
-            print('小单放款失败')
+            asset_info, old_asset = self.grant.asset_import(item_no, channel, element, period, amount, source_type,
+                                                            from_system_name, from_system, x_item_no)
+            import_asset_info = self.grant.asset_import_success(asset_info)
+        except ValueError as e:
+            url = 'http://127.0.0.1:5208/rbiz-auto-loan'
+            param = {
+                "count": period,
+                "env": self.env,
+                "channel": channel,
+                "country": self.country,
+                "environment": "test"
+            }
+            ret = Http.http_post(url, param)
+            item_no = ret['data']['item_no']
+        else:
+            withdraw_success_data = self.grant.get_withdraw_success_data(item_no, old_asset, x_item_no, asset_info)
+            self.grant.asset_withdraw_success(withdraw_success_data)
+            self.run_msg_by_type_and_order_no(item_no, 'AssetWithdrawSuccess', timeout=1)
+            capital_data = self.grant.get_capital_asset_data(item_no)
+            self.grant.capital_asset_success(capital_data)
+
+            # 小单
+            try:
+                x_list = (x_source_type, x_right)
+                for index, x_asset in enumerate((x_item_no, x_rights)):
+                    if x_asset:
+                        no_asset_info, no_old_asset = self.grant.asset_no_loan_import(asset_info, import_asset_info, item_no,
+                                                                                      x_asset, x_list[index])
+                        self.grant.asset_import_success(no_asset_info)
+                        withdraw_success_data_no = self.grant.get_withdraw_success_data(x_asset, no_old_asset, item_no,
+                                                                                        no_asset_info)
+                        self.grant.asset_withdraw_success(withdraw_success_data_no)
+                        self.run_msg_by_type_and_order_no(x_asset, 'AssetWithdrawSuccess')
+            except Exception as e:
+                print(e)
+                print('小单放款失败')
         self.add_asset(item_no, 0)
         return item_no, x_item_no
 

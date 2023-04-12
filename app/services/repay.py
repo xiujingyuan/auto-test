@@ -557,6 +557,7 @@ class RepayBaseService(BaseService):
         exist_asset = AutoAsset.query.filter(AutoAsset.asset_name == name, AutoAsset.asset_env == self.env).first()
         if exist_asset:
             exist_asset.asset_env = self.env
+            exist_asset.asset_type = source_type
             exist_asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
             db.session.add(exist_asset)
             db.session.flush()
