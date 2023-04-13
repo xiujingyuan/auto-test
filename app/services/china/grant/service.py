@@ -326,7 +326,7 @@ class ChinaGrantService(GrantBaseService):
         task = self.db_session.queyr(Task).filter(Task.task_order_no == item_no).all()
         msg = self.db_session.queyr(Sendmsg).filter(Sendmsg.sendmsg_order_no == item_no).all()
         asset_loan_record = self.db_session.queyr(AssetLoanRecord).filter(AssetLoanRecord.asset_loan_record_asset_item_no == item_no).all()
-        capital_asset = self.db_session.queyr(CapitalAsset).filter(CapitalAsset.capital_asset_item_no == item_no).frist()
+        capital_asset = self.db_session.queyr(CapitalAsset).filter(CapitalAsset.capital_asset_item_no == item_no).first()
         capital_tran = self.db_session.queyr(CapitalTransaction).filter(CapitalTransaction.capital_transaction_item_no == item_no).all()
         return None
 

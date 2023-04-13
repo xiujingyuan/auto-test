@@ -170,7 +170,7 @@ class GrantBaseService(BaseService):
         task = self.db_session.query(Synctask).filter(
             Synctask.synctask_order_no == old_asset,
             Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))
-        ).frist()
+        ).first()
         return task.to_dict
 
     def asset_import_success(self, asset_info):
