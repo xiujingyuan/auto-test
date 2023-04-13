@@ -291,16 +291,21 @@ class ChinaBizCentralService(BaseService):
         task_order_no = tuple(list(task_order_no) + [channel]) \
             if channel is not None else task_order_no
         task_list = self.db_session.query(CentralTask).filter(
-            or_(CentralTask.task_order_no.in_(task_order_no),
+            CentralTask.task_order_no.in_(task_order_no),
+            CentralTask.task_update_at >= max_create_at)\
+            .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=15, error_out=False).items
+
+        other_task_list = self.db_session.query(CentralTask).filter(
+            or_(
                 CentralTask.task_order_no.like('settle_detail_{0}%'.format(channel)),
                 CentralTask.task_order_no.like('REPAYMENTFILE_%'),
                 CentralTask.task_order_no.like('COMPFILE_%'),
                 CentralTask.task_order_no.like('{0}%'.format(channel)),
                 CentralTask.task_order_no.like('{0}%'.format(item_no))),
-            CentralTask.task_update_at >= max_create_at) \
-            .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=20, error_out=False).items
+            CentralTask.task_update_at >= self.get_date(is_str=True, fmt='%Y-%m-%d')) \
+            .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=5, error_out=False).items
 
-        return task_list
+        return task_list + other_task_list
 
     @biz_modify_return
     def get_central_msg(self, item_no, max_create_at=None):
