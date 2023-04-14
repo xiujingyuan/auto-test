@@ -58,14 +58,16 @@ class ChinaGrantService(GrantBaseService):
         self.run_msg_by_id(new_msg.sendmsg_id)
 
     def add_sync_task(self, task):
-        new_task = Synctask()
-        for key, value in task.items():
-            if key != 'synctask_id':
-                setattr(new_task, key, value)
-        self.db_session.add(new_task)
-        self.db_session.flush()
-        self.db_session.commit()
-        # self.run_task_by_id(new_task.task_id)
+        exist_sync_task = self.db_session.query(Synctask).filter(Synctask.synctask_order_no == task.synctask_order_no).first()
+        if exist_sync_task is None:
+            new_task = Synctask()
+            for key, value in task.items():
+                if key != 'synctask_id':
+                    setattr(new_task, key, value)
+            self.db_session.add(new_task)
+            self.db_session.flush()
+            self.db_session.commit()
+            # self.run_task_by_id(new_task.task_id)
 
     def get_apr36_total_amount(self, principal_amount, period_count):
         return self.get_total_amount(principal_amount, period_count, 36, "equal")
