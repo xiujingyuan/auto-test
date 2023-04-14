@@ -58,7 +58,7 @@ class ChinaGrantService(GrantBaseService):
         self.run_msg_by_id(new_msg.sendmsg_id)
 
     def add_sync_task(self, task):
-        exist_sync_task = self.db_session.query(Synctask).filter(Synctask.synctask_order_no == task.synctask_order_no).first()
+        exist_sync_task = self.db_session.query(Synctask).filter(Synctask.synctask_order_no == task['synctask_order_no']).first()
         if exist_sync_task is None:
             new_task = Synctask()
             for key, value in task.items():
