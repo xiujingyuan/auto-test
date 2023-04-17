@@ -88,8 +88,7 @@ class ChinaRepayService(RepayBaseService):
                 "count": period,
                 "env": self.env,
                 "channel": channel,
-                "country": self.country,
-                "environment": "dev"
+                "country": self.country
             }
             ret = Http.http_post(url, param)
             item_no = ret['data']['item_no']
