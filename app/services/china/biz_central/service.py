@@ -301,7 +301,7 @@ class ChinaBizCentralService(BaseService):
                 CentralTask.task_order_no.like('REPAYMENTFILE_%'),
                 CentralTask.task_order_no.like('COMPFILE_%'),
                 CentralTask.task_order_no.like('{0}%'.format(channel))),
-            CentralTask.task_update_at >= self.get_date(is_str=True, fmt='%Y-%m-%d')) \
+            CentralTask.task_id >= task_list[0].task_id) \
             .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=5, error_out=False).items
 
         return task_list + other_task_list
