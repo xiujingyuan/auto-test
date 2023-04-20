@@ -380,8 +380,8 @@ class ChinaBizCentralService(BaseService):
         for item in CapitalSettlementDetail.__table__.columns:
             item = str(item).replace('capital_settlement_detail.', '')
             if item.startswith("repay") and item.replace("repay_", '') not in ('principal', 'interest', 'lateinterest'):
-                setattr(compensate, item, ret[item.replace("repay_", '')] if item.replace("repay_", '') in ret else 0)
-        compensate.repay_lateinterest = 0
+                setattr(compensate, item, ret[item.replace("repay_", '')] if item.replace("repay_", '') in ret else 1)
+        compensate.repay_lateinterest = 1
         compensate.contract_start_date = asset.asset_actual_grant_at
         compensate.contract_end_date = asset.asset_due_at
         compensate.type = settlement_type
