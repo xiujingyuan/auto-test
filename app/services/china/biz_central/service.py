@@ -62,7 +62,8 @@ class ChinaBizCentralService(BaseService):
         max_create_at = self.get_date(is_str=True, days=-3)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = self.get_withhold_key_info
         channel = asset['asset'][0]['loan_channel']
-        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel]
+        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) \
+                        + [channel] + ['{0}_query'.format(item_no)]
         ret = {}
         req_name = 'get_{0}'.format(refresh_type)
         if refresh_type == 'central_task':
