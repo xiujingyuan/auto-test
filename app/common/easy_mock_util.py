@@ -9,7 +9,7 @@ from jsonpath_ng import parse
 import datetime
 from dateutil.relativedelta import relativedelta
 
-BASE_URL = "http://easy-mock.k8s-ingress-nginx.kuainiujinke.com"
+BASE_URL = "https://easy-mock.k8s-ingress-nginx.kuainiujinke.com"
 CD_BIZ_PROJECT_ID = '5b555fbc3a0f770020651dda'
 ACCOUNT = {
     "user": "carltonliu",

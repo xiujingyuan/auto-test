@@ -153,7 +153,7 @@ class BaseService(object):
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
-        return "{0}{1}_{2}".format(prefix, item_no, int(time.time()))
+        return "{0}{1}_{2}".format(item_no, prefix, int(time.time()))
 
     @staticmethod
     def cal_days(str1, str2):

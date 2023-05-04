@@ -13,7 +13,7 @@ from app.model.Model import AutoAsset
 from app.services import BaseService, Asset, AssetExtend, time_print, CapitalAsset, AssetTran, CapitalTransaction
 from app.services.china.repay import modify_return, WithholdOrder, wait_time
 from app.services.china.repay.Model import WithholdRequest, Withhold, SendMsg, \
-    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback, Card, CardAsset, CapitalRepayTran, BuybackTran
+    AssetOperationAuth, WithholdAssetDetailLock, Task, Buyback, Card, CardAsset, CapitalRepayTran, BuybackTran, Synctask
 import pytz
 from app.services.china.repay import query_withhold
 
@@ -65,9 +65,9 @@ class RepayBaseService(BaseService):
         return getattr(self, kv_type)(kv_value)
 
     def update_repay_paysvr_config(self, kv_value):
-        payment_url = 'http://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/5de5d515d1784d36471d6041/rbiz_auto_test'
+        payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/5de5d515d1784d36471d6041/rbiz_auto_test'
         if kv_value == 'manual':
-            payment_url = 'http://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/617b69d43083b20020c66359' \
+            payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/617b69d43083b20020c66359' \
                           '/rbiz_manual_test'
         elif kv_value == 'stating':
             payment_url = 'http://biz-payment-staging.k8s-ingress-nginx.kuainiujinke.com'
@@ -418,6 +418,16 @@ class RepayBaseService(BaseService):
         return {'task': task_list}
 
     @time_print
+    def get_sync_task(self, task_order_no, max_create_at, refresh_id):
+        sync_task_list = self.db_session.query(Synctask).filter(
+            Synctask.synctask_key.like('{0}%'.format(task_order_no)),
+            Synctask.synctask_create_at >= max_create_at).order_by(desc(Synctask.synctask_id)).paginate(
+            page=1, per_page=10, error_out=False).items
+        sync_task_list = list(map(lambda x: x.to_spec_dict_obj([Synctask.task_request_data,
+                                                                Synctask.task_response_data]),sync_task_list))
+        return {'sync_task': sync_task_list}
+
+    @time_print
     def get_msg(self, task_order_no, max_create_at, refresh_id):
         msg_list = self.db_session.query(SendMsg).filter(
             SendMsg.sendmsg_order_no.in_(task_order_no),
@@ -448,6 +458,8 @@ class RepayBaseService(BaseService):
         elif refresh_type == 'withhold_request':
             ret = self.get_withhold_request(request_no)
         elif refresh_type == 'asset_tran':
+            ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
+        elif refresh_type == 'sync_task':
             ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
         # elif refresh_type in ('biz_capital', 'biz_capital_tran', 'biz_capital_notify'):
         #     ret = getattr(self.biz_central, 'get_{0}'.format(refresh_type[4:]))(item_no)
