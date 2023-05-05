@@ -100,7 +100,8 @@ class RepayBaseService(BaseService):
             withhold_order = withhold_order_list
         request_no_tuple = tuple(map(lambda x: x.withhold_order_request_no, withhold_order))
         serial_no_tuple = tuple(map(lambda x: x.withhold_order_serial_no, withhold_order))
-        id_num_encrypt_tuple = (self.get_repay_card_by_item_no(item_no)['card_acc_id_num_encrypt'],)
+        id_num_encrypt_tuple = (self.get_repay_card_by_item_no(item_no)['card_acc_id_num_encrypt'],) \
+            if item_no is not None else ()
         withhold_order = list(map(lambda x: x.to_spec_dict, withhold_order))
         return request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order
 
@@ -554,8 +555,7 @@ class RepayBaseService(BaseService):
                                             AutoAsset.asset_env == self.env,
                                             AutoAsset.asset_country == self.country,
                                             AutoAsset.asset_type == asset_type) \
-            .order_by(desc(AutoAsset.asset_id)).paginate(
-            page=1,per_page=10,error_out=False).items
+            .order_by(desc(AutoAsset.asset_id)).paginate(page=1, per_page=10, error_out=False).items
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
         ret = {'assets': asset_list}
         if asset_list:

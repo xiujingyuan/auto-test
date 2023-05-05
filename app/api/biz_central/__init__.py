@@ -19,7 +19,7 @@ def biz_central_tools(tool):
     country = req.pop('country', 'china')
     env = req.pop('env', None)
     environment = req.pop('environment', 'dev')
-    mock_name = req.pop('mock_name')
+    mock_name = req.pop('mock_name', None)
     item_no = req.pop('item_no') if tool in ('run_xxl_job',
                                              'add_and_update_holiday',
                                              'run_central_task_by_task_id',
