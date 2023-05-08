@@ -57,7 +57,7 @@ class ZhongbanghaoyuerlMock(BusinessMock):
                           '$.data.repayPenaltyAmount',
                           '$.data.status',
                           '$.code'), (
-            str(principal + interest),
+            str(principal + interest + fee_amount + penalty_amount),
             str(principal),
             str(interest),
             str(penalty_amount),
