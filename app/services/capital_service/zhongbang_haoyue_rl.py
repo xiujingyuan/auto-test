@@ -4,12 +4,12 @@ from functools import reduce
 from app.services.capital_service import BusinessMock
 
 
-class ZhongbangzhongjiMock(BusinessMock):
+class ZhongbanghaoyuerlMock(BusinessMock):
 
     def __init__(self, project, asset, asset_extend, asset_tran_list, period_start, period_end):
         self.channel = 'zhongbang_haoyue_rl'
-        super(ZhongbangzhongjiMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start,
-                                                   period_end)
+        super(ZhongbanghaoyuerlMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start,
+                                                    period_end)
         self.trail_url = '/runlou/zhongbang_haoyue_rl/loan.zb.assis.repayment.trial.query'
         self.trail_query_url = ''
         self.repay_plan_url = '/runlou/zhongbang_haoyue_rl/loan.zb.assis.repayment.plan.query'
