@@ -63,3 +63,36 @@ class ZhongbanghaoyuerlMock(BusinessMock):
             str(penalty_amount),
             status, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
+
+    def repay_plan_mock(self):
+        principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
+        repayPlanList = []
+        for period in list(range(1, self.asset.asset_period_count + 1)):
+            overdue_amount = float(Decimal(
+                repayPlanDict[period]["overdue"] * repayPlanDict[period]["principal"] * 0.001).quantize(
+                Decimal("0.00")))
+            repayPlanList.append(
+                {
+                    "termNo": period,
+                    "repayDate": "2023-04-05",
+                    "principalAmount": repayPlanDict[period]["principal"],
+                    "interestAmount": repayPlanDict[period]["interest"],
+                    "penaltyAmount": overdue_amount,
+                    "paidPrincipal": "0",
+                    "paidInterest": "0",
+                    "paidPenaltyAmount": "0",
+                    "intefine": "0",
+                    "paidIntefine": "0",
+                    "isOverdue": "1" if overdue_amount else "0"
+                })
+        req_data = {
+            "code": "0",
+            "message": "Success",
+            "data": {
+                "status": "S",
+                "repayPlan": repayPlanList
+            }
+        }
+        return self.update_by_value(self.repay_plan_url, req_data)
+
+
