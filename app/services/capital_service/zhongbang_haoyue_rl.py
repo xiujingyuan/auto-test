@@ -29,9 +29,9 @@ class ZhongbanghaoyuerlMock(BusinessMock):
             interest_amount = interest_amount + 1
         elif interest_type == 'zero':
             interest_amount = 0
-        value = dict(zip(('$.data.result.actualRepayAmount',
-                          '$.data.result.repayPrincipal',
-                          '$.data.result.repayInterest'),
+        value = dict(zip(('$.data.actualRepayAmount',
+                          '$.data.repayPrincipal',
+                          '$.data.repayInterest'),
                          (principal_amount + interest_amount, principal_amount, interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
@@ -51,12 +51,12 @@ class ZhongbanghaoyuerlMock(BusinessMock):
         penalty_amount = float(Decimal(penalty_amount / 100).quantize(Decimal("0.00")))
         code = "0" if success_type.lower() == 'success' else 100
         status = 'S' if success_type.lower() == 'success' else 'F'
-        value = dict(zip(('$.data.result.actualRepayAmount',
-                          '$.data.result.repayPrincipal',
-                          '$.data.result.repayInterest',
-                          '$.data.result.repayPenaltyAmount',
-                          '$.data.result.status',
-                          '$.data.code'), (
+        value = dict(zip(('$.data.actualRepayAmount',
+                          '$.data.repayPrincipal',
+                          '$.data.repayInterest',
+                          '$.data.repayPenaltyAmount',
+                          '$.data.status',
+                          '$.code'), (
             str(principal + interest),
             str(principal),
             str(interest),
