@@ -531,7 +531,6 @@ class BaseService(object):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
-        phone_number = '13980522295'
         user_name = fake.name()
         bank_code = self.get_bank_code(bank_name, bank_code_suffix)
         response = {
