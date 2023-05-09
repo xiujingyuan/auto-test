@@ -28,7 +28,7 @@ def biz_central_tools(tool):
     max_create_at = repay.get_date(is_str=True, days=-3)
     asset = repay.get_asset(item_no)
     request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order = \
-            repay.get_withhold_key_info(item_no, max_create_at=max_create_at)
+        repay.get_withhold_key_info(item_no, max_create_at=max_create_at)
     central = BizCentralServiceFactory.get_biz_central(country, env, environment, mock_name)
     central.get_withhold_key_info = [request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple,
                                      withhold_order]

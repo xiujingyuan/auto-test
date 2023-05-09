@@ -118,11 +118,13 @@ class BaseService(object):
     def get_detail_info(self, table_name, get_id, get_attr):
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
         table_name = table_name.replace("grant_", '')
-        obj = getattr(meta_class, ''.join(tuple(map(lambda x: x.title() if x != 'msg' else 'SendMsg', table_name.split('_')))))
+        obj = getattr(meta_class, ''.join(
+            tuple(map(lambda x: x.title() if x != 'msg' else 'SendMsg', table_name.split('_')))))
         table_name = table_name.replace('central_', '')
         table_name = table_name if table_name != 'msg' else 'sendmsg'
         item = self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(table_name)) == get_id).first()
-        return getattr(item, '{0}_{1}'.format(table_name, get_attr) if not get_attr.startswith(table_name) else get_attr)
+        attr_name = '{0}_{1}'.format(table_name, get_attr) if not get_attr.startswith(table_name) else get_attr
+        return getattr(item, attr_name) if hasattr(item, attr_name) else ''
 
     def run_job_by_api(self, job_type, job_params):
         # return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, json.dumps(job_params)))
