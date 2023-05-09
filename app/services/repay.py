@@ -555,7 +555,7 @@ class RepayBaseService(BaseService):
                                             AutoAsset.asset_env == self.env,
                                             AutoAsset.asset_country == self.country,
                                             AutoAsset.asset_type == asset_type) \
-            .order_by(desc(AutoAsset.asset_id)).paginate(page=1, per_page=10, error_out=False).items
+            .order_by(desc(AutoAsset.asset_create_at)).paginate(page=1, per_page=10, error_out=False).items
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
         ret = {'assets': asset_list}
         if asset_list:
