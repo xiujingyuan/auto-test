@@ -358,7 +358,7 @@ class ChinaGrantService(GrantBaseService):
         from_system = FROM_SYSTEM_DICT[from_system_name]
         back_code = BANK_MAP[back_code]
         asset_info, _ = self.asset_import(item_no, channel, element, count, amount, source_type,
-                                                  from_system_name, from_system, ref_order_no, back_code=back_code)
+                                          from_system_name, from_system, ref_order_no, back_code=back_code)
         self.asset_import_success(asset_info)
         if grant_way == 2:
             self.open_account(element, back_code, item_no, channel)
