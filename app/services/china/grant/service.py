@@ -22,10 +22,11 @@ BANK_MAP = {"中国银行": "BOC",
 
 class ChinaGrantService(GrantBaseService):
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
-        self.grant_host = "http://grant{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.contract_host = "http://contract{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
-        self.cmdb_host = 'http://biz-cmdb-api-1.k8s-ingress-nginx.kuainiujinke.com/v6/rate/standard-calculate'
+        self.grant_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/grant{0}".format(env)
+        self.contract_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/contract{0}".format(env)
+        self.repay_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/grant{0}".format(env)
+        self.cmdb_host = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-cmdb1' \
+                         '/v6/rate/standard-calculate'
         super(ChinaGrantService, self).__init__('china', env, run_env, mock_name, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
         self.task_url = self.grant_host + '/task/run?orderNo={0}'

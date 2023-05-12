@@ -65,12 +65,13 @@ class RepayBaseService(BaseService):
         return getattr(self, kv_type)(kv_value)
 
     def update_repay_paysvr_config(self, kv_value):
-        payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/5de5d515d1784d36471d6041/rbiz_auto_test'
+        payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/' \
+                      '5de5d515d1784d36471d6041/rbiz_auto_test'
         if kv_value == 'manual':
             payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/617b69d43083b20020c66359' \
                           '/rbiz_manual_test'
         elif kv_value == 'stating':
-            payment_url = 'http://biz-payment-staging.k8s-ingress-nginx.kuainiujinke.com'
+            payment_url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-payment-staging'
         json_path_dict = {
             '$.api_config.payment_url': payment_url,
             '$.api_config.url': payment_url,
