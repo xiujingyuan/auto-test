@@ -285,13 +285,10 @@ class CoverageInfo(db.Model, BaseToDict):
     service_name = db.Column(db.String(50), info='服务名')
     compare_branch = db.Column(db.String(255), index=True, info='对比分支/commit号')
     content = db.Column(db.String(collation='utf8_bin'), info='增量覆盖率内容-原始内容')
-    change_content = db.Column(db.Text(collation='utf8_bin'), info='增量覆盖率内容-转换内容')
     version = db.Column(db.String(20, 'utf8_bin'), info='获取版本号')
     create_time = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='创建时间')
     update_time = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='更新时间')
     env = db.Column(db.String(20, 'utf8_bin'), info='执行环境')
-    coverage_type = db.Column(db.Integer, server_default=db.FetchedValue(), info='获取覆盖率类型')
-    coverage_return = db.Column(db.String(255), info='覆盖率请求返还值')
     new_coverage = db.Column(db.Integer, server_default=db.FetchedValue(), info='获取覆盖率类型')
 
 
