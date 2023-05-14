@@ -65,12 +65,13 @@ class RepayBaseService(BaseService):
         return getattr(self, kv_type)(kv_value)
 
     def update_repay_paysvr_config(self, kv_value):
-        payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/5de5d515d1784d36471d6041/rbiz_auto_test'
+        payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/' \
+                      '5de5d515d1784d36471d6041/rbiz_auto_test'
         if kv_value == 'manual':
             payment_url = 'https://easy-mock.k8s-ingress-nginx.kuainiujinke.com/mock/617b69d43083b20020c66359' \
                           '/rbiz_manual_test'
         elif kv_value == 'stating':
-            payment_url = 'http://biz-payment-staging.k8s-ingress-nginx.kuainiujinke.com'
+            payment_url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-payment-staging'
         json_path_dict = {
             '$.api_config.payment_url': payment_url,
             '$.api_config.url': payment_url,
@@ -107,7 +108,10 @@ class RepayBaseService(BaseService):
 
     def get_active_card_info(self, item_no, repay_card, repay_card_num, bank_code='中国银行'):
         card_info = self.get_repay_card_by_item_no(item_no)
-        random_card = self.get_four_element(bank_name=bank_code)['data']
+        for_element = self.get_four_element(bank_name=bank_code)
+        if self.country != 'china':
+            return for_element['borrower_card_uuid']
+        random_card = for_element['data']
         if repay_card == 1:
             # 1-还款卡还款
             return card_info
@@ -555,7 +559,7 @@ class RepayBaseService(BaseService):
                                             AutoAsset.asset_env == self.env,
                                             AutoAsset.asset_country == self.country,
                                             AutoAsset.asset_type == asset_type) \
-            .order_by(desc(AutoAsset.asset_id)).paginate(page=1, per_page=10, error_out=False).items
+            .order_by(desc(AutoAsset.asset_create_at)).paginate(page=1, per_page=10, error_out=False).items
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
         ret = {'assets': asset_list}
         if asset_list:
@@ -858,9 +862,9 @@ class OverseaRepayService(RepayBaseService):
                 "verify_seq": None
             }
         }
-
-        for four_element_key, four_element_value in self.__get_four_element_key__(repay_card).items():
-            active_request_data['data'][four_element_key] = card_info[four_element_value]
+        if self.country == 'china':
+            for four_element_key, four_element_value in self.__get_four_element_key__(repay_card).items():
+                active_request_data['data'][four_element_key] = card_info[four_element_value]
         amount_info_list = [(item_no, amount, item_no_priority, None, None, coupon_dict[item_no]),
                             (item_no_x, x_amount, item_no_x_priority, None, None, coupon_dict[item_no_x])]
         amount_info_key = ("project_num", "amount", "priority", "coupon_num", "coupon_amount", "coupon_list")
@@ -877,7 +881,7 @@ class OverseaRepayService(RepayBaseService):
         id_num_info = self.db_session.execute(sql)
         return id_num_info[0] if id_num_info else ''
 
-    def get_four_element(self):
+    def get_four_element(self, bank_name=''):
         four_element = {
                 "borrower_uuid": "400486{0}".format(time.time()).split(".")[0],
                 "id_num": "enc_02_4248611931357196288_648",

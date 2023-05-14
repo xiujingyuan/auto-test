@@ -118,11 +118,13 @@ class BaseService(object):
     def get_detail_info(self, table_name, get_id, get_attr):
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
         table_name = table_name.replace("grant_", '')
-        obj = getattr(meta_class, ''.join(tuple(map(lambda x: x.title() if x != 'msg' else 'SendMsg', table_name.split('_')))))
+        obj = getattr(meta_class, ''.join(
+            tuple(map(lambda x: x.title() if x != 'msg' else 'SendMsg', table_name.split('_')))))
         table_name = table_name.replace('central_', '')
         table_name = table_name if table_name != 'msg' else 'sendmsg'
         item = self.db_session.query(obj).filter(getattr(obj, '{0}_id'.format(table_name)) == get_id).first()
-        return getattr(item, '{0}_{1}'.format(table_name, get_attr) if not get_attr.startswith(table_name) else get_attr)
+        attr_name = '{0}_{1}'.format(table_name, get_attr) if not get_attr.startswith(table_name) else get_attr
+        return getattr(item, attr_name) if hasattr(item, attr_name) else ''
 
     def run_job_by_api(self, job_type, job_params):
         # return Http.http_get(self.job_url + "?jobType={0}&param={1}".format(job_type, json.dumps(job_params)))
@@ -164,7 +166,7 @@ class BaseService(object):
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
-        return "{0}{1}_{2}".format(item_no, prefix, int(time.time()))
+        return "{0}{1}_{2}".format(prefix, item_no, int(time.time()))
 
     @staticmethod
     def cal_days(str1, str2):
@@ -368,6 +370,8 @@ class BaseService(object):
             min_diff = -14 * 60
         elif self.country == "tha":
             min_diff = -1 * 60
+        elif self.country == "pak":
+            min_diff = -3 * 60
         task.task_next_run_at = get_date(minutes=min_diff)
         self.db_session.add(task)
         self.db_session.commit()
@@ -531,7 +535,6 @@ class BaseService(object):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()
-        phone_number = '13980522295'
         user_name = fake.name()
         bank_code = self.get_bank_code(bank_name, bank_code_suffix)
         response = {

@@ -33,8 +33,8 @@ class BusinessMock(EasyMock):
                     fee_amount += at.asset_tran_balance_amount
                 if at.asset_tran_category == 'late':
                     late_amount += at.asset_tran_balance_amount
-            elif at.asset_tran_category in ('interest', 'fee'):
-                asset_tran_balance_amount = 0
+            # elif at.asset_tran_category in ('interest', 'fee'):
+            #     asset_tran_balance_amount = 0
             if at.asset_tran_period not in repayPlanDict:
                 repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0, 'late': 0}
             amt = repayPlanDict[at.asset_tran_period][at.asset_tran_category] + asset_tran_balance_amount

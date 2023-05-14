@@ -18,7 +18,7 @@ from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrd
 
 class ChinaRepayService(RepayBaseService):
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
-        self.repay_host = "http://repay{0}.k8s-ingress-nginx.kuainiujinke.com".format(env)
+        self.repay_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/repay{0}".format(env)
         super(ChinaRepayService, self).__init__('china', env, run_env, mock_name, check_req, return_req)
         self.grant = ChinaGrantService(env, run_env, mock_name, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
