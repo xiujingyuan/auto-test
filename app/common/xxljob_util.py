@@ -42,7 +42,7 @@ XXL_JOB_DICT = {
         }
     },
     "ind": {
-        'url': 'http://biz-job-ind.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'url': '',
         'username': 'admin',
         'password': '123456',
         'repay': {
@@ -56,7 +56,7 @@ XXL_JOB_DICT = {
         }
     },
     "tha": {
-        'url': 'http://biz-job-tha.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'url': '',
         'username': 'admin',
         'password': '123456',
         'repay': {
@@ -70,7 +70,7 @@ XXL_JOB_DICT = {
         }
     },
     "phl": {
-        'url': 'http://biz-job-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'url': '',
         'username': 'admin',
         'password': '123456',
         'repay': {
@@ -84,7 +84,7 @@ XXL_JOB_DICT = {
         }
     },
 "pak": {
-        'url': 'http://biz-job-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'url': '',
         'username': 'admin',
         'password': '123456',
         'repay': {
@@ -98,7 +98,7 @@ XXL_JOB_DICT = {
         }
     },
     "mex": {
-        'url': 'http://biz-job-mex.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer.com/xxl-job-admin',
+        'url': '',
         'username': 'admin',
         'password': '123456',
         'repay': {

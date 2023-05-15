@@ -4,8 +4,7 @@ from app.services.phl.grant.service import PhlGrantService
 
 class PhlRepayService(OverseaRepayService):
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
-        self.repay_host = "http://repay{0}-phl.c99349d1eb3d045a4857270fb79311aa0.cn-shanghai.alicontainer." \
-                          "com".format(env)
+        self.repay_host = "https://biz-gateway-proxy.starklotus.com/phl_repay{0}".format(env)
         self.grant = PhlGrantService(env, run_env, mock_name, check_req, return_req)
         super(PhlRepayService, self).__init__('phl', env, run_env, mock_name, check_req, return_req)
 
