@@ -101,8 +101,9 @@ class RepayBaseService(BaseService):
             withhold_order = withhold_order_list
         request_no_tuple = tuple(map(lambda x: x.withhold_order_request_no, withhold_order))
         serial_no_tuple = tuple(map(lambda x: x.withhold_order_serial_no, withhold_order))
-        id_num_encrypt_tuple = (self.get_repay_card_by_item_no(item_no)['card_acc_id_num_encrypt'],) \
-            if item_no is not None else ()
+        card_info = self.get_repay_card_by_item_no(item_no)
+        id_num_encrypt_tuple = (card_info['card_acc_id_num_encrypt'],) \
+            if item_no is not None or card_info else ()
         withhold_order = list(map(lambda x: x.to_spec_dict, withhold_order))
         return request_no_tuple, serial_no_tuple, id_num_encrypt_tuple, item_no_tuple, withhold_order
 
