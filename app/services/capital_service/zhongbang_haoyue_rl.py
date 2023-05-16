@@ -45,11 +45,9 @@ class ZhongbanghaoyuerlMock(BusinessMock):
         principal = reduce(lambda x, y: x + y, principal_detail, 0)
         principal = float(Decimal(principal / 100).quantize(Decimal("0.00")))
         interest = float(Decimal(interest_detail[0] / 100).quantize(Decimal("0.00"))) if interest_detail else 0
-        fee_amount = reduce(lambda x, y: x + y, fee_detail, 0)
-        fee_amount = float(Decimal(fee_amount / 100).quantize(Decimal("0.00")))
         penalty_amount = reduce(lambda x, y: x + y, penalty_detail, 0)
         penalty_amount = float(Decimal(penalty_amount / 100).quantize(Decimal("0.00")))
-        code = "0" if success_type.lower() == 'success' else 100
+        code = "0"
         status = 'S' if success_type.lower() == 'success' else 'F'
         value = dict(zip(('$.data.actualRepayAmount',
                           '$.data.repayPrincipal',
@@ -57,7 +55,7 @@ class ZhongbanghaoyuerlMock(BusinessMock):
                           '$.data.repayPenaltyAmount',
                           '$.data.status',
                           '$.code'), (
-            str(principal + interest + fee_amount + penalty_amount),
+            str(principal + interest + penalty_amount),
             str(principal),
             str(interest),
             str(penalty_amount),
