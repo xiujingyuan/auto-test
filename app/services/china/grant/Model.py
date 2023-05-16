@@ -260,6 +260,7 @@ class AssetLoanRecord(db.Model, BaseToDict):
     asset_loan_record_grant_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='放款到虚户/二类户的时间')
     asset_loan_record_memo = db.Column(db.String(2048), server_default=db.FetchedValue(), info='备注信息')
     asset_loan_record_push_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='发起进件请求时间')
+    asset_loan_record_confirm_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='确认时间')
 
 
 
