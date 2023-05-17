@@ -10,7 +10,7 @@ class HayinzhongbaoMock(BusinessMock):
         self.channel = 'hayin_zhongbao'
         super(HayinzhongbaoMock, self).__init__(project, asset, asset_extend, asset_tran_list, period_start,
                                                     period_end)
-        self.trail_url = '/hayin/hayin_zhongbao/api/repay/query/trial'
+        self.trail_url = '/hayin/hayin_zhongbao/api/repay/trial'
         self.trail_query_url = ''
         self.repay_plan_url = ''
         self.repay_apply_url = ''
@@ -29,9 +29,9 @@ class HayinzhongbaoMock(BusinessMock):
             interest_amount = interest_amount + 1
         elif interest_type == 'zero':
             interest_amount = 0
-        value = dict(zip(('$.data.actualRepayAmount',
-                          '$.data.repayPrincipal',
-                          '$.data.repayInterest'),
+        value = dict(zip(('$.basicInfo.totalAmt',
+                          '$.basicInfo.prcp',
+                          '$.basicInfo.inteAmt'),
                          (principal_amount + interest_amount, principal_amount, interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
