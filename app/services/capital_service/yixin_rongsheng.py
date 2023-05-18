@@ -14,12 +14,12 @@ class YixinrongshengMock(BusinessMock):
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         _, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
-        principal_amount = repayPlanDict[min(repayPlanDict.keys())]['principal'] * 100
-        principal_amount = principal_amount + 1 if principal_over else principal_amount
+        principal_amount = repayPlanDict[min(repayPlanDict.keys())]['principal']
+        principal_amount = principal_amount + 100 if principal_over else principal_amount
         if interest_type == 'less':
-            interest_amount = interest_amount - 1
+            interest_amount = interest_amount - 100
         elif interest_type == 'more':
-            interest_amount = interest_amount + 1
+            interest_amount = interest_amount + 100
         elif interest_type == 'zero':
             interest_amount = 0
         value = dict(zip(('$.data.lnsCurAmt', '$.data.lnsCurInt'),

@@ -18,21 +18,19 @@ class HayinzhongbaoMock(BusinessMock):
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
         principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
-        principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
-        principal_amount = principal_amount[0]
-        interest_amount = float(Decimal(interest_amount / 100).quantize(Decimal("0.00"))),
-        interest_amount = interest_amount[0]
-        principal_amount = principal_amount + 1 if principal_over else principal_amount
+        principal_amount = principal_amount + 100 if principal_over else principal_amount
         if interest_type == 'less':
-            interest_amount = interest_amount - 1
+            interest_amount = interest_amount - 100
         elif interest_type == 'more':
-            interest_amount = interest_amount + 1
+            interest_amount = interest_amount + 100
         elif interest_type == 'zero':
             interest_amount = 0
         value = dict(zip(('$.basicInfo.totalAmt',
                           '$.basicInfo.prcp',
                           '$.basicInfo.inteAmt'),
-                         (principal_amount + interest_amount, principal_amount, interest_amount)))
+                         (self.fen2yuan(principal_amount + interest_amount),
+                          self.fen2yuan(principal_amount),
+                          self.fen2yuan(interest_amount))))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
@@ -42,10 +40,8 @@ class HayinzhongbaoMock(BusinessMock):
                             if x.withhold_detail_type == 'principal']
         fee_detail = [x.withhold_detail_withhold_amount for x in withhold_detail if x.withhold_detail_type == 'fee']
         principal = reduce(lambda x, y: x + y, principal_detail, 0)
-        principal = float(Decimal(principal / 100).quantize(Decimal("0.00")))
-        interest = float(Decimal(interest_detail[0] / 100).quantize(Decimal("0.00"))) if interest_detail else 0
+        interest = interest_detail[0]  if interest_detail else 0
         fee_amount = reduce(lambda x, y: x + y, fee_detail, 0)
-        fee_amount = float(Decimal(fee_amount / 100).quantize(Decimal("0.00")))
         code = "0"
         status = '02' if success_type.lower() == 'success' else '03'
         value = dict(zip(('$.basicInfo.repayAmt',
@@ -54,10 +50,10 @@ class HayinzhongbaoMock(BusinessMock):
                           '$.basicInfo.channelFee',
                           '$.basicInfo.repayStatus',
                           '$.retCode'), (
-            str(principal + interest + fee_amount),
-            str(principal),
-            str(interest),
-            str(fee_amount),
+            self.fen2yuan(principal + interest + fee_amount),
+            self.fen2yuan(principal),
+            self.fen2yuan(interest),
+            self.fen2yuan(fee_amount),
             status, code)))
         return self.update_by_json_path(self.repay_apply_query_url, value, method='post')
 

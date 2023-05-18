@@ -22,7 +22,8 @@ class ZhongyuanzunhaoMock(BusinessMock):
         principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
         value = dict(zip(('$.data.totalRepayAmt', '$.data.totalPlanamt',
                           '$.data.totalPsPrcpAmt', '$.data.totalPsNormInt'), (
-                             principal_amount + interest_amount, principal_amount + interest_amount,
+                             principal_amount + interest_amount,
+                             principal_amount + interest_amount,
                              principal_amount,
                              interest_amount)))
         return self.update_by_json_path(self.trail_url, value, method='post')

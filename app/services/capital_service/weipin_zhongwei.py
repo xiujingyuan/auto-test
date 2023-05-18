@@ -105,9 +105,7 @@ class WeipinzhongweiMock(BusinessMock):
         principal_amount, interest_amount, fee_amount, _, repayPlanDict = self.__get_trail_amount__()
         repayPlanList = []
         for period in list(range(1, self.asset.asset_period_count + 1)):
-            overdue_amount = float(Decimal(
-                repayPlanDict[period]["overdue"] * repayPlanDict[period]["principal"] * 0.001).quantize(
-                Decimal("0.00")))
+            overdue_amount = repayPlanDict[period]["overdue"] * repayPlanDict[period]["principal"] * 0.001
             repayPlanList.append({
                 "tenor": period,
                 "paymentDueDate": "20221028",

@@ -15,11 +15,11 @@ class ZhongkehegangMock(BusinessMock):
         self.repay_apply_query_url = ''
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
-        principal_amount, interest_amount, _, late_amount, repayPlanDict = self.__get_trail_amount__()
-        principal = float(Decimal(float(principal_amount / 100)).quantize(Decimal("0.00")))
-        interest = float(Decimal(float(interest_amount / 100)).quantize(Decimal("0.00")))
+        principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
         value = dict(zip(('$.tradeCapital', '$.tradeInt', '$.tradeAmt'),
-                         (principal, interest, principal + interest)))
+                         (self.fen2yuan(principal_amount),
+                          self.fen2yuan(interest_amount),
+                          self.fen2yuan(principal_amount + interest_amount))))
         trail_url = '/hegang/repayTrialQuery/{0}'.format(self.asset.asset_product_code)
         return self.update_by_json_path(trail_url, value, method='post')
 

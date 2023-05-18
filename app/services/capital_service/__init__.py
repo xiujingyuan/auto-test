@@ -15,6 +15,10 @@ class BusinessMock(EasyMock):
         self.period_end = period_end if period_end is not None else asset.asset_period_count
         self.repay_type = 'early_settlement' if period_end == asset.asset_period_count else 'normal'
 
+    @staticmethod
+    def fen2yuan(amount):
+        return float(Decimal(amount/100).quantize(Decimal("0.00")))
+
     def __get_trail_amount__(self):
         principal_amount = 0
         interest_amount = 0
@@ -22,8 +26,6 @@ class BusinessMock(EasyMock):
         late_amount = 0
         repayPlanDict = {}
         for at in self.asset_tran_list:
-            asset_tran_balance_amount = float(
-                Decimal(float(at.asset_tran_balance_amount / 100)).quantize(Decimal("0.00")))
             if at.asset_tran_category == 'principal':
                 principal_amount += at.asset_tran_balance_amount
             if at.asset_tran_period == self.period_start:
@@ -33,20 +35,13 @@ class BusinessMock(EasyMock):
                     fee_amount += at.asset_tran_balance_amount
                 if at.asset_tran_category == 'late':
                     late_amount += at.asset_tran_balance_amount
-            # elif at.asset_tran_category in ('interest', 'fee'):
-            #     asset_tran_balance_amount = 0
             if at.asset_tran_period not in repayPlanDict:
                 repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0, 'late': 0}
-            amt = repayPlanDict[at.asset_tran_period][at.asset_tran_category] + asset_tran_balance_amount
-            repayPlanDict[at.asset_tran_period][at.asset_tran_category] = float(Decimal(amt).quantize(Decimal("0.00")))
+            repayPlanDict[at.asset_tran_period][at.asset_tran_category] += at.asset_tran_balance_amount
             if 'overdue' not in repayPlanDict[at.asset_tran_period]:
                 overdue = self.cal_days(at.asset_tran_due_at, datetime.now())
                 overdue = overdue if overdue >= 0 else 0
                 repayPlanDict[at.asset_tran_period]['overdue'] = overdue
-        principal_amount = float(Decimal(principal_amount).quantize(Decimal("0.00")))
-        interest_amount = float(Decimal(interest_amount).quantize(Decimal("0.00")))
-        fee_amount = float(Decimal(fee_amount).quantize(Decimal("0.00")))
-        late_amount = float(Decimal(late_amount).quantize(Decimal("0.00")))
         return principal_amount, interest_amount, fee_amount, late_amount, repayPlanDict
 
     def repay_plan_mock(self):

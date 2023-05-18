@@ -31,8 +31,8 @@ class JiexintaikangxinheyuanMock(BusinessMock):
             interest_amount += 100
         value = dict(zip(('$.data.payNormAmt', '$.data.payInteAmt',
                           '$.data.status'), (
-                             float(Decimal(float(principal_amount / 100)).quantize(Decimal("0.00"))),
-                             float(Decimal(float(interest_amount / 100)).quantize(Decimal("0.00"))),
+                             self.fen2yuan(principal_amount),
+                             self.fen2yuan(interest_amount),
                              'SUCCESS')))
         return self.update_by_json_path(self.trail_url, value, method='post')
 

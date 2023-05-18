@@ -16,29 +16,26 @@ class LanhaizhongshiqjMock(BusinessMock):
         self.repay_apply_query_url = '/qingjia/lanhai_zhongshi_qj/repayResultQuery'
 
     def repay_trail_mock(self, status, principal_over=False, interest_type='less'):
-        principal_amount, interest_amount, _, _, repayPlanDict = self.__get_trail_amount__()
-        principal_amount = float(str(Decimal(principal_amount / 100).quantize(Decimal("0.00")))),
-        principal_amount = principal_amount[0]
-        interest_amount = float(str(Decimal(interest_amount / 100).quantize(Decimal("0.00")))),
-        interest_amount = interest_amount[0]
-        principal_amount = principal_amount + 1 if principal_over else principal_amount
+        principal_amount, interest_amount, _, _, _ = self.__get_trail_amount__()
+        principal_amount = principal_amount + 100 if principal_over else principal_amount
         if interest_type == 'less':
-            interest_amount = interest_amount - 1
+            interest_amount = interest_amount - 100
         elif interest_type == 'more':
-            interest_amount = interest_amount + 1
+            interest_amount = interest_amount + 100
         elif interest_type == 'zero':
             interest_amount = 0
         other = {}
         for at in self.asset_tran_list:
             if at.asset_tran_period == self.period_start and at.asset_tran_category == 'fee':
-                other[at.asset_tran_type] = str(
-                    Decimal(at.asset_tran_balance_amount / 100).quantize(Decimal("0.00")) - 1)
-                other[at.asset_tran_type] = float(other[at.asset_tran_type])
+                other[at.asset_tran_type] = at.asset_tran_balance_amount - 100
             continue
         value = dict(zip(('$.data.repaytotal', '$.data.repaycapital', '$.data.repayinterest',
                           '$.data.repayguarantFee', '$.data.repaydeductFee'),
-                         (principal_amount + interest_amount + other['guarantee'] + other['technical_service'],
-                          principal_amount, interest_amount, other['guarantee'], other['technical_service'])))
+                         (self.fen2yuan(principal_amount + interest_amount + other['guarantee'] + other['technical_service']),
+                          self.fen2yuan(principal_amount),
+                          self.fen2yuan(interest_amount),
+                          self.fen2yuan(other['guarantee']),
+                          self.fen2yuan(other['technical_service']))))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
