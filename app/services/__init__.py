@@ -359,7 +359,7 @@ class BaseService(object):
         self.db_session.add_all(asset_tran_list)
         self.db_session.commit()
 
-        if channel == 'lanhai_zhongshi_qj':
+        if channel in ('lanhai_zhongshi_qj', 'lanzhou_haoyue_qinjia'):
             try:
                 current_app.logger.info(json.dumps(update_capital_plan))
                 current_app.logger.info(json.dumps(update_capital_grant))

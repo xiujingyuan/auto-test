@@ -55,6 +55,9 @@ class ChinaGrantService(GrantBaseService):
         }
         return self.nacos.update_config_by_json_path(f'gbiz_capital_{channel}', json_path_dict)
 
+    def modify_capital_plan(self, channel):
+        return self.update_route_capital_plan(channel)
+
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
         asset = self.asset
