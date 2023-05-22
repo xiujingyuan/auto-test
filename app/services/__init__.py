@@ -24,7 +24,7 @@ from app.common.db_util import DataBase
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
-from app.model.Model import AutoAsset
+from app.model.Model import AutoAsset, BackendKeyValue
 from app.services.china.repay import time_print
 from app.services.china.repay.Model import SendMsg, Synctask
 from app.services.ind.repay.Model import Task, CapitalTransaction, CapitalAsset, AssetTran, Asset, AssetExtend, Sendmsg
@@ -114,6 +114,20 @@ class BaseService(object):
             self.db_session_contract = MyScopedSession(sessionmaker())
             self.db_session_contract.configure(bind=self.engine_contract)
         self.log = LogUtil()
+
+    @staticmethod
+    def get_random_str(num=10):
+        data = '1234567890abcdefghijklmnopqrstuvwxyz'
+        result = ''
+        for i in range(num):
+            result = result + random.choice(list(data))
+        return result
+
+    def get_key_value(self, key_name, is_json=True):
+        record = BackendKeyValue.query.filter(BackendKeyValue.backend_group == self.program,
+                                              BackendKeyValue.backend_key == key_name,
+                                              BackendKeyValue.backend_is_active == 1).first()
+        return json.loads(record.backend_value) if is_json else record.backend_value
 
     def get_detail_info(self, table_name, get_id, get_attr):
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))

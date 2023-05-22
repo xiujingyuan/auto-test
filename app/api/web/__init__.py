@@ -106,10 +106,16 @@ def auto_task():
     return jsonify(ret)
 
 
-@api_web.route('/remove_item/<string:item_no>', methods=["POST"])
-def remove_item(item_no):
+@api_web.route('/remove_item/', methods=["POST"])
+def remove_item():
+    req = request.json
+    item_no = req.get('item_no', '')
+    item_type = req.get('item_type', '0')
+    env = req.get('env', '1')
     ret = deepcopy(RET)
-    db.session.query(AutoAsset).filter(AutoAsset.asset_name == item_no).delete()
+    db.session.query(AutoAsset).filter(AutoAsset.asset_name == item_no,
+                                       AutoAsset.asset_type == item_type,
+                                       AutoAsset.asset_env == env).delete()
     db.session.flush()
     return jsonify(ret)
 

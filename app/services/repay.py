@@ -84,11 +84,9 @@ class RepayBaseService(BaseService):
 
     def get_withhold_key_info(self, item_no, request_no=None, req_key=None, max_create_at=None):
         item_no_x = self.get_no_loan(item_no)
-        max_create_at = max_create_at if max_create_at is not None else self.get_date(is_str=True, days=-7)
         item_no_tuple = tuple(filter(lambda x: x, (item_no, item_no_x)))
         withhold_order_list = self.db_session.query(WithholdOrder).filter(
-            WithholdOrder.withhold_order_reference_no.in_(item_no_tuple),
-            WithholdOrder.withhold_order_create_at >= max_create_at). \
+            WithholdOrder.withhold_order_reference_no.in_(item_no_tuple)). \
             order_by(desc(WithholdOrder.withhold_order_create_at)).paginate(page=1, per_page=10, error_out=False).items
         withhold_order = []
         if request_no is not None:
@@ -447,7 +445,7 @@ class RepayBaseService(BaseService):
         asset = self.get_asset(item_no)
         max_create_at = self.get_date(is_str=True, days=-7)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
-            self.get_withhold_key_info(item_no, max_create_at=max_create_at)
+            self.get_withhold_key_info(item_no, max_create_at=None)
         channel = asset['asset'][0]['loan_channel']
         task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel]
         ret = {}
@@ -560,7 +558,7 @@ class RepayBaseService(BaseService):
                                             AutoAsset.asset_env == self.env,
                                             AutoAsset.asset_country == self.country,
                                             AutoAsset.asset_type == asset_type) \
-            .order_by(desc(AutoAsset.asset_create_at)).paginate(page=1, per_page=10, error_out=False).items
+            .order_by(desc(AutoAsset.asset_update_at)).paginate(page=1, per_page=10, error_out=False).items
         asset_list = list(map(lambda x: x.to_spec_dict, asset_list))
         ret = {'assets': asset_list}
         if asset_list:

@@ -1,4 +1,5 @@
 import json
+import math
 import random
 from app import db
 from sqlalchemy import desc
@@ -10,8 +11,9 @@ from app.common.http_util import Http
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.services.china.grant.Model import Asset, Task, Sendmsg, AssetExtend, \
-    AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan, Synctask
-from app.services.china.grant.ContractModel import Task as ContractTask
+    AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan, Synctask, \
+    AssetAttachment
+from app.services.china.grant.ContractModel import Task as ContractTask, Contract, Contract2023
 
 BANK_MAP = {"中国银行": "BOC",
                     "工商银行": "ICBC",
@@ -38,6 +40,20 @@ class ChinaGrantService(GrantBaseService):
         self.run_contract_msg_id_url = self.contract_host + '/msg/run?msgId={0}'
         self.msg_url = self.grant_host + '/msg/run?orderNo={0}'
         self.seq = ''
+
+    def modify_diff(self, channel, item_no):
+        task = self.db_session.query(Task).filter(Task.task_order_no == item_no,
+                                                  Task.task_type == 'CapitalRepayPlanQuery').first()
+        message = json.loads(task.task_response_data)['message']
+        diff_str = message.split('[{')[1].split('}]')[0].split(',')
+        diff_str_interest = int(diff_str[0].split("=")[1])
+        diff_str_service = int(diff_str[1].split("=")[1])
+        diff = diff_str_interest + diff_str_service
+        json_path_dict = {
+            '$.task_config_map.CapitalRepayPlanQuery.execute.allowance_check_range.min_value': -diff,
+            '$.task_config_map.CapitalRepayPlanQuery.execute.allowance_check_range.max_value': diff,
+        }
+        return self.nacos.update_config_by_json_path(f'gbiz_capital_{channel}', json_path_dict)
 
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
@@ -85,6 +101,33 @@ class ChinaGrantService(GrantBaseService):
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
         refresh_type = refresh_type[6:] if refresh_type.startswith("grant_") else refresh_type
         return getattr(self, 'get_{0}'.format(refresh_type))(item_no)
+
+    def capital_manual_grant(self, channel, count, amount, app, source_type, extend):
+        req = {
+            "env": self.env,
+            "country": self.country,
+            "environment": self.run_env,
+            "channel": channel,
+            "amount": amount,
+            "count": count,
+            "app": app,
+            "source_type": source_type,
+            "extend": extend
+        }
+        url = 'https://framework-test.k8s-ingress-nginx.kuainiujinke.com/capital-manual-grant'
+        url = 'http://127.0.0.1:5208/capital-manual-grant'
+        ret = Http.http_post(url, req)
+        if ret['code'] == 0:
+            item_no = ret['data']['item_no']
+            task = self.get_task_info(item_no)[0]
+            asset_info = json.loads(task.task_request_data)['data']
+            element = ret['data']['element']
+            self.insert_router_record(item_no, channel, amount, count, element, asset_info)
+            self.update_route_capital_plan(channel)
+            self.run_task_by_task_order_no(item_no)
+            self.prepare_attachment(channel, item_no)
+            self.add_asset(item_no, source_type=2)
+        return ret
 
     def run_contract_task_by_id(self, task_id, excepts={'code': 0}):
         # self.update_task_next_run_at_forward_by_task_id(task_id)
@@ -161,13 +204,32 @@ class ChinaGrantService(GrantBaseService):
         return {'contract_task': list(map(lambda x: x.to_spec_dict, task))}
 
     def get_task(self, item_no):
-        task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
+        task = self.get_task_info(item_no)
         return {'grant_task': list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]), task))}
+
+    def get_task_info(self, item_no):
+        task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()
+        return task
 
     def get_router_capital_plan(self, item_no):
         router_capital_plan = self.db_session.query(RouterCapitalPlan).order_by(
             desc(RouterCapitalPlan.router_capital_plan_date)).all()
         return {'router_capital_plan': list(map(lambda x: x.to_spec_dict, router_capital_plan))}
+
+    def update_route_capital_plan(self, channel):
+        router_capital_plan = self.db_session.query(RouterCapitalPlan).filter(
+            RouterCapitalPlan.router_capital_plan_label.like(f'{channel}%')).order_by(
+            desc(RouterCapitalPlan.router_capital_plan_date)).first()
+        if router_capital_plan is None:
+            pass
+        if self.cal_days(router_capital_plan.router_capital_plan_date, self.get_date()) != 0:
+            router_capital_plan.router_capital_plan_date = self.get_date(fmt='%Y-%m-%d')
+            self.db_session.add(router_capital_plan)
+            self.db_session.commit()
+        if router_capital_plan.router_capital_plan_amount < 100000000:
+            router_capital_plan.router_capital_plan_amount = 100000000
+            self.db_session.add(router_capital_plan)
+            self.db_session.commit()
 
     def get_capital_account(self, item_no):
         capital_account = self.db_session.query(CapitalAccount).filter(CapitalAccount.capital_account_item_no == item_no).all()
@@ -183,6 +245,52 @@ class ChinaGrantService(GrantBaseService):
         return {'grant_sendmsg': list(map(lambda x: x.to_spec_dict_obj([Sendmsg.sendmsg_content,
                                                                         Sendmsg.sendmsg_response_data,
                                                                         Sendmsg.sendmsg_memo]), msg))}
+
+    def add_contract(self, item, channel, attachment_type, attachment_name, attachment_url):
+        now = self.get_date(is_str=True)
+        contract = Contract2023()
+        contract.contract_create_at = self.get_date()
+        contract.contract_asset_item_no = item
+        contract.contract_type = attachment_type
+        contract.contract_type_text = attachment_name
+        contract.contract_url = attachment_url
+        contract.contract_status = 'SUCCESS'
+        contract.contract_from_system = 'strawberry'
+        contract.contract_code = self.get_random_str()
+        contract.contract_apply_id = f'{item}-30300-1611906119811'
+        contract.contract_flow_key = 'tpl2007301443234707AE'
+        contract.contract_ref_item_no = item
+        contract.contract_sign_at = now
+        contract.contract_update_at = now
+        contract.contract_sign_opportunity = 'AssetImport'
+        contract.contract_provider = 'YUN'
+        contract.contract_subject = '如皋智萃'
+        contract.contract_channel = channel
+        contract.contract_version = 1
+        self.db_session_contract.add(contract)
+        self.db_session_contract.commit()
+
+    def add_attachment(self, item_no, attachment_type, attachment_name, attachment_url):
+        attachment = AssetAttachment()
+        attachment.asset_attachment_asset_item_no = item_no
+        attachment.asset_attachment_type = attachment_type
+        attachment.asset_attachment_contract_code = self.get_random_str()
+        attachment.asset_attachment_type_text = attachment_name
+        attachment.asset_attachment_url = attachment_url
+        attachment.asset_attachment_status = 1
+        attachment.asset_attachment_from_system = 'contract'
+        self.db_session.add(attachment)
+        self.db_session.commit()
+
+    def prepare_attachment(self, channel, item_no):
+        key_value = self.get_key_value('attachment')
+        if channel not in key_value:
+            return
+        for attachment_type, attachment_name, attachment_url in key_value[channel]:
+            self.add_contract(item_no, channel, attachment_type, attachment_name, attachment_url)
+            # 云信全互还是读的gbiz附件表
+            if channel == "yunxin_quanhu":
+                self.add_attachment(item_no, attachment_type, attachment_name, attachment_url)
 
     def get_asset_loan_record(self, item_no):
         asset_loan_record = self.db_session.query(AssetLoanRecord).filter(
