@@ -264,7 +264,8 @@ class BaseService(object):
         finish_time = {}
         user_repay_time = {}
         operate_time = {}
-        if channel == 'lanhai_zhongshi_qj':
+        capital_mock = ('lanhai_zhongshi_qj', 'lanzhou_haoyue_qinjia')
+        if channel in capital_mock:
             update_capital_grant = {
                 "channel": "KN10001",
                 "loanNo": "1047175727827218433",
@@ -359,7 +360,7 @@ class BaseService(object):
         self.db_session.add_all(asset_tran_list)
         self.db_session.commit()
 
-        if channel in ('lanhai_zhongshi_qj', 'lanzhou_haoyue_qinjia'):
+        if channel in capital_mock:
             try:
                 current_app.logger.info(json.dumps(update_capital_plan))
                 current_app.logger.info(json.dumps(update_capital_grant))
