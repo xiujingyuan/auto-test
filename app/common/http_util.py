@@ -18,6 +18,8 @@ def modify_resp(func):
         if 'status_code' not in dir(resp) or resp.status_code not in (200, 201, 400):
             raise ValueError('request run status_code error: {0} #==# with url: {1} #==# req_data: {2}'.format(
                 resp.status_code, url, json.dumps(req_data, ensure_ascii=False)))
+        if url.startswith("https://openapitest.qinjia001.com"):
+            return resp.content
         content = json.loads(resp.content)
         log_info = dict(zip(('url', 'method', 'request', 'response'),
                             (url, 'post', req_data, content)))

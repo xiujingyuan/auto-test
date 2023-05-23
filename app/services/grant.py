@@ -8,7 +8,7 @@ from sqlalchemy import desc
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.services import BaseService, CapitalAsset
-from app.services.china.grant.Model import AssetExtend
+from app.services.china.grant.Model import AssetExtend, AssetCard
 from app.services.china.grant.Model import RouterLoadRecord, Sendmsg, Task, Synctask, AssetTran
 from app.services.mex.grant.Model import Asset as OverseaAsset
 from app.services.china.grant.Model import Asset
@@ -23,6 +23,33 @@ class GrantBaseService(BaseService):
         self.run_task_id_url = self.grant_host + '/task/run?taskId={0}'
         self.run_msg_id_url = self.grant_host + '/msg/run?msgId={0}'
         self.run_task_order_url = self.grant_host + '/task/run?orderNo={0}'
+
+    def get_repay_card_by_item_no(self, item_no):
+        id_num_info = self.db_session.query(AssetCard). filter(AssetCard.asset_card_asset_item_no == item_no,
+                                                               AssetCard.asset_card_type == 'receive').first()
+        return id_num_info.to_dict if id_num_info is not None else ''
+
+    def get_asset(self, item_no):
+        asset = self.check_item_exist(item_no)
+        if asset is None:
+            return {'asset': []}
+        asset = asset.to_spec_dict
+        four_ele = self.get_repay_card_by_item_no(item_no)
+        asset['id_num'] = four_ele['asset_card_account_idnum_encrypt']
+        asset['id_num_entry'] = self.decrypt_data(four_ele['asset_card_account_idnum_encrypt'])
+        asset['repay_card'] = four_ele['asset_card_account_card_number_encrypt']
+        asset['repay_card_entry'] = self.decrypt_data(four_ele['asset_card_account_card_number_encrypt'])
+        asset['repay_name'] = four_ele['asset_card_account_name_encrypt']
+        asset['repay_name_entry'] = self.decrypt_data(four_ele['asset_card_account_name_encrypt'])
+        asset['repay_tel'] = four_ele['asset_card_account_tel_encrypt']
+        asset['repay_tel_entry'] = self.decrypt_data(four_ele['asset_card_account_tel_encrypt'])
+        asset['item_x'] = self.get_no_loan(item_no)
+        return {'asset': [asset]}
+
+    def get_no_loan(self, item_no):
+        asset_extend = self.db_session.query(AssetExtend).filter(
+            AssetExtend.asset_extend_asset_item_no == item_no).first()
+        return asset_extend.asset_extend_ref_order_no
 
     def update_task_next_run_at_forward_by_task_id(self, task_id):
         task = self.db_session.query(Task).filter(Task.task_id == task_id).first()
@@ -102,6 +129,12 @@ class GrantBaseService(BaseService):
                 withdraw_success_data['data']['dtransactions'].append(asset_tran.to_spec_dict)
             else:
                 withdraw_success_data['data']['fees'].append(asset_tran.to_spec_dict)
+
+    def get_asset_info(self, item_no):
+        asset_info = {}
+        asset = self.get_asset(item_no)
+        asset_info.update(asset)
+        return asset_info
 
     def set_withdraw_success_asset(self, withdraw_success_data, asset, x_item_no):
         biz_asset = self.biz_central.get_asset_info(asset.asset_item_no)

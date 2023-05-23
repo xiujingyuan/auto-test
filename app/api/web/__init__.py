@@ -26,6 +26,23 @@ def get_menu():
     return jsonify(ret)
 
 
+@api_web.route('/save_desc', methods=["POST"])
+def save_desc():
+    ret = deepcopy(RET)
+    req = request.json
+    channel = req.get('channel', None)
+    desc = req.get('desc', None)
+    desc_recorde = BackendKeyValue.query.filter(BackendKeyValue.backend_key == 'capital_connection_measure').first()
+    backend_value = json.loads(desc_recorde.backend_value)
+    if channel not in backend_value:
+        backend_value[channel] = ''
+    backend_value[channel] = desc
+    desc_recorde.backend_value = json.dumps(backend_value, ensure_ascii=False)
+    db.session.add(desc_recorde)
+    db.session.flush()
+    return jsonify(ret)
+
+
 @api_web.route('/backend_config', methods=["GET"])
 def get_backend_key_value():
     key_value_list = BackendKeyValue.query.filter(BackendKeyValue.backend_is_active == 1,

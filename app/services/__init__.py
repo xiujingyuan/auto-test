@@ -268,7 +268,7 @@ class BaseService(object):
         if channel in capital_mock:
             update_capital_grant = {
                 "channel": "KN10001",
-                "loanNo": "1047175727827218433",
+                "loanNo": due_bill_no,
                 "lenderTime": self.get_date(fmt='%Y%m%d%H%M%S', date=self.get_date(months=advance_month,
                                                                                    days=advance_day), is_str=True)
             }
@@ -281,12 +281,10 @@ class BaseService(object):
                 if str(asset_tran.asset_tran_finish_at) not in finish_time:
                     cal_advance_day = self.cal_days(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
                     cal_advance_month = self.cal_months(asset_tran.asset_tran_due_at, asset_tran.asset_tran_finish_at)
-                    finish_at = self.get_date(date=asset_tran_due_at,
-                                                                    months=cal_advance_month,
-                                                                    days=cal_advance_day,
-                                                                    hours=asset_tran.asset_tran_finish_at.hour,
-                                                                    minutes=asset_tran.asset_tran_finish_at.minute,
-                                                                    seconds=asset_tran.asset_tran_finish_at.second)
+                    finish_at = self.get_date(date=asset_tran_due_at, months=cal_advance_month, days=cal_advance_day,
+                                              hours=asset_tran.asset_tran_finish_at.hour,
+                                              minutes=asset_tran.asset_tran_finish_at.minute,
+                                              seconds=asset_tran.asset_tran_finish_at.second)
                     finish_time[str(asset_tran.asset_tran_finish_at)] = finish_at
                     asset_tran.asset_tran_finish_at = finish_at
                 else:
@@ -299,8 +297,8 @@ class BaseService(object):
                     update_capital_plan_key[asset_tran.asset_tran_period] = True
                     update_capital_plan.append({
                         "channel": "KN10001",
-                        "num": "{0}".format(asset_tran.asset_tran_period),
-                        "loanNo": "{0}".format(due_bill_no) if due_bill_no else None,
+                        "num": str(asset_tran.asset_tran_period),
+                        "loanNo": due_bill_no,
                         "dueDate": self.get_date(fmt='%Y%m%d', date=asset_tran_due_at, is_str=True)
                     })
                 asset_tran.asset_tran_due_at = asset_tran_due_at
@@ -361,14 +359,10 @@ class BaseService(object):
         self.db_session.commit()
 
         if channel in capital_mock:
-            try:
-                current_app.logger.info(json.dumps(update_capital_plan))
-                current_app.logger.info(json.dumps(update_capital_grant))
-                Http.http_post(url='https://openapitest.qinjia001.com/mockUpdate/MC00001', req_data=update_capital_plan)
-                Http.http_post(url='https://openapitest.qinjia001.com/mockUpdate/MC00002', req_data=update_capital_grant)
-            except Exception as e:
-                print(e)
-                pass
+            if update_capital_grant:
+                Http.http_post('https://openapitest.qinjia001.com/mockUpdate/MC00002', update_capital_grant)
+            if update_capital_plan:
+                Http.http_post('https://openapitest.qinjia001.com/mockUpdate/MC00001', update_capital_plan)
 
     def run_task_by_order_no(self, order_no, task_type, status='open', excepts={'code': 0}):
         task = self.db_session.query(Task).filter(Task.task_order_no == order_no,

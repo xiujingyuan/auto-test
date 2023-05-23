@@ -59,12 +59,15 @@ class ChinaBizCentralService(BaseService):
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
         asset = self.asset
+        ret = {}
+        if asset['asset'][0]['status'] == 'grant':
+            return ret
         max_create_at = self.get_date(is_str=True, days=-3)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = self.get_withhold_key_info
         channel = asset['asset'][0]['loan_channel']
         task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) \
                         + [channel] + ['{0}_query'.format(item_no)]
-        ret = {}
+
         req_name = 'get_{0}'.format(refresh_type)
         if refresh_type == 'central_task':
             ret = getattr(self, req_name)(task_order_no, item_no, channel, max_create_at,

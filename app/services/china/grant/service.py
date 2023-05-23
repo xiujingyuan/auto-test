@@ -105,7 +105,7 @@ class ChinaGrantService(GrantBaseService):
         refresh_type = refresh_type[6:] if refresh_type.startswith("grant_") else refresh_type
         return getattr(self, 'get_{0}'.format(refresh_type))(item_no)
 
-    def capital_manual_grant(self, channel, count, amount, app, source_type, extend):
+    def capital_manual_grant(self, channel, count, amount, app, source_type, bank_code, extend):
         req = {
             "env": self.env,
             "country": self.country,
@@ -113,6 +113,7 @@ class ChinaGrantService(GrantBaseService):
             "channel": channel,
             "amount": amount,
             "count": count,
+            'bank_code': bank_code,
             "app": app,
             "source_type": source_type,
             "extend": extend
