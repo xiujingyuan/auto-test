@@ -242,7 +242,10 @@ class ChinaBizCentralService(BaseService):
         try:
             get_param = self.xxljob.get_job_info(job_type)[0]['executorParam']
         except Exception as e:
+            print(e)
             get_param = {}
+        if param == {}:
+            param = get_param
         if not isinstance(param, dict):
             param = json.dumps(json.loads(param)) if param else get_param
         url = self.run_job_by_date_url.format(job_type, param, run_date)
