@@ -5,7 +5,7 @@ import random
 import time
 from functools import reduce
 
-from sqlalchemy import desc
+from sqlalchemy import desc, or_
 
 from app import db
 from app.common.http_util import Http
@@ -38,6 +38,7 @@ class RepayBaseService(BaseService):
         self.run_task_order_url = self.repay_host + '/task/run?orderNo={0}'
         self.bc_query_asset_url = self.repay_host + '/paydayloan/projectRepayQuery'
         self.crm_trail_url = self.repay_host + '/asset/capital/SettlementTrial'
+        self.channel = None
 
     def get_debt_item_card(self, joint_debt_item):
         element = self.get_four_element()
@@ -414,11 +415,12 @@ class RepayBaseService(BaseService):
 
     @time_print
     def get_task(self, task_order_no, max_create_at, refresh_id):
-        task_list = self.db_session.query(Task).filter(
-            Task.task_order_no.in_(task_order_no),
+        task_list = self.db_session.query(Task).filter(or_(
+            Task.task_order_no.in_(task_order_no), Task.task_order_no.like(f'{self.channel}%')),
             Task.task_create_at >= max_create_at).order_by(desc(Task.task_id)).paginate(
-            page=1,per_page=20,error_out=False).items
-        task_list = list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]), task_list))
+            page=1, per_page=20, error_out=False).items
+        task_list = list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]),
+                             task_list))
         return {'task': task_list}
 
     @time_print
@@ -446,8 +448,8 @@ class RepayBaseService(BaseService):
         max_create_at = self.get_date(is_str=True, days=-7)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
             self.get_withhold_key_info(item_no, max_create_at=None)
-        channel = asset['asset'][0]['loan_channel']
-        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel]
+        self.channel = asset['asset'][0]['loan_channel']
+        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [self.channel]
         ret = {}
         if refresh_type in ('task', 'msg'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at, refresh_id)
