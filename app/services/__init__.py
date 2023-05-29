@@ -21,6 +21,7 @@ from sshtunnel import SSHTunnelForwarder
 import app.common as common
 from app import db
 from app.common.db_util import DataBase
+from app.common.es_util import ES
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
@@ -77,8 +78,8 @@ class BaseService(object):
         self.country = country
         self.program = program
         self.mock_name = mock_name
-        self.job_url = getattr(self, 'biz_host' if program ==
-                                                   'biz_central' else '{0}_host'.format(program)) + "/job/run"
+        self.job_url = getattr(self, 'biz_host' if program == 'biz_central' else '{0}_host'.format(program)) + \
+                       "/job/run"
         self.easy_mock = common.EasyMockFactory.get_easy_mock(country, program, mock_name, check_req, return_req)
         self.xxljob = common.XxlJobFactory.get_xxljob(country, program, env)
         self.nacos = common.NacosFactory.get_nacos(country, program, env)
@@ -114,6 +115,12 @@ class BaseService(object):
             self.db_session_contract = MyScopedSession(sessionmaker())
             self.db_session_contract.configure(bind=self.engine_contract)
         self.log = LogUtil()
+
+    @staticmethod
+    def get_trace_info(services, task_order_no, operation):
+        es = ES(services)
+        trace_info = es.get_request_child_info(operation, order='desc', operation_index=0, orderNo=task_order_no)
+        return {'trace': trace_info}
 
     @staticmethod
     def get_random_str(num=10):
@@ -254,7 +261,8 @@ class BaseService(object):
                 channel = asset.asset_loan_channel
                 due_bill_no = asset.asset_due_bill_no if hasattr(asset, 'asset_due_bill_no') else None
             if asset.asset_status == 'payoff':
-                asset.asset_actual_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
+                asset.asset_actual_payoff_at = self.get_date(date=real_now,
+                                                             days=asset.asset_period_count * interval_day)
                 asset.asset_payoff_at = self.get_date(date=real_now, days=asset.asset_period_count * interval_day)
         if capital_asset is not None and capital_asset:
             capital_asset.capital_asset_granted_at = real_now
@@ -324,7 +332,8 @@ class BaseService(object):
                     user_repay_time[str(capital_tran.capital_transaction_user_repay_at)] = user_repay_at
                     capital_tran.capital_transaction_user_repay_at = user_repay_at
                 else:
-                    capital_tran.capital_transaction_user_repay_at = user_repay_time[str(capital_tran.capital_transaction_user_repay_at)]
+                    capital_tran.capital_transaction_user_repay_at = user_repay_time[
+                        str(capital_tran.capital_transaction_user_repay_at)]
             actual_operate_at = 'capital_transaction_actual_operate_at' if \
                 hasattr(capital_tran, 'capital_transaction_actual_operate_at') \
                 else 'capital_transaction_actual_finished_at'
@@ -335,12 +344,13 @@ class BaseService(object):
                     cal_advance_month = self.cal_months(capital_tran.capital_transaction_expect_finished_at,
                                                         getattr(capital_tran, actual_operate_at))
                     actual_operate_time = self.get_date(date=expect_finished_at,
-                                                                           months=cal_advance_month,
-                                                                           days=cal_advance_day)
+                                                        months=cal_advance_month,
+                                                        days=cal_advance_day)
                     operate_time[str(getattr(capital_tran, actual_operate_at))] = actual_operate_time
                     setattr(capital_tran, actual_operate_at, actual_operate_time)
                 else:
-                    setattr(capital_tran, actual_operate_at, operate_time[str(getattr(capital_tran, actual_operate_at))])
+                    setattr(capital_tran, actual_operate_at,
+                            operate_time[str(getattr(capital_tran, actual_operate_at))])
             if hasattr(capital_tran, 'capital_transaction_expect_operate_at'):
                 cal_advance_day = self.cal_days(capital_tran.capital_transaction_expect_finished_at,
                                                 capital_tran.capital_transaction_expect_operate_at)
@@ -413,7 +423,8 @@ class BaseService(object):
     def run_msg_by_order_no(self, order_no, sendmsg_type):
         msg = self.db_session.query(SendMsg).filter(SendMsg.sendmsg_order_no == order_no,
                                                     SendMsg.sendmsg_type == sendmsg_type,
-                                                    SendMsg.sendmsg_status == 'open').order_by(desc(SendMsg.sendmsg_id)).all()
+                                                    SendMsg.sendmsg_status == 'open').order_by(
+            desc(SendMsg.sendmsg_id)).all()
         for item in msg:
             self.run_msg_by_id(item.sendmsg_id)
 
@@ -540,7 +551,8 @@ class BaseService(object):
             return '解密失败'
         return req['data'][value] if req['code'] == 0 else req
 
-    def get_four_element(self, bank_name='中国银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F", id_num=None):
+    def get_four_element(self, bank_name='中国银行', bank_code_suffix=None, min_age=25, max_age=45, gender="F",
+                         id_num=None):
         fake = Faker("zh_CN")
         id_number = fake.ssn(min_age=min_age, max_age=max_age, gender=gender)
         phone_number = fake.phone_number()

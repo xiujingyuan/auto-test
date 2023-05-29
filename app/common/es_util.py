@@ -21,7 +21,7 @@ class ES(object):
         :param indexs:
         """
         self.services = services
-        self.es_url = "http://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com:80"
+        self.es_url = "https://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com:80"
         self.es = Elasticsearch(self.es_url)
         self.index = indexs
 
