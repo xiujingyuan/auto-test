@@ -119,7 +119,7 @@ class ChinaGrantService(GrantBaseService):
             "extend": extend
         }
         url = 'https://framework-test.k8s-ingress-nginx.kuainiujinke.com/capital-manual-grant'
-        url = 'http://127.0.0.1:5208/capital-manual-grant'
+        # url = 'http://127.0.0.1:5208/capital-manual-grant'
         ret = Http.http_post(url, req)
         if ret['code'] == 0:
             item_no = ret['data']['item_no']
