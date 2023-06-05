@@ -29,6 +29,20 @@ class CaseTask(db.Model, BaseToDict):
     case_task_type = db.Column(db.Integer, info='任务类型，0:具体时间；1:cron')
 
 
+class TraceInfo(db.Model, BaseToDict):
+    __tablename__ = 'trace_info'
+
+    trace_info_id = db.Column(db.Integer, primary_key=True)
+    trace_info_trace_id = db.Column(db.Integer, nullable=False, info='关联的taskid或者是synctaskid')
+    trace_info_env = db.Column(db.Integer, info='环境')
+    trace_info_program = db.Column(db.String(10), nullable=False, info='所属项目，repay，grant，biz-central')
+    trace_info_trace_type = db.Column(db.String(30), info='类型')
+    trace_info_content = db.Column(db.Text, nullable=False, info='内容')
+    trace_info_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    trace_info_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue())
+    trace_info_creator = db.Column(db.String(10), nullable=False)
+
+
 class AutoAsset(db.Model, BaseToDict):
     __tablename__ = 'asset'
 
@@ -39,6 +53,7 @@ class AutoAsset(db.Model, BaseToDict):
     asset_country = db.Column(db.String(11), info='所属国家')
     asset_env = db.Column(db.String(10), nullable=False, server_default=db.FetchedValue(), info='所属环境')
     asset_descript = db.Column(db.String(50), info='资产描述')
+    asset_extend = db.Column(db.Text, info='扩展')
     asset_create_owner = db.Column(db.String(11), nullable=False, server_default=db.FetchedValue(), info='资产创建人')
     asset_create_at = db.Column(db.Date, nullable=False, info='资产创建时间')
     asset_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='资产更新时间')

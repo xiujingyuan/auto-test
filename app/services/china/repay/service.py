@@ -23,7 +23,7 @@ class ChinaRepayService(RepayBaseService):
         self.grant = ChinaGrantService(env, run_env, mock_name, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
 
-    def operate_action(self, item_no, extend, op_type, table_name, run_date):
+    def operate_action(self, item_no, creator, extend, op_type, table_name, run_date):
         req = {'max_create_at': extend['create_at'] if hasattr(extend, 'create_at') else None,
                 'item_no': item_no,
                'refresh_type': table_name
@@ -42,6 +42,18 @@ class ChinaRepayService(RepayBaseService):
             req['serial_no'] = extend['serial_no']
             req['status'] = 3 if op_type.endswith('fail') else 2
             op_type = 'repay_callback'
+        elif op_type == 'get_trace_info':
+            # services, task_order_no, operation
+            req.pop('item_no')
+            req.pop('refresh_type')
+            req.pop('max_create_at')
+            req['services'] = f'{self.program}{self.env}'
+            req['task_order_no'] = extend['order_no']
+            req['operation'] = extend['type']
+            req['query_start'] = None
+            req['trace_id'] = extend['id']
+            req['creator'] = creator
+            req['query_end'] = None
         return getattr(self, op_type)(**req)
 
     def calc_qinnong_early_settlement(self, item_no):
@@ -82,8 +94,9 @@ class ChinaRepayService(RepayBaseService):
                                                             from_system_name, from_system, x_item_no)
             import_asset_info = self.grant.asset_import_success(asset_info)
         except ValueError as e:
-            url = 'http://framework-test.k8s-ingress-nginx.kuainiujinke.com/rbiz-auto-loan'
-            # url = 'http://127.0.0.1:5208/rbiz-auto-loan'
+            # url = 'http://framework-test.k8s-ingress-nginx.kuainiujinke.com/rbiz-auto-loan'
+            url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/rbiz-auto-loan'
+            url = 'http://127.0.0.1:5208/rbiz-auto-loan'
             param = {
                 "count": period,
                 "env": self.env,

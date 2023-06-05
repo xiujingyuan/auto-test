@@ -21,7 +21,7 @@ class ES(object):
         :param indexs:
         """
         self.services = services
-        self.es_url = "https://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com:80"
+        self.es_url = "https://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com"
         self.es = Elasticsearch(self.es_url)
         self.index = indexs
 
@@ -40,12 +40,14 @@ class ES(object):
         return tag
 
     @staticmethod
-    def search_trace_body(services, operate, order, **tags):
+    def search_trace_body(services, operate, order, query_start=None, query_end=None, **tags):
         """
         组装查询语句：根据service、操作、标签搜索
         :param services:
         :param operate:
         :param order:
+        :param query_start:
+        :param query_end:
         :return:
         """
         body = {
@@ -74,6 +76,17 @@ class ES(object):
                     }
                 }
             })
+            if query_start is not None and query_end is not None:
+                body["query"]["bool"]["filter"] = [
+                    {
+                        "range": {
+                            "timestamp": {
+                                "gte": get_date(date=query_start, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True),
+                                "lte": get_date(date=query_end, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True)
+                            }
+                        }
+                    }
+                ]
         return body
 
     @staticmethod
@@ -197,10 +210,12 @@ class ES(object):
             return ret_data_dt
         return None
 
-    def get_request_child_info(self, operate, order='desc', operation_index=0, **tags):
+    def get_request_child_info(self, operate, query_start, query_end, order='desc', operation_index=0, **tags):
         """
         获取请求地址，参数和返回
         :param operate:
+        :param query_start:
+        :param query_end:
         :param order:
         :param operation_index:
         :param tags:
@@ -208,10 +223,11 @@ class ES(object):
         """
         ret_data_dt = {}
         # 1.查到trace_id
-        param = self.search_trace_body(self.services, operate, order, **tags)
+        param = self.search_trace_body(self.services, operate, order, query_start, query_end, **tags)
         resp = self.es.search(index=self.index, body=param)
-        print("hits trace: %s" % resp)
+        # print("hits trace: %s" % resp)
         hits = resp['hits']['hits']
+        print("hits trace: %s" % hits)
         if not hits:
             return None
         trace_id = hits[operation_index]['_source']['traceID']
@@ -238,7 +254,7 @@ class ES(object):
     def clear_log(cls, last_day):
         for i in range(last_day, last_day+5):
             date = get_date(day=-i, fmt="%Y-%m-%d")
-            Http.http_delete("http://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com/*{}*".format(date))
+            Http.http_delete("https://biz-elasticsearch.k8s-ingress-nginx.kuainiujinke.com/*{}*".format(date))
 
 
 if __name__ == '__main__':

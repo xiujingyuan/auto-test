@@ -1,5 +1,4 @@
 import json
-import math
 import random
 from app import db
 from sqlalchemy import desc
@@ -12,7 +11,7 @@ from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant import FROM_SYSTEM_DICT, CHANNEL_SOURCE_TYPE_DICT
 from app.services.china.grant.Model import Asset, Task, Sendmsg, AssetExtend, \
     AssetTran, CapitalAsset, AssetLoanRecord, CapitalTransaction, CapitalAccount, RouterCapitalPlan, Synctask, \
-    AssetAttachment
+    AssetAttachment, CapitalAccountAction
 from app.services.china.grant.ContractModel import Task as ContractTask, Contract, Contract2023
 
 BANK_MAP = {"中国银行": "BOC",
@@ -23,6 +22,14 @@ BANK_MAP = {"中国银行": "BOC",
 
 
 class ChinaGrantService(GrantBaseService):
+    RPC_DICT = {
+        'lanzhouhaoyue': 'lanzhouhaoyue',
+        'weipin_zhongwei': 'weipin',
+        'zhongyuan_zunhao': 'zhongyuan',
+        'jinmeixin_hanchen': 'hanchen',
+        'lanzhou_haoyue_qinjia': 'qinjia'
+    }
+
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
         self.grant_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/grant{0}".format(env)
         self.contract_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/contract{0}".format(env)
@@ -40,6 +47,17 @@ class ChinaGrantService(GrantBaseService):
         self.run_contract_msg_id_url = self.contract_host + '/msg/run?msgId={0}'
         self.msg_url = self.grant_host + '/msg/run?orderNo={0}'
         self.seq = ''
+
+    def is_mock(self, channel):
+        value = self.nacos.get_config('rpc_clients.properties', group='SYSTEM')
+        key_name = f'rpc.client.{self.RPC_DICT[channel]}.serviceUrl' \
+            if channel in self.RPC_DICT else 'rpc.client.bizGateway.serviceName'
+        for v in value:
+            if v.startswith(key_name):
+                v_value = v.split('=')[-1]
+                if v_value == 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
+                    return False
+        return True
 
     def modify_diff(self, channel, item_no):
         task = self.db_session.query(Task).filter(Task.task_order_no == item_no,
@@ -118,8 +136,8 @@ class ChinaGrantService(GrantBaseService):
             "source_type": source_type,
             "extend": extend
         }
-        url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
-        # url = 'http://127.0.0.1:5208/capital-manual-grant'
+        # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
+        url = 'http://127.0.0.1:5208/capital-manual-grant'
         ret = Http.http_post(url, req)
         if ret['code'] == 0:
             item_no = ret['data']['item_no']
@@ -130,7 +148,44 @@ class ChinaGrantService(GrantBaseService):
             self.update_route_capital_plan(channel)
             self.run_task_by_task_order_no(item_no)
             self.prepare_attachment(channel, item_no)
-            self.add_asset(item_no, source_type=2)
+            self.add_asset(item_no, source_type=2, extend=element)
+        return ret
+
+    def register_after(self, item_no, account_action, account_phone, account_code):
+        # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/register-after'
+        url = 'http://127.0.0.1:5208/register-after'
+        asset = db.session.query(AutoAsset).filter(AutoAsset.asset_name == item_no,
+                                                   AutoAsset.asset_env == self.env,
+                                                   AutoAsset.asset_type == 2).first()
+        four_element = json.loads(asset.asset_extend)
+        account_phone = account_phone if account_phone else '18683783691'
+
+        if account_phone:
+            four_element['data']['phone_number'] = account_phone
+            phone_number_encrypt = four_element['data'].pop('phone_number_encrypt')
+            four_element['data']['phone_number_encrypt'] = self.encrypt_data('mobile', account_phone)
+        req = {
+            'item_no': item_no,
+            'four_element': four_element,
+            'account_code': account_code,
+            'account_action': account_action,
+            'env': self.env,
+            'channel': asset.asset_channel
+        }
+
+        if account_action == 'CheckSmsVerifyCode':
+            sms_seq = self.db_session.query(CapitalAccountAction).filter(
+                CapitalAccountAction.capital_account_action_item_no == item_no,
+                CapitalAccountAction.capital_account_action_type == 'GetSmsVerifyCode').first()
+            req['sms_seq'] = sms_seq if sms_seq is None else sms_seq.capital_account_action_seq
+        ret = Http.http_post(url, req)
+
+        if account_phone:
+            account = self.db_session.query(CapitalAccount).filter(
+                CapitalAccount.capital_account_item_no == item_no).first()
+            account.capital_account_mobile_encrypt = phone_number_encrypt
+            self.db_session.add(account)
+            self.db_session.commit()
         return ret
 
     def run_contract_task_by_id(self, task_id, excepts={'code': 0}):
@@ -173,7 +228,7 @@ class ChinaGrantService(GrantBaseService):
         ret = Http.http_get(url)
         return ret
 
-    def operate_action(self, item_no, extend, op_type, table_name, run_date):
+    def operate_action(self, item_no, extend, op_type, table_name, run_date, creator):
         table_name = table_name[6:] if table_name.startswith('grant_') else table_name
         extend_name = '{0}_create_at'.format(table_name)
         max_create_at = extend[extend_name] if extend_name in extend else None
@@ -552,7 +607,7 @@ class ChinaGrantService(GrantBaseService):
         print(ret)
         return ret
 
-    def add_asset(self, name, source_type):
+    def add_asset(self, name, source_type, extend=None):
         grant_asset = self.check_item_exist(name)
         if grant_asset is None:
             return '没有该资产'
@@ -563,6 +618,7 @@ class ChinaGrantService(GrantBaseService):
         asset.asset_create_at = self.get_date(fmt="%Y-%m-%d", is_str=True)
         asset.asset_channel = grant_asset.asset_loan_channel
         asset.asset_descript = ''
+        asset.asset_extend = json.dumps(extend, ensure_ascii=False) if extend is not None else ''
         asset.asset_name = name
         asset.asset_period = grant_asset.asset_period_count
         asset.asset_env = self.env

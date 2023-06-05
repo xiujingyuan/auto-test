@@ -1,6 +1,7 @@
 import collections
 import json
 from datetime import datetime
+from datetime import date as datetime_date
 from functools import wraps
 import socket
 from random import random
@@ -165,5 +166,9 @@ def parse_resp_body(resp):
     return resp
 
 
-def get_date(fmt="%Y-%m-%d %H:%M:%S", timezone=None, **kwargs):
-    return (datetime.now(timezone) + relativedelta(**kwargs)).strftime(fmt)
+def get_date(fmt="%Y-%m-%d %H:%M:%S", date=None, timezone=None, is_str=False, **kwargs):
+    date = date if date is not None else datetime.now(timezone)
+    date = date if isinstance(date, (datetime, datetime_date)) \
+        else datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+    new_data = date + relativedelta(**kwargs)
+    return new_data.strftime(fmt) if is_str else new_data

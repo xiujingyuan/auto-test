@@ -25,7 +25,7 @@ from app.common.es_util import ES
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
 from app.common.tools import CheckExist, get_date
-from app.model.Model import AutoAsset, BackendKeyValue
+from app.model.Model import AutoAsset, BackendKeyValue, TraceInfo
 from app.services.china.repay import time_print
 from app.services.china.repay.Model import SendMsg, Synctask
 from app.services.ind.repay.Model import Task, CapitalTransaction, CapitalAsset, AssetTran, Asset, AssetExtend, Sendmsg
@@ -116,11 +116,31 @@ class BaseService(object):
             self.db_session_contract.configure(bind=self.engine_contract)
         self.log = LogUtil()
 
-    @staticmethod
-    def get_trace_info(services, task_order_no, operation):
+    def get_trace_info(self, trace_id, creator, services, task_order_no, operation, query_start, query_end):
+        trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
+                                                        TraceInfo.trace_info_env == int(self.env),
+                                                        TraceInfo.trace_info_trace_id == trace_id).first()
+        if trace_info is not None:
+            return json.loads(trace_info.trace_info_content)
+
         es = ES(services)
-        trace_info = es.get_request_child_info(operation, order='desc', operation_index=0, orderNo=task_order_no)
-        return {'trace': trace_info}
+        trace_info = es.get_request_child_info(operation, query_start, query_end,
+                                               order='desc', operation_index=0, orderNo=task_order_no)
+        self.save_trace_info(trace_id, operation, trace_info, creator)
+        print('trace_info', trace_info)
+        return trace_info
+
+    def save_trace_info(self, trace_id, operate_type, content, creator):
+        if content:
+            trace_info = TraceInfo()
+            trace_info.trace_info_creator = creator
+            trace_info.trace_info_trace_id = trace_id
+            trace_info.trace_info_trace_type = operate_type
+            trace_info.trace_info_content = json.dumps(content, ensure_ascii=False)
+            trace_info.trace_info_env = int(self.env)
+            trace_info.trace_info_program = self.program
+            db.session.add(trace_info)
+            db.session.flush()
 
     @staticmethod
     def get_random_str(num=10):
@@ -136,7 +156,10 @@ class BaseService(object):
                                               BackendKeyValue.backend_is_active == 1).first()
         return json.loads(record.backend_value) if is_json else record.backend_value
 
-    def get_detail_info(self, table_name, get_id, get_attr):
+    def get_detail_info(self, table_name, get_id, get_attr, extend):
+        if get_attr == 'trace_info':
+            return self.get_trace_info(get_id, extend['creator'], f'{self.program}{self.env}', extend['order_no'],
+                                       extend['type'], None, None)
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
         table_name = table_name.replace("grant_", '')
         obj = getattr(meta_class, ''.join(
