@@ -23,6 +23,16 @@ class ChinaRepayService(RepayBaseService):
         self.grant = ChinaGrantService(env, run_env, mock_name, check_req, return_req)
         self.biz_central = ChinaBizCentralService(env, run_env, mock_name, check_req, return_req)
 
+    def is_mock(self, channel):
+        value = self.nacos.get_config('repay.properties', group='SYSTEM')
+        key_name = 'rpc.client.bizGateway.serviceUrl'
+        for v in value:
+            if v.startswith(key_name):
+                v_value = v.split('=')[-1]
+                if v_value == 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
+                    return False
+        return True
+
     def operate_action(self, item_no, creator, extend, op_type, table_name, run_date):
         req = {'max_create_at': extend['create_at'] if hasattr(extend, 'create_at') else None,
                 'item_no': item_no,
@@ -96,7 +106,7 @@ class ChinaRepayService(RepayBaseService):
         except ValueError as e:
             # url = 'http://framework-test.k8s-ingress-nginx.kuainiujinke.com/rbiz-auto-loan'
             url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/rbiz-auto-loan'
-            url = 'http://127.0.0.1:5208/rbiz-auto-loan'
+            # url = 'http://127.0.0.1:5208/rbiz-auto-loan'
             param = {
                 "count": period,
                 "env": self.env,

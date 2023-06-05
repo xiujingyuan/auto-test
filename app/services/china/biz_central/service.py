@@ -35,6 +35,16 @@ class ChinaBizCentralService(BaseService):
         self.get_withhold_key_info = []
         self.asset = None
 
+    def is_mock(self, channel):
+        value = self.nacos.get_config(f'biz-central-{self.env}.properties', group='SYSTEM')
+        key_name = 'rpc.client.bizGateway.serviceUrl'
+        for v in value:
+            if v.startswith(key_name):
+                v_value = v.split('=')[-1]
+                if v_value == 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
+                    return False
+        return True
+
     def operate_action(self, item_no, extend, op_type, table_name, run_date, loading_key):
         loading_key_first = loading_key.split("_")[0]
         extend_name = '{0}_create_at'.format(loading_key_first)
