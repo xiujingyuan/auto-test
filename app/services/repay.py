@@ -161,7 +161,6 @@ class RepayBaseService(BaseService):
         """
         获取代扣信息
         :param item_no: 查询的资产编号
-        :param max_create_at: 查询的资产编号
         :param request_no: 当次请求的no，如果为None，则查所有代扣信息
         :param req_key: 当次请求的key,如果为None，则查所有代扣信息
         :return:
@@ -170,7 +169,7 @@ class RepayBaseService(BaseService):
         withhold_order_list = self.get_withhold_key_info(item_no, request_no, req_key)
         withhold_dict = self.get_withhold(serial_no_tuple)
         withhold_detail_dict = self.get_withhold_detail(serial_no_tuple)
-        withhold_request_dict = self.get_withhold_request(serial_no_tuple)
+        withhold_request_dict = self.get_withhold_request(request_no_tuple)
         ret = {'withhold_order': withhold_order_list}
         ret.update(withhold_dict)
         ret.update(withhold_detail_dict)
@@ -367,7 +366,7 @@ class RepayBaseService(BaseService):
         return reduce(lambda x, y: x + y.asset_tran_balance_amount, asset_tran_list, 0)
 
     def __get_active_request_data__(self, item_no, item_no_x, item_no_rights, amount, x_amount, rights_amount,
-                                    repay_card, bank_code, item_no_priority=12, item_no_rights_priority=5,
+                                    repay_card, phone, bank_code, item_no_priority=12, item_no_rights_priority=5,
                                     item_no_x_priority=1, coupon_num=None, coupon_amount=None, order_no='',
                                     verify_code='', verify_seq='', repay_card_num=None):
         # card_info = self.get_active_card_info('item_no_1634196466', repay_card)
@@ -389,6 +388,8 @@ class RepayBaseService(BaseService):
         }
         for four_element_key, four_element_value in self.__get_four_element_key__(repay_card).items():
             active_request_data['data'][four_element_key] = card_info[four_element_value]
+        if phone:
+            active_request_data['data']['card_user_phone_encrypt'] = self.encrypt_data('mobile', phone)
         amount_info_list = [(item_no, amount, item_no_priority, None, None),
                             (item_no_rights, rights_amount, item_no_rights_priority, None, None),
                             (item_no_x, x_amount, item_no_x_priority, coupon_num, coupon_amount)]

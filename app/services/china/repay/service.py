@@ -13,7 +13,7 @@ from app.services.china.grant.service import ChinaGrantService
 from app.services.china.repay import query_withhold
 from app.services.china.repay.Model import Asset, AssetExtend, Task, WithholdOrder, AssetTran, \
     SendMsg, Withhold, Card, CardAsset, \
-    WithholdRequest, WithholdDetail, Individual, IndividualAsset
+    WithholdRequest, WithholdDetail, Individual, IndividualAsset, Synctask
 
 
 class ChinaRepayService(RepayBaseService):
@@ -318,10 +318,11 @@ class ChinaRepayService(RepayBaseService):
 
     @query_withhold
     def active_repay(self, item_no, item_no_rights='', repay_card=1, amount=0, x_amount=0, rights_amount=0,
-                     verify_code='', verify_seq=None, agree=False, protocol=False,
+                     verify_code='', verify_seq=None, agree=False, protocol=False, phone='',
                      period_start=None, period_end=None, repay_card_num=None, bank_code='中国银行'):
         """
         主动还款
+        :param repay_card_num:
         :param item_no:
         :param item_no_rights:
         :param repay_card:
@@ -358,26 +359,40 @@ class ChinaRepayService(RepayBaseService):
         if amount == 0 and x_amount == 0 and rights_amount == 0:
             return "当前已结清", "", []
         request_data = self.__get_active_request_data__(item_no, item_no_x, item_no_rights, amount, x_amount,
-                                                        rights_amount, repay_card, bank_code, verify_code=verify_code,
+                                                        rights_amount, repay_card, phone, bank_code,
+                                                        verify_code=verify_code,
                                                         verify_seq=verify_seq, repay_card_num=repay_card_num)
         resp = Http.http_post(self.active_repay_url, request_data)
         if resp['code'] == 0 and agree and 'type' in resp['data']:
             # 协议支付 发短信
             first_serial_no = resp['data']['project_list'][0]['order_no']
-            agree_request_data = copy.deepcopy(request_data)
             verify_seq = self.send_msg(first_serial_no) if verify_seq is None else verify_seq
             # 第二次发起
-            agree_request_data['key'] = self.__create_req_key__(item_no, prefix='Agree')
-            agree_request_data['data']['order_no'] = first_serial_no
-            agree_request_data['data']['verify_code'] = verify_code
-            # agree_request_data['data']['verify_seq'] = verify_seq if protocol else 'error_test'
-            agree_request_data['data']['verify_seq'] = 'error_test'
-            time.sleep(2)
-            agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
-            # 执行协议签约任务
-            request_data = [request_data, agree_request_data]
+            agree_resp = []
+            if not phone or self.channel != 'lanhai_zhongbao_rl':
+                agree_request_data = copy.deepcopy(request_data)
+                agree_request_data['key'] = self.__create_req_key__(item_no, prefix='Agree')
+                agree_request_data['data']['order_no'] = first_serial_no
+                agree_request_data['data']['verify_code'] = verify_code
+                # agree_request_data['data']['verify_seq'] = verify_seq if protocol else 'error_test'
+                agree_request_data['data']['verify_seq'] = 'error_test'
+                time.sleep(2)
+                agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
+                # 执行协议签约任务
+                request_data = [request_data, agree_request_data]
             resp = [resp, agree_resp]
         return request_data, self.active_repay_url, resp
+
+    def second_active_repay(self, item_no, verify_code):
+        withhold_info = self.get_withhold_info(item_no)
+        sync_task = self.db_session.query(Synctask).filter(Synctask.synctask_key == withhold_info['withhold_request'][0]['req_key']).first()
+        agree_request_data = copy.deepcopy(json.loads(sync_task.synctask_request_data))
+        agree_request_data['key'] = self.__create_req_key__(item_no, prefix='Agree')
+        agree_request_data['data']['order_no'] = withhold_info['withhold'][0]['serial_no']
+        agree_request_data['data']['verify_code'] = verify_code
+        agree_request_data['data']['verify_seq'] = 'error_test'
+        agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
+        return agree_request_data, self.active_repay_url, agree_resp
 
     def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg,
                    grant_sync_task, source_type):
