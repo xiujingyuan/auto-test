@@ -26,10 +26,10 @@ class ChinaRepayService(RepayBaseService):
     def is_mock(self, channel):
         value = self.nacos.get_config('repay.properties', group='SYSTEM')
         key_name = 'rpc.client.bizGateway.serviceUrl'
-        for v in value:
+        for v in value['content'].split('\n')[::-1]:
             if v.startswith(key_name):
                 v_value = v.split('=')[-1]
-                if v_value == 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
+                if v_value != 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
                     return False
         return True
 

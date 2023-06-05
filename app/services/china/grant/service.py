@@ -51,11 +51,11 @@ class ChinaGrantService(GrantBaseService):
     def is_mock(self, channel):
         value = self.nacos.get_config('rpc_clients.properties', group='SYSTEM')
         key_name = f'rpc.client.{self.RPC_DICT[channel]}.serviceUrl' \
-            if channel in self.RPC_DICT else 'rpc.client.bizGateway.serviceName'
-        for v in value:
+            if channel in self.RPC_DICT else 'rpc.client.bizGateway.serviceUrl'
+        for v in value['content'].split('\n')[::-1]:
             if v.startswith(key_name):
                 v_value = v.split('=')[-1]
-                if v_value == 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
+                if v_value != 'http://biz-gateway-api.k8s-ingress-nginx.kuainiujinke.com':
                     return False
         return True
 
@@ -66,7 +66,7 @@ class ChinaGrantService(GrantBaseService):
         diff_str = message.split('[{')[1].split('}]')[0].split(',')
         diff_str_interest = int(diff_str[0].split("=")[1])
         diff_str_service = int(diff_str[1].split("=")[1])
-        diff = diff_str_interest + diff_str_service
+        diff = abs(diff_str_interest + diff_str_service)
         json_path_dict = {
             '$.task_config_map.CapitalRepayPlanQuery.execute.allowance_check_range.min_value': -diff,
             '$.task_config_map.CapitalRepayPlanQuery.execute.allowance_check_range.max_value': diff,
@@ -136,8 +136,8 @@ class ChinaGrantService(GrantBaseService):
             "source_type": source_type,
             "extend": extend
         }
-        url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
-        # url = 'http://127.0.0.1:5208/capital-manual-grant'
+        # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
+        url = 'http://127.0.0.1:5208/capital-manual-grant'
         ret = Http.http_post(url, req)
         if ret['code'] == 0:
             item_no = ret['data']['item_no']
@@ -178,14 +178,18 @@ class ChinaGrantService(GrantBaseService):
                 CapitalAccountAction.capital_account_action_item_no == item_no,
                 CapitalAccountAction.capital_account_action_type == 'GetSmsVerifyCode').first()
             req['sms_seq'] = sms_seq if sms_seq is None else sms_seq.capital_account_action_seq
+
         ret = Http.http_post(url, req)
 
-        if account_phone:
+        if account_action == 'CheckSmsVerifyCode':
             account = self.db_session.query(CapitalAccount).filter(
-                CapitalAccount.capital_account_item_no == item_no).first()
+                CapitalAccount.capital_account_item_no == item_no,
+                CapitalAccount.capital_account_mobile_encrypt == self.encrypt_data('mobile', account_phone)
+            ).first()
             account.capital_account_mobile_encrypt = phone_number_encrypt
             self.db_session.add(account)
             self.db_session.commit()
+
         return ret
 
     def run_contract_task_by_id(self, task_id, excepts={'code': 0}):
