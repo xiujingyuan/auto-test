@@ -43,6 +43,36 @@ def save_desc():
     return jsonify(ret)
 
 
+@api_web.route('/add_capital', methods=["POST"])
+def add_capital():
+    ret = deepcopy(RET)
+    req = request.json
+    channel = req.get('channel', '')
+    label = req.get('label', '')
+    country = req.get('country', 'china')
+    if channel == '' or label == '':
+        ret['code'] = 1
+        ret['message'] = "channel or label's value is error!"
+        return jsonify(ret)
+    channels = BackendKeyValue.query.filter(BackendKeyValue.backend_key == 'channels').first()
+    channel_info = json.loads(channels.backend_value)
+    periods = BackendKeyValue.query.filter(BackendKeyValue.backend_key == 'periods').first()
+    period_info = json.loads(periods.backend_value)
+    if channel not in [x['value'] for x in channel_info[country]]:
+        channel_info[country].insert(0, {
+            "label": label,
+            "value": channel
+        })
+        channels.backend_value = json.dumps(channel_info, ensure_ascii=False)
+        db.session.add(channels)
+    if channel not in json.loads(periods.backend_value):
+        period_info[channel] = [{"value": 12, "label": "12期"}]
+        periods.backend_value = json.dumps(period_info, ensure_ascii=False)
+        db.session.add(periods)
+    db.session.flush()
+    return jsonify(ret)
+
+
 @api_web.route('/backend_config', methods=["GET"])
 def get_backend_key_value():
     key_value_list = BackendKeyValue.query.filter(BackendKeyValue.backend_is_active == 1,
