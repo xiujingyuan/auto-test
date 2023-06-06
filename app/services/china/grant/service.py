@@ -136,8 +136,8 @@ class ChinaGrantService(GrantBaseService):
             "source_type": source_type,
             "extend": extend
         }
-        # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
-        url = 'http://127.0.0.1:5208/capital-manual-grant'
+        url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
+        #url = 'http://127.0.0.1:5208/capital-manual-grant'
         ret = Http.http_post(url, req)
         if ret['code'] == 0:
             item_no = ret['data']['item_no']
@@ -152,8 +152,8 @@ class ChinaGrantService(GrantBaseService):
         return ret
 
     def register_after(self, item_no, account_action, account_phone, account_code):
-        # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/register-after'
-        url = 'http://127.0.0.1:5208/register-after'
+        url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/register-after'
+        # url = 'http://127.0.0.1:5208/register-after'
         asset = db.session.query(AutoAsset).filter(AutoAsset.asset_name == item_no,
                                                    AutoAsset.asset_env == self.env,
                                                    AutoAsset.asset_type == 2).first()
