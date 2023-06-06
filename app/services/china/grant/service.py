@@ -78,9 +78,8 @@ class ChinaGrantService(GrantBaseService):
 
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
-        asset = self.asset
         ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
-        ret.update(asset)
+        ret.update(self.asset)
         return ret
 
     def add_msg(self, msg):
@@ -269,6 +268,12 @@ class ChinaGrantService(GrantBaseService):
     def get_task(self, item_no):
         task = self.get_task_info(item_no)
         return {'grant_task': list(map(lambda x: x.to_spec_dict_obj([Task.task_request_data, Task.task_response_data]), task))}
+
+    def get_synctask(self, item_no):
+        sync_task = self.db_session.query(Synctask).filter(
+            Synctask.synctask_order_no == item_no).order_by(desc(Synctask.synctask_id)).all()
+        return {'grant_synctask': list(map(lambda x: x.to_spec_dict_obj(
+            [Synctask.synctask_request_data, Synctask.synctask_response_data]), sync_task))}
 
     def get_task_info(self, item_no):
         task = self.db_session.query(Task).filter(Task.task_order_no == item_no).order_by(desc(Task.task_id)).all()

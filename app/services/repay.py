@@ -425,14 +425,13 @@ class RepayBaseService(BaseService):
         return {'task': task_list}
 
     @time_print
-    def get_sync_task(self, task_order_no, max_create_at, refresh_id):
+    def get_synctask(self, task_order_no):
         sync_task_list = self.db_session.query(Synctask).filter(
-            Synctask.synctask_key.like('{0}%'.format(task_order_no)),
-            Synctask.synctask_create_at >= max_create_at).order_by(desc(Synctask.synctask_id)).paginate(
-            page=1, per_page=10, error_out=False).items
-        sync_task_list = list(map(lambda x: x.to_spec_dict_obj([Synctask.task_request_data,
-                                                                Synctask.task_response_data]),sync_task_list))
-        return {'sync_task': sync_task_list}
+            Synctask.synctask_key.like('%{0}%'.format(task_order_no))).order_by(desc(Synctask.synctask_id)).paginate(
+            page=1, per_page=20, error_out=False).items
+        sync_task_list = list(map(lambda x: x.to_spec_dict_obj([Synctask.synctask_request_data,
+                                                                Synctask.synctask_response_data]), sync_task_list))
+        return {'synctask': sync_task_list}
 
     @time_print
     def get_msg(self, task_order_no, max_create_at, refresh_id):
@@ -445,13 +444,16 @@ class RepayBaseService(BaseService):
 
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None, refresh_id=None):
+        ret = {}
         asset = self.get_asset(item_no)
+        if not asset['asset']:
+            return ret
         max_create_at = self.get_date(is_str=True, days=-7)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = \
             self.get_withhold_key_info(item_no, max_create_at=None)
         self.channel = asset['asset'][0]['loan_channel']
         task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [self.channel]
-        ret = {}
+
         if refresh_type in ('task', 'msg'):
             ret = getattr(self, 'get_{0}'.format(refresh_type))(task_order_no, max_create_at, refresh_id)
         # elif refresh_type == 'biz_task':
@@ -466,7 +468,7 @@ class RepayBaseService(BaseService):
             ret = self.get_withhold_request(request_no)
         elif refresh_type == 'asset_tran':
             ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
-        elif refresh_type == 'sync_task':
+        elif refresh_type == 'synctask':
             ret = getattr(self, 'get_{0}'.format(refresh_type))(item_no)
         # elif refresh_type in ('biz_capital', 'biz_capital_tran', 'biz_capital_notify'):
         #     ret = getattr(self.biz_central, 'get_{0}'.format(refresh_type[4:]))(item_no)

@@ -4,6 +4,7 @@ import json
 import time
 from datetime import datetime
 from decimal import Decimal
+from functools import reduce
 
 from app.common.http_util import Http, FORM_HEADER
 from app.model.Model import BackendKeyValue
@@ -365,7 +366,8 @@ class ChinaRepayService(RepayBaseService):
         resp = Http.http_post(self.active_repay_url, request_data)
         if resp['code'] == 0 and agree and 'type' in resp['data']:
             # 协议支付 发短信
-            first_serial_no = resp['data']['project_list'][0]['order_no']
+            first_serial_no = list(filter(lambda x: not x.startswith('AUTO_C'),
+                                          [y['order_no'] for y in resp['data']['project_list']]))[0]
             verify_seq = self.send_msg(first_serial_no) if verify_seq is None else verify_seq
             # 第二次发起
             agree_resp = []
@@ -388,7 +390,8 @@ class ChinaRepayService(RepayBaseService):
         sync_task = self.db_session.query(Synctask).filter(Synctask.synctask_key == withhold_info['withhold_request'][0]['req_key']).first()
         agree_request_data = copy.deepcopy(json.loads(sync_task.synctask_request_data))
         agree_request_data['key'] = self.__create_req_key__(item_no, prefix='Agree')
-        agree_request_data['data']['order_no'] = withhold_info['withhold'][0]['serial_no']
+        agree_request_data['data']['order_no'] = list(filter(lambda x: not x.startswith('AUTO_C'),
+                                                             [y['serial_no'] for y in withhold_info['withhold']]))[0]
         agree_request_data['data']['verify_code'] = verify_code
         agree_request_data['data']['verify_seq'] = 'error_test'
         agree_resp = Http.http_post(self.active_repay_url, agree_request_data)

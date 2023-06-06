@@ -10,7 +10,8 @@ import json
 
 from app.services.china.biz_central import biz_modify_return
 from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
-    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday
+    CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday, \
+    CentralSynctask
 from app.test_cases import CaseException
 
 
@@ -75,8 +76,7 @@ class ChinaBizCentralService(BaseService):
         max_create_at = self.get_date(is_str=True, days=-3)
         request_no, serial_no, id_num, item_no_tuple, withhold_order = self.get_withhold_key_info
         channel = asset['asset'][0]['loan_channel']
-        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) \
-                        + [channel] + ['{0}_query'.format(item_no)]
+        task_order_no = list(request_no) + list(serial_no) + list(id_num) + list(item_no_tuple) + [channel] + ['{0}_query'.format(item_no)]
 
         req_name = 'get_{0}'.format(refresh_type)
         if refresh_type == 'central_task':
@@ -90,6 +90,11 @@ class ChinaBizCentralService(BaseService):
                                           exclude_col=[CentralSendMsg.sendmsg_content,
                                                        CentralSendMsg.sendmsg_response_data,
                                                        CentralSendMsg.sendmsg_memo])
+        elif refresh_type == 'central_synctask':
+            ret = getattr(self, req_name)(item_no, max_create_at, record_type='to_spec_dict_obj',
+                                          exclude_col=[CentralSynctask.synctask_request_data,
+                                                       CentralSynctask.synctask_response_data,
+                                                       CentralSynctask.synctask_memo])
         elif refresh_type in ('capital', 'capital_transaction', 'capital_notify'):
             ret = getattr(self, req_name)(item_no)
         elif refresh_type == 'capital_settlement_detail':
@@ -332,6 +337,13 @@ class ChinaBizCentralService(BaseService):
             .order_by(desc(CentralSendMsg.sendmsg_id)).paginate(page=1,
                                                                 per_page=20,
                                                                 error_out=False).items
+        return msg_list
+
+    @biz_modify_return
+    def get_central_synctask(self, item_no, max_create_at=None):
+        msg_list = self.db_session.query(CentralSynctask). \
+            filter(CentralSynctask.synctask_order_no == item_no).order_by(desc(CentralSynctask.synctask_id)).paginate(
+            page=1, per_page=20, error_out=False).items
         return msg_list
 
     def get_capital_info(self, item_no, channel):
