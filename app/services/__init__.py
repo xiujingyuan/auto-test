@@ -417,6 +417,7 @@ class BaseService(object):
         elif self.country == "pak":
             min_diff = -3 * 60
         task.task_next_run_at = get_date(minutes=min_diff)
+        task.task_status = 'open'
         self.db_session.add(task)
         self.db_session.commit()
 

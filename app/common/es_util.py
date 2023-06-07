@@ -236,6 +236,10 @@ class ES(object):
         resp = self.es.search(index=self.index, body=param)
         for span in resp['hits']['hits']:
             operate_name = span['_source']['operationName']
+            if operate_name.startswith('/kv/nacos/'):
+                continue
+            if operate_name.startswith('/decrypt/'):
+                continue
             operate_time = datetime.datetime.fromtimestamp(
                 span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
             if operate_time not in hits:
