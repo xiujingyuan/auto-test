@@ -46,7 +46,7 @@ class ChinaBizCentralService(BaseService):
                     return False
         return True
 
-    def operate_action(self, item_no, extend, op_type, table_name, run_date, loading_key):
+    def operate_action(self, item_no, extend, op_type, table_name, run_date, loading_key, creator):
         loading_key_first = loading_key.split("_")[0]
         extend_name = '{0}_create_at'.format(loading_key_first)
         max_create_at = extend[extend_name] if extend_name in extend else None

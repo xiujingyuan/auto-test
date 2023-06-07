@@ -70,7 +70,8 @@ def add_capital():
         periods.backend_value = json.dumps(period_info, ensure_ascii=False)
         db.session.add(periods)
     db.session.flush()
-    return jsonify(ret)
+
+    return get_backend_key_value()
 
 
 @api_web.route('/backend_config', methods=["GET"])
