@@ -260,7 +260,8 @@ class ES(object):
                     req_dt[log_key] = log_value
                 req_dt["trace_url"] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujinke.com/trace/{trace_id}/"
                 hit_ret_data_dt[operate_name].update(req_dt)
-            ret_data_dt[operate_time] = hit_ret_data_dt
+            if hit_ret_data_dt:
+                ret_data_dt[hit_ret_data_dt.keys()[0]] = hit_ret_data_dt
         return ret_data_dt
 
     @classmethod
