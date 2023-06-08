@@ -136,6 +136,7 @@ class BaseService(object):
                 trace_info.trace_info_trace_type = operate_type
                 trace_info.trace_info_env = int(self.env)
                 trace_info.trace_info_program = self.program
+
             trace_info.trace_info_content = json.dumps(content, ensure_ascii=False)
             db.session.add(trace_info)
             db.session.flush()

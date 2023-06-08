@@ -230,30 +230,37 @@ class ES(object):
         print("hits trace: %s" % hits)
         if not hits:
             return None
-        trace_id = hits[operation_index]['_source']['traceID']
-        # 2.查询具体span
-        param = self.search_all_child_body(self.services, trace_id, order)
-        resp = self.es.search(index=self.index, body=param)
-        for span in resp['hits']['hits']:
-            operate_name = span['_source']['operationName']
-            if operate_name.startswith('/kv/nacos/'):
-                continue
-            if operate_name.startswith('/decrypt/'):
-                continue
-            if operate_name.startswith('/alert'):
-                continue
-            operate_time = datetime.datetime.fromtimestamp(
-                span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
-            if operate_time not in hits:
-                ret_data_dt[operate_name] = {'count': 1}
-            else:
-                ret_data_dt[operate_name]['count'] += 1
-            req_dt = {'operate_time': operate_time}
-            for tag in span['_source']['tags']:
-                req_dt[tag['key']] = tag['value']
-            for log in span['_source']['logs']:
-                req_dt[log['fields'][0]['key']] = log['fields'][0]['value']
-            ret_data_dt[operate_name].update(req_dt)
+        for hit in hits:
+            trace_id = hit['_source']['traceID']
+            hit_ret_data_dt = {}
+            # 2.查询具体span
+            param = self.search_all_child_body(self.services, trace_id, order)
+            resp = self.es.search(index=self.index, body=param)
+            for span in resp['hits']['hits']:
+                operate_name = span['_source']['operationName']
+                if operate_name.startswith('/kv/nacos/'):
+                    continue
+                if operate_name.startswith('/decrypt/'):
+                    continue
+                if operate_name.startswith('/alert'):
+                    continue
+                operate_time = datetime.datetime.fromtimestamp(
+                    span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+                if operate_time not in hits:
+                    hit_ret_data_dt[operate_name] = {'count': 1}
+                else:
+                    hit_ret_data_dt[operate_name]['count'] += 1
+                req_dt = {'operate_time': operate_time}
+                for tag in span['_source']['tags']:
+                    req_dt[tag['key']] = tag['value']
+                for log in span['_source']['logs']:
+                    log_key = log['fields'][0]['key']
+                    log_value = log['fields'][0]['value']
+                    log_value = json.loads(log_value) if log_key in ('feign.request', 'feign.response') else log_value
+                    req_dt[log_key] = log_value
+                req_dt["trace_url"] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujinke.com/trace/{trace_id}/"
+                hit_ret_data_dt[operate_name].update(req_dt)
+            ret_data_dt[operate_time] = hit_ret_data_dt
         return ret_data_dt
 
     @classmethod
