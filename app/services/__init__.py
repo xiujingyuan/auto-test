@@ -157,8 +157,10 @@ class BaseService(object):
 
     def get_detail_info(self, table_name, get_id, get_attr, extend):
         if get_attr == 'trace_info':
-            order_no = 'synctask_order_no' if table_name == 'central_synctask' else 'order_no'
-            task_type = 'synctask_type' if table_name == 'central_synctask' else 'type'
+            order_no = f'{table_name.replace("central_", "")}_order_no' if \
+                table_name.startswith('central_') else 'order_no'
+            task_type = f'{table_name.replace("central_", "")}_type' if \
+                table_name.startswith('central_') else 'type'
             return self.get_trace_info(get_id, extend['creator'], f'{self.program}{self.env}', extend[order_no],
                                        extend[task_type], None, None)
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
