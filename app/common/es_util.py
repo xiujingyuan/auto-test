@@ -256,7 +256,8 @@ class ES(object):
                 for log in span['_source']['logs']:
                     log_key = log['fields'][0]['key']
                     log_value = log['fields'][0]['value']
-                    log_value = json.loads(log_value) if log_key in ('feign.request', 'feign.response') else log_value
+                    log_value = json.loads(log_value) if log_key in ('feign.request', 'feign.response',
+                                                                     'http.request', 'http.response') else log_value
                     req_dt[log_key] = log_value
                 req_dt["trace_url"] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujinke.com/trace/{trace_id}/"
                 hit_ret_data_dt[operate_name].update(req_dt)
