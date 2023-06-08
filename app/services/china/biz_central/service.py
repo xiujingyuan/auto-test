@@ -316,15 +316,16 @@ class ChinaBizCentralService(BaseService):
             CentralTask.task_order_no.in_(task_order_no),
             CentralTask.task_update_at >= max_create_at)\
             .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=25, error_out=False).items
-
-        other_task_list = self.db_session.query(CentralTask).filter(
-            or_(
-                CentralTask.task_order_no.like('settle_detail_{0}%'.format(channel)),
-                CentralTask.task_order_no.like('REPAYMENTFILE_%'),
-                CentralTask.task_order_no.like('COMPFILE_%'),
-                CentralTask.task_order_no.like('{0}%'.format(channel))),
-            CentralTask.task_id >= task_list[0].task_id) \
-            .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=5, error_out=False).items
+        other_task_list = []
+        if task_list:
+            other_task_list = self.db_session.query(CentralTask).filter(
+                or_(
+                    CentralTask.task_order_no.like('settle_detail_{0}%'.format(channel)),
+                    CentralTask.task_order_no.like('REPAYMENTFILE_%'),
+                    CentralTask.task_order_no.like('COMPFILE_%'),
+                    CentralTask.task_order_no.like('{0}%'.format(channel))),
+                CentralTask.task_id >= task_list[0].task_id) \
+                .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=5, error_out=False).items
 
         return task_list + other_task_list
 
