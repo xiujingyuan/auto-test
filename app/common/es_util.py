@@ -240,6 +240,8 @@ class ES(object):
                 continue
             if operate_name.startswith('/decrypt/'):
                 continue
+            if operate_name.startswith('/alert'):
+                continue
             operate_time = datetime.datetime.fromtimestamp(
                 span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
             if operate_time not in hits:

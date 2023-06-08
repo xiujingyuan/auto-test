@@ -426,9 +426,20 @@ class RepayBaseService(BaseService):
 
     @time_print
     def get_synctask(self, task_order_no):
+        withhold = self.db_session.query(WithholdOrder).filter(
+            WithholdOrder.withhold_order_reference_no == task_order_no,
+            WithholdOrder.withhold_order_withhold_status == 'ready',
+            WithholdOrder.withhold_order_serial_no.notlike('AUTO_C%')).first()
+        sync_task = None
+        if withhold is not None:
+            sync_task = self.db_session.query(Synctask).filter(
+                Synctask.synctask_order_no == withhold.withhold_order_serial_no,
+                Synctask.synctask_type == 'SendBindSms'
+            ).order_by(desc(Synctask.synctask_id)).first()
         sync_task_list = self.db_session.query(Synctask).filter(
-            Synctask.synctask_key.like('%{0}%'.format(task_order_no))).order_by(desc(Synctask.synctask_id)).paginate(
+            Synctask.synctask_key.like('{0}%'.format(task_order_no))).order_by(desc(Synctask.synctask_id)).paginate(
             page=1, per_page=20, error_out=False).items
+        sync_task_list = sync_task_list if sync_task is None else [sync_task] + sync_task_list
         sync_task_list = list(map(lambda x: x.to_spec_dict_obj([Synctask.synctask_request_data,
                                                                 Synctask.synctask_response_data]), sync_task_list))
         return {'synctask': sync_task_list}

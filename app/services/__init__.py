@@ -117,12 +117,6 @@ class BaseService(object):
         self.log = LogUtil()
 
     def get_trace_info(self, trace_id, creator, services, task_order_no, operation, query_start, query_end):
-        trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
-                                                        TraceInfo.trace_info_env == int(self.env),
-                                                        TraceInfo.trace_info_trace_id == trace_id).first()
-        if trace_info is not None:
-            return json.loads(trace_info.trace_info_content)
-
         es = ES(services)
         trace_info = es.get_request_child_info(operation, query_start, query_end,
                                                order='desc', operation_index=0, orderNo=task_order_no)
@@ -132,13 +126,17 @@ class BaseService(object):
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
         if content:
-            trace_info = TraceInfo()
-            trace_info.trace_info_creator = creator
-            trace_info.trace_info_trace_id = trace_id
-            trace_info.trace_info_trace_type = operate_type
+            trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
+                                                            TraceInfo.trace_info_env == int(self.env),
+                                                            TraceInfo.trace_info_trace_id == trace_id).first()
+            if trace_info is None:
+                trace_info = TraceInfo()
+                trace_info.trace_info_creator = creator
+                trace_info.trace_info_trace_id = trace_id
+                trace_info.trace_info_trace_type = operate_type
+                trace_info.trace_info_env = int(self.env)
+                trace_info.trace_info_program = self.program
             trace_info.trace_info_content = json.dumps(content, ensure_ascii=False)
-            trace_info.trace_info_env = int(self.env)
-            trace_info.trace_info_program = self.program
             db.session.add(trace_info)
             db.session.flush()
 
@@ -212,7 +210,7 @@ class BaseService(object):
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
-        return "{0}{1}_{2}".format(prefix, item_no, int(time.time()))
+        return "{1}_{0}_{2}".format(prefix, item_no, int(time.time()))
 
     @staticmethod
     def cal_days(str1, str2):
