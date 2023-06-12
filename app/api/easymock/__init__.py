@@ -1,9 +1,11 @@
+import json
 from copy import deepcopy
 
 from flask import Blueprint, request, jsonify
 from flask import current_app
 
 from app.common import EasyMockFactory, RET
+from app.common.easy_mock_util import EasyMock
 
 api_easy_mock = Blueprint('api_easy_mock', __name__)
 
@@ -32,6 +34,18 @@ def easy_mock_change():
         easy_mock = EasyMockFactory.get_easy_mock(country, program, project_name, check_req, return_req)
         easy_mock.update(url, params)
     return jsonify(get_ret)
+
+
+@api_easy_mock.route('/modify_mock', methods=['POST'])
+def modify_mock():
+    get_ret = deepcopy(RET)
+    req = request.json
+    url = req.get('url', None)
+    value = req.get("value", None)
+    mock_name = url.split("/")[3]
+    easy_mock = EasyMock(mock_name)
+    easy_mock.update_by_value(url.split(mock_name)[-1], json.loads(value))
+    return get_ret
 
 
 @api_easy_mock.route('/<string:operate>', methods=['POST'])

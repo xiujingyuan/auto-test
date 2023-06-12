@@ -23,7 +23,6 @@ class WeipinzhongweiMock(BusinessMock):
         for period in list(range(self.period_start, self.period_end + 1)):
             interest = repayPlanDict[period]['interest']
             principal = repayPlanDict[period]['principal']
-            total_amount += reduce(lambda x, y: x+y, repayPlanDict[period].values(), 0)
             if period == self.period_start:
                 if principal_over:
                     principal = principal - 1
@@ -33,11 +32,13 @@ class WeipinzhongweiMock(BusinessMock):
                     interest = interest + 1
                 elif interest_type == 'zero':
                     interest = 0
+            period_total = principal + interest
+            total_amount += period_total
             repayPlanList.append({
                 "tenor": period,
-                "principalAmount": principal,
-                "interestAmount": interest,
-                "penaltyAmount": repayPlanDict[period]['late'],
+                "principalAmount": self.fen2yuan(principal),
+                "interestAmount": self.fen2yuan(interest),
+                "penaltyAmount": self.fen2yuan(repayPlanDict[period]['late']),
                 "feeAmount": 0,
                 "compountAmount": 0,
                 "delqDays": 0
@@ -52,7 +53,7 @@ class WeipinzhongweiMock(BusinessMock):
                 "userId": "16545892470612460068",
                 "repaymentList": [
                     {
-                        "totalAmount": float(Decimal(total_amount).quantize(Decimal("0.00"))),
+                        "totalAmount": self.fen2yuan(total_amount),
                         "preFeeAmount": None,
                         "planList": repayPlanList
                     }]

@@ -122,7 +122,7 @@ class BaseService(object):
                                                order='desc', operation_index=0, orderNo=task_order_no)
         self.save_trace_info(trace_id, operation, trace_info, creator)
         print('trace_info', trace_info)
-        return trace_info
+        return trace_info[list(trace_info.keys())[0]] if trace_info else ''
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
         if content:
