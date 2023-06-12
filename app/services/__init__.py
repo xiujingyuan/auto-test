@@ -125,10 +125,10 @@ class BaseService(object):
         return trace_info[list(trace_info.keys())[0]] if trace_info else ''
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
+        trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
+                                                        TraceInfo.trace_info_env == int(self.env),
+                                                        TraceInfo.trace_info_trace_id == trace_id).first()
         if content:
-            trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
-                                                            TraceInfo.trace_info_env == int(self.env),
-                                                            TraceInfo.trace_info_trace_id == trace_id).first()
             if trace_info is None:
                 trace_info = TraceInfo()
                 trace_info.trace_info_creator = creator
@@ -140,7 +140,9 @@ class BaseService(object):
             trace_info.trace_info_content = json.dumps(content, ensure_ascii=False)
             db.session.add(trace_info)
             db.session.flush()
-
+        elif trace_info is not None:
+            content = trace_info.trace_info_content
+        return content
     @staticmethod
     def get_random_str(num=10):
         data = '1234567890abcdefghijklmnopqrstuvwxyz'
@@ -213,7 +215,8 @@ class BaseService(object):
 
     @staticmethod
     def __create_req_key__(item_no, prefix=''):
-        return "{1}_{0}_{2}".format(prefix, item_no, int(time.time()))
+        return "{1}_{0}_{2}".format(prefix, item_no, int(time.time())) if prefix != 'FOX' else "FOX_{0}_{1}".format(
+            item_no, int(time.time()))
 
     @staticmethod
     def cal_days(str1, str2):
