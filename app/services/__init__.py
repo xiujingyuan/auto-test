@@ -120,7 +120,7 @@ class BaseService(object):
         es = ES(services)
         trace_info = es.get_request_child_info(operation, query_start, query_end,
                                                order='desc', operation_index=0, orderNo=task_order_no)
-        self.save_trace_info(trace_id, operation, trace_info, creator)
+        trace_info = self.save_trace_info(trace_id, operation, trace_info, creator)
         print('trace_info', trace_info)
         return trace_info[list(trace_info.keys())[0]] if trace_info else ''
 
@@ -163,7 +163,11 @@ class BaseService(object):
                 table_name.startswith('central_') else 'order_no'
             task_type = f'{table_name.replace("central_", "")}_type' if \
                 table_name.startswith('central_') else 'type'
-            return self.get_trace_info(get_id, extend['creator'], f'{self.program}{self.env}', extend[order_no],
+            service_name = f'biz-central-{self.env}' if \
+                table_name.startswith('central_') else f'{self.program}{self.env}'
+            service_name = f'gbiz{self.env}' if \
+                table_name.startswith('grant_') else service_name
+            return self.get_trace_info(get_id, extend['creator'], service_name, extend[order_no],
                                        extend[task_type], None, None)
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
         table_name = table_name.replace("grant_", '')

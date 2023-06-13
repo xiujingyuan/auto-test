@@ -238,29 +238,38 @@ class ES(object):
             resp = self.es.search(index=self.index, body=param)
             for span in resp['hits']['hits']:
                 operate_name = span['_source']['operationName']
+                print(operate_name)
+                if operate_name == 'Batch':
+                    continue
                 if operate_name.startswith('/kv/nacos/'):
                     continue
                 if operate_name.startswith('/decrypt/'):
+                    continue
+                if operate_name.startswith('/encrypt/'):
                     continue
                 if operate_name.startswith('/alert'):
                     continue
                 operate_time = datetime.datetime.fromtimestamp(
                     span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
-                if operate_time not in hits:
-                    hit_ret_data_dt[operate_name] = {'count': 1}
-                else:
-                    hit_ret_data_dt[operate_name]['count'] += 1
                 req_dt = {'operate_time': operate_time}
                 for tag in span['_source']['tags']:
                     req_dt[tag['key']] = tag['value']
                 for log in span['_source']['logs']:
                     log_key = log['fields'][0]['key']
                     log_value = log['fields'][0]['value']
-                    log_value = json.dumps(json.loads(log_value), ensure_ascii=False) if log_key in ('feign.request', 'feign.response',
-                                                                     'http.request', 'http.response') else log_value
+                    if log_key in ('feign.request', 'feign.response', 'http.request', 'http.response') and not log_value.endswith("..."):
+                        try:
+                            log_value = json.dumps(json.loads(log_value), ensure_ascii=False)
+                        except json.decoder.JSONDecodeError as e:
+                            pass
+
                     log_key = log_key.replace("feign.", "") if log_key in ('feign.request', 'feign.response') else log_key
                     log_key = log_key.replace("http.", "") if log_key in ('http.request', 'http.response') else log_key
                     req_dt[log_key] = log_value
+                if 'http.path' not in req_dt:
+                    continue
+                if operate_time not in hits:
+                    hit_ret_data_dt[operate_name] = {'count': 1}
                 req_dt["trace_url"] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujinke.com/trace/{trace_id}/"
                 hit_ret_data_dt[operate_name].update(req_dt)
             if hit_ret_data_dt:
