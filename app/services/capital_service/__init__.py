@@ -26,8 +26,13 @@ class BusinessMock(EasyMock):
         late_amount = 0
         repayPlanDict = {}
         for at in self.asset_tran_list:
+            if at.asset_tran_period not in repayPlanDict:
+                repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0, 'late': 0}
             if at.asset_tran_category == 'principal':
                 principal_amount += at.asset_tran_balance_amount
+                overdue = self.cal_days(at.asset_tran_due_at, datetime.now())
+                overdue = overdue if overdue >= 0 else 0
+                repayPlanDict[at.asset_tran_period]['overdue'] = overdue
             if at.asset_tran_period == self.period_start:
                 if at.asset_tran_category == 'interest':
                     interest_amount += at.asset_tran_balance_amount
@@ -35,13 +40,8 @@ class BusinessMock(EasyMock):
                     fee_amount += at.asset_tran_balance_amount
                 if at.asset_tran_category == 'late':
                     late_amount += at.asset_tran_balance_amount
-            if at.asset_tran_period not in repayPlanDict:
-                repayPlanDict[at.asset_tran_period] = {'principal': 0, 'interest': 0, 'fee': 0, 'late': 0}
             repayPlanDict[at.asset_tran_period][at.asset_tran_category] += at.asset_tran_balance_amount
-            if 'overdue' not in repayPlanDict[at.asset_tran_period]:
-                overdue = self.cal_days(at.asset_tran_due_at, datetime.now())
-                overdue = overdue if overdue >= 0 else 0
-                repayPlanDict[at.asset_tran_period]['overdue'] = overdue
+
         return principal_amount, interest_amount, fee_amount, late_amount, repayPlanDict
 
     def repay_plan_mock(self):
