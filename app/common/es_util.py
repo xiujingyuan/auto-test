@@ -225,20 +225,31 @@ class ES(object):
         # 1.查到trace_id
         param = self.search_trace_body(self.services, operate, order, query_start, query_end, **tags)
         resp = self.es.search(index=self.index, body=param)
-        # print("hits trace: %s" % resp)
         hits = resp['hits']['hits']
-        print("hits trace: %s" % hits)
+
         if not hits:
             return None
         for hit in hits:
+            print("hits trace: %s" % hit)
             trace_id = hit['_source']['traceID']
-            hit_ret_data_dt = {}
+            hit_ret_data_dt = {'task_info': {}}
+            operate_time = datetime.datetime.fromtimestamp(
+                hit['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
+            hit_ret_data_dt['task_info']["count"] = 1
+            hit_ret_data_dt['task_info']['operate_time'] = operate_time
+            hit_ret_data_dt['task_info']['http.path'] = "本地"
+            hit_ret_data_dt['task_info']['host'] = "本地"
+            hit_ret_data_dt['task_info']['path'] = "本地"
+            hit_ret_data_dt['task_info']['http.url'] = "本地"
+            hit_ret_data_dt['task_info']['request'] = hit['_source']['logs'][0]['fields'][0]['value']
+            hit_ret_data_dt['task_info']['response'] = hit['_source']['logs'][-1]['fields'][0]['value']
+            hit_ret_data_dt['task_info']['trace_url'] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujin" \
+                                                        f"ke.com/trace/{trace_id}/"
             # 2.查询具体span
             param = self.search_all_child_body(self.services, trace_id, order)
             resp = self.es.search(index=self.index, body=param)
             for span in resp['hits']['hits']:
                 operate_name = span['_source']['operationName']
-                print(operate_name)
                 if operate_name == 'Batch':
                     continue
                 if operate_name.startswith('/kv/nacos/'):
@@ -249,15 +260,19 @@ class ES(object):
                     continue
                 if operate_name.startswith('/alert'):
                     continue
-                operate_time = datetime.datetime.fromtimestamp(
-                    span['_source']['startTimeMillis'] / 1000).strftime('%Y-%m-%d %H:%M:%S')
                 req_dt = {'operate_time': operate_time}
                 for tag in span['_source']['tags']:
-                    req_dt[tag['key']] = tag['value']
+                    tag_key = tag['key']
+                    tag_value = tag['value']
+                    if tag_key == 'http.url':
+                        req_dt['path'] = '/' + '/'.join(tag_value.split("/")[6:]) if \
+                            tag_value.index('/mock/') > 0 else tag_value.split("/")[0]
+                        req_dt['host'] = tag_value.replace(req_dt['path'], '')
+                    req_dt[tag_key] = tag_value
                 for log in span['_source']['logs']:
                     log_key = log['fields'][0]['key']
                     log_value = log['fields'][0]['value']
-                    if log_key in ('feign.request', 'feign.response', 'http.request', 'http.response') and not log_value.endswith("..."):
+                    if log_key in ('feign.request', 'feign.response', 'http.request', 'http.response'):
                         try:
                             log_value = json.dumps(json.loads(log_value), ensure_ascii=False)
                         except json.decoder.JSONDecodeError as e:

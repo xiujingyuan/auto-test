@@ -27,7 +27,7 @@ class WeipinhanchenjfMock(JinmeixindaqinMock):
                           '$.data.data.repaymentTotalAmt', '$.data.data.repaymentDefaultInterest'), (
                              principal_amount,
                              interest_amount,
-                             interest_amount + principal_amount, repayPlanDict[0]['overdue'])))
+                             interest_amount + principal_amount, repayPlanDict[list(repayPlanDict.keys())[0]]['late'])))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='PART'):
