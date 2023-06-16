@@ -265,8 +265,8 @@ class ES(object):
                     tag_key = tag['key']
                     tag_value = tag['value']
                     if tag_key == 'http.url':
-                        req_dt['path'] = '/' + '/'.join(tag_value.split("/")[6:]) if \
-                            tag_value.index('/mock/') > 0 else tag_value.split("/")[0]
+                        index = 6 if '/mock/' in tag_value else 3
+                        req_dt['path'] = '/' + '/'.join(tag_value.split("/")[index:])
                         req_dt['host'] = tag_value.replace(req_dt['path'], '')
                     req_dt[tag_key] = tag_value
                 for log in span['_source']['logs']:
