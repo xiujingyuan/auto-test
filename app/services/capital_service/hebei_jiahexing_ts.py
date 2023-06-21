@@ -29,11 +29,9 @@ class HebeijiahexingtsMock(BusinessMock):
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
         principal_amount, _, _, _, _ = self.__get_trail_amount__()
-        principal_amount = float(Decimal(principal_amount / 100).quantize(Decimal("0.00"))),
-        principal_amount = principal_amount[0]
+        principal_amount = self.fen2yuan(principal_amount)
         interest_detail = tuple(filter(lambda x: x.withhold_detail_asset_tran_type == 'repayinterest', withhold_detail))
-        interest = float(Decimal(interest_detail[0].withhold_detail_withhold_amount / 100).quantize(Decimal("0.00"))) \
-            if interest_detail else 0
+        interest = self.fen2yuan(interest_detail[0].withhold_detail_withhold_amount) if interest_detail else 0
         code = 0 if success_type.lower() == 'success' else 90000
         status = 'S' if success_type.lower() == 'success' else 'F'
         value = dict(zip(('$.data.applyRepayAmt', '$.data.dealRepayAmt', '$.data.billStatus'), (

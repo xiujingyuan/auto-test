@@ -132,15 +132,6 @@ def get_table():
     return jsonify(ret)
 
 
-@api_web.route('/cases/<string:country>/<string:program>', methods=["GET"])
-def get_case(country, program):
-    case_list = TestCase.query.filter(TestCase.test_cases_country == country,
-                                      TestCase.test_cases_group == program).order_by(TestCase.test_cases_id).all()
-    ret = deepcopy(RET)
-    ret['data'] = {'case': list(map(lambda x: x.to_spec_dict, case_list))}
-    return jsonify(ret)
-
-
 @api_web.route('/auto_task', methods=["POST"])
 def auto_task():
     ret = deepcopy(RET)

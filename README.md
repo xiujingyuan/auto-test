@@ -1,5 +1,5 @@
 **1.生成对应表的orm地址**
-#### venv/bin/flask-sqlacodegen  --outfile=app/model/MockConfigDb.py --table=mock_config  mysql://root:Coh8Beyiusa7@127.0.0.1:3306/auto-test --flask
+#### venv/bin/flask-sqlacodegen  --outfile=app/model/CaseTaskDb.py --table=case_task  mysql://root:Coh8Beyiusa7@127.0.0.1:3306/auto-test --flask
 #### flask-sqlacodegen  --outfile=app/model/TraceInfoDb.py --table=trace_info  mysql://root:Coh8Beyiusa7@127.0.0.1:3306/trace_info --flask
 ####  
 #### venv/bin/flask-sqlacodegen  --outfile=app/services/china/repay/AssetExtendDb.py --table=capital_settlement_detail  mysql://root:Coh8Beyiusa7@127.0.0.1:3306/biz3 --flask

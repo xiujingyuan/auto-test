@@ -22,12 +22,13 @@ class CaseTask(db.Model, BaseToDict):
     case_task_creator = db.Column(db.String(11), info='创建者')
     case_task_updater = db.Column(db.String(11), info='最后更新人')
     case_task_execute_time = db.Column(db.String(20), info='执行时间')
-    case_task_create_at = db.Column(db.DateTime, info='创建时间')
-    case_task_update_at = db.Column(db.DateTime, info='更新时间')
-    case_task_country = db.Column(db.String(10), info='国家')
+    case_task_create_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='创建时间')
+    case_task_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='更新时间')
+    case_task_country = db.Column(db.String(10), nullable=False, server_default=db.FetchedValue(), info='国家')
     case_task_program = db.Column(db.String(10), info='系统')
     case_task_type = db.Column(db.Integer, info='任务类型，0:具体时间；1:cron')
-
+    case_task_run_env = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue())
+    case_task_is_valid = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='任务是否有效')
 
 class TraceInfo(db.Model, BaseToDict):
     __tablename__ = 'trace_info'
@@ -149,6 +150,7 @@ class TestCase(db.Model, BaseToDict):
 
     test_cases_id = db.Column(db.Integer, primary_key=True)
     test_cases_country = db.Column(db.String(20), nullable=False, index=True, server_default=db.FetchedValue(), info='所在国家')
+    test_cases_priority = db.Column(db.Integer, nullable=False, index=True, server_default=db.FetchedValue(), info='优先级')
     test_cases_group = db.Column(db.String(50), nullable=False, index=True, server_default=db.FetchedValue(), info='项目组')
     test_cases_channel = db.Column(db.String(50), nullable=False, index=True, server_default=db.FetchedValue(), info='资方通道')
     test_cases_mock_name = db.Column(db.String(50), nullable=False, index=True, server_default=db.FetchedValue(), info='资方通道')
