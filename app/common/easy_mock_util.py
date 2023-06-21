@@ -174,7 +174,7 @@ class EasyMock(object):
         :return:
         """
         api_info = self.get_api_info_by_api(api, method)
-        api_info['mode'] = json.dumps(value, ensure_ascii=False)
+        api_info['mode'] = json.dumps(value, ensure_ascii=False) if not isinstance(value, str) else value
         resp = Http.http_post(self.update_url, api_info, headers=self.header)
         return resp
 

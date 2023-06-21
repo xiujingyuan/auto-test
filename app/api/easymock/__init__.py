@@ -44,7 +44,7 @@ def modify_mock():
     value = req.get("value", None)
     mock_name = url.split("/")[3]
     easy_mock = EasyMock(mock_name)
-    easy_mock.update_by_value(url.split(mock_name)[-1], json.loads(value))
+    easy_mock.update_by_value(url.split(mock_name)[-1], value)
     return get_ret
 
 

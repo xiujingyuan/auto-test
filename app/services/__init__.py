@@ -21,6 +21,7 @@ from sshtunnel import SSHTunnelForwarder
 import app.common as common
 from app import db
 from app.common.db_util import DataBase
+from app.common.easy_mock_util import EasyMock
 from app.common.es_util import ES
 from app.common.http_util import Http
 from app.common.log_util import LogUtil
@@ -122,6 +123,14 @@ class BaseService(object):
                                                order='desc', operation_index=0, orderNo=task_order_no)
         trace_info = self.save_trace_info(trace_id, operation, trace_info, creator)
         print('trace_info', trace_info)
+
+        if trace_info:
+            trace_info_first = list(trace_info.keys())[0]
+            for item in trace_info[trace_info_first]:
+                if '/mock/' in trace_info[trace_info_first][item]['http.url']:
+                    easy_mock = EasyMock(trace_info[trace_info_first][item]['http.url'].split("/")[5:][0])
+                    api_info = easy_mock.get_api_info_by_api(trace_info[trace_info_first][item]['path'], None)
+                    trace_info[trace_info_first][item]['mock'] = api_info['mode']
         return trace_info[list(trace_info.keys())[0]] if trace_info else ''
 
     def save_trace_info(self, trace_id, operate_type, content, creator):

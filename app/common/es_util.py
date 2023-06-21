@@ -283,6 +283,7 @@ class ES(object):
                     req_dt[log_key] = log_value
                 if 'http.path' not in req_dt:
                     continue
+                operate_name = operate_name if operate_name == 'task_info' else operate_name.split('/')[-1]
                 if operate_time not in hits:
                     hit_ret_data_dt[operate_name] = {'count': 1}
                 req_dt["trace_url"] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujinke.com/trace/{trace_id}/"
