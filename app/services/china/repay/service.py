@@ -105,6 +105,7 @@ class ChinaRepayService(RepayBaseService):
                                                             from_system_name, from_system, x_item_no)
             import_asset_info = self.grant.asset_import_success(asset_info)
         except ValueError as e:
+            print(e)
             # url = 'http://framework-test.k8s-ingress-nginx.kuainiujinke.com/rbiz-auto-loan'
             url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/rbiz-auto-loan'
             # url = 'http://127.0.0.1:5208/rbiz-auto-loan'

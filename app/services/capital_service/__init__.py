@@ -19,6 +19,13 @@ class BusinessMock(EasyMock):
     def fen2yuan(amount):
         return float(Decimal(amount/100).quantize(Decimal("0.00")))
 
+    def __get_advance_day__(self):
+        for at in self.asset_tran_list:
+            if at.asset_tran_period == self.period_start:
+                advance = self.cal_days(at.asset_tran_due_at, datetime.now())
+                advance = -advance if advance < 0 else 0
+                return advance
+
     def __get_trail_amount__(self):
         principal_amount = 0
         interest_amount = 0
