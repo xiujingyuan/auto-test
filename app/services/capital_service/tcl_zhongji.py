@@ -27,10 +27,10 @@ class TclzhongjiMock(BusinessMock):
             interest_amount = 0
         value = dict(zip(('$.data.data.totalAmt', '$.data.data.termAmt', '$.data.data.termInt',
                           '$.data.data.termGuaranteeFee', '$.data.data.termServiceFee'),
-                         (self.fen2yuan(principal_amount + interest_amount + fee_amount * advance / 30),
+                         (self.fen2yuan(principal_amount + interest_amount + fee_amount * advance / 31),
                           self.fen2yuan(principal_amount),
                           self.fen2yuan(interest_amount),
-                          self.fen2yuan(fee_amount * (advance - 1) / 30), self.fen2yuan(fee_amount / 30))))
+                          self.fen2yuan(fee_amount * (advance - 1) / 31), self.fen2yuan(fee_amount / 31))))
         return self.update_by_json_path(self.trail_url, value, method='post')
 
     def repay_apply_query_mock(self, withhold, withhold_detail, success_type='success'):
