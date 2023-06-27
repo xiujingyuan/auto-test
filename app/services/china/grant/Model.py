@@ -683,6 +683,8 @@ class RouterLoadRecord(db.Model, BaseToDict):
     router_load_record_import_at = db.Column(db.DateTime, nullable=False, index=True, server_default=db.FetchedValue(), info='进件时间')
     router_load_record_update_at = db.Column(db.DateTime, nullable=False, server_default=db.FetchedValue(), info='修改时间')
     router_load_record_idnum = db.Column(db.String(32, 'utf8_bin'), index=True, info='身份证号码')
+    router_load_record_extend_info = db.Column(db.String(2048, 'utf8_bin'), info='扩展信息')
+
 
 
 
