@@ -46,6 +46,14 @@ class GrantBaseService(BaseService):
         asset['item_x'] = self.get_no_loan(item_no)
         return {'asset': [asset]}
 
+    def get_router_loan_record(self, channel):
+        router_data = self.db_session.query(RouterLoadRecord).filter(
+            RouterLoadRecord.router_load_record_channel == channel,
+            RouterLoadRecord.router_load_record_extend_info != '').first()
+        return router_data.to_spec_dict
+
+
+
     def get_no_loan(self, item_no):
         asset_extend = self.db_session.query(AssetExtend).filter(
             AssetExtend.asset_extend_asset_item_no == item_no).first()
@@ -233,9 +241,9 @@ class GrantBaseService(BaseService):
             raise ValueError("withdraw task error, {0}".format(resp['message']))
 
     def insert_router_record(self, item_no, channel, amount, count, element, asset_info, sub_order_type=None, days=0,
-                             types='month', district='四川省'):
+                             types='month'):
         # 进件前，在路由表插入一条记录
-        extend_info = '{\"district\":{\"idNumDistrict\":\"\",\"idAddrDistrict\":\"'+district+'\",\"residentialDistrict\":\"'+district+'\",\"workplaceDistrict\":\"'+district+'\",\"mobileDistrict\":\"'+district+'\",\"ipDistrict\":\"\",\"gpsDistrict\":\"\"}}'
+        extend_info = self.get_router_loan_record(channel)['extend_info']
         router_record = RouterLoadRecord()
         router_record.router_load_record_key = item_no + channel
         router_record.router_load_record_rule_code = (channel + "_" + str(count) + "m") if \

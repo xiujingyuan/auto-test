@@ -76,6 +76,7 @@ class ChinaGrantService(GrantBaseService):
     def modify_diff_dueat(self, channel):
         json_path_dict = {
             '$.task_config_map.CapitalRepayPlanQuery.execute.allow_diff_due_at': True,
+            '$.task_config_map.CapitalRepayPlanQuery.execute.allow_diff_effect_at': False,
         }
         return self.nacos.update_config_by_json_path(f'gbiz_capital_{channel}', json_path_dict)
 
