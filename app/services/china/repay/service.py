@@ -81,9 +81,11 @@ class ChinaRepayService(RepayBaseService):
                 decrease_amount += value['advance_repay_decrease_amount']
         return total_amount - decrease_amount - repaid_amount
 
-    def auto_loan(self, channel, period, amount, source_type, from_system_name='香蕉', days=0, joint_debt_item=''):
+    def auto_loan(self, channel, period, amount, source_type, bank_name='中国银行',
+                  from_system_name='香蕉', days=0, joint_debt_item=''):
         """
         自动放款
+        :param bank_name:
         :param channel:
         :param period:
         :param amount:
@@ -94,15 +96,25 @@ class ChinaRepayService(RepayBaseService):
         :return:
         """
         self.log.log_info("rbiz_loan_tool_auto_import...env=%s, channel_name=%s" % (self.env, channel))
-        element = self.get_debt_item_card(joint_debt_item)
+        element = self.get_debt_item_card(joint_debt_item, bank_name)
         # item_no 大单, x_item_no 小单, x_rights 权益单
         # item_no, x_item_no, x_rights = '20201630050959854539', '', ''
         item_no, x_item_no, x_rights, source_type, x_source_type, x_right, from_system = \
             self.grant.get_asset_item_info(channel, source_type, from_system_name)
         # 大单
         try:
+            url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-payment-staging/card/bank'
+            req = {"merchant_id": 30,
+                   "sign": "4942ecb205f5664cdec3a2e2bc104879",
+                   "card_num": None,
+                   "card_num_encrypt": element['data']["bank_code_encrypt"],
+                   "merchant_name": "biz"}
+            ret = Http.http_post(url, req)
+            back_code = ret['data']['bank_code']
+
             asset_info, old_asset = self.grant.asset_import(item_no, channel, element, period, amount, source_type,
-                                                            from_system_name, from_system, x_item_no)
+                                                            from_system_name, from_system, x_item_no,
+                                                            back_code=back_code)
             import_asset_info = self.grant.asset_import_success(asset_info)
         except ValueError as e:
             print(e)
@@ -637,14 +649,15 @@ class ChinaRepayService(RepayBaseService):
                                                                 id_num_encrypt)))
 
     @query_withhold
-    def fox_repay(self, item_no, amount=0, period_start=None, period_end=None):
+    def fox_repay(self, item_no, amount=0, repay_card=1,
+                  period_start=None, period_end=None, repay_card_num=None, bank_code='中国银行'):
         asset_tran = self.db_session.query(AssetTran).filter(AssetTran.asset_tran_asset_item_no == item_no).all()
         max_period = asset_tran[-1].asset_tran_period
         is_overdue = False if self.cal_days(self.get_date(), asset_tran[-1].asset_tran_due_at) > 0 else True
         if amount == 0 and period_start is not None and period_end is not None:
             amount = self.__get_repay_amount__(amount, item_no, period_start, period_end, max_period, is_overdue)
         req_key = self.__create_req_key__(item_no, prefix='FOX')
-        card_info = self.get_active_card_info(item_no, 1, '')
+        card_info = self.get_active_card_info(item_no, repay_card, repay_card_num, bank_code)
         fox_active_data = {
             "busi_key": "20190731061116179",
             "data": {

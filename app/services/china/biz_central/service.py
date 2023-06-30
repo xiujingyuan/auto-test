@@ -11,7 +11,7 @@ import json
 from app.services.china.biz_central import biz_modify_return
 from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday, \
-    CentralSynctask
+    CentralSynctask, CapitalRepayTrial
 from app.test_cases import CaseException
 
 
@@ -67,6 +67,12 @@ class ChinaBizCentralService(BaseService):
             return self.info_refresh(item_no, max_create_at, refresh_type=table_name)
         return ret
 
+    @biz_modify_return
+    def get_capital_repay_trial(self, item_no):
+        trial_list = self.db_session.query(CapitalRepayTrial).filter(
+            CapitalRepayTrial.capital_repay_trial_item_no == item_no).all()
+        return trial_list
+
     @time_print
     def info_refresh(self, item_no, max_create_at=None, refresh_type=None):
         asset = self.asset
@@ -95,7 +101,7 @@ class ChinaBizCentralService(BaseService):
                                           exclude_col=[CentralSynctask.synctask_request_data,
                                                        CentralSynctask.synctask_response_data,
                                                        CentralSynctask.synctask_memo])
-        elif refresh_type in ('capital', 'capital_transaction', 'capital_notify'):
+        elif refresh_type in ('capital', 'capital_transaction', 'capital_notify', 'capital_repay_trial'):
             ret = getattr(self, req_name)(item_no)
         elif refresh_type == 'capital_settlement_detail':
             ret = getattr(self, req_name)(channel)
@@ -327,7 +333,7 @@ class ChinaBizCentralService(BaseService):
                 CentralTask.task_id >= task_list[0].task_id) \
                 .order_by(desc(CentralTask.task_id)).paginate(page=1, per_page=5, error_out=False).items
 
-        return task_list + other_task_list
+        return other_task_list + task_list
 
     @biz_modify_return
     def get_central_msg(self, item_no, max_create_at=None):

@@ -50,9 +50,7 @@ class GrantBaseService(BaseService):
         router_data = self.db_session.query(RouterLoadRecord).filter(
             RouterLoadRecord.router_load_record_channel == channel,
             RouterLoadRecord.router_load_record_extend_info != '').first()
-        return router_data.to_spec_dict
-
-
+        return {'extend_info': ''} if router_data is None else router_data.to_spec_dict
 
     def get_no_loan(self, item_no):
         asset_extend = self.db_session.query(AssetExtend).filter(

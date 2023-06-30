@@ -43,6 +43,68 @@ def save_desc():
     return jsonify(ret)
 
 
+@api_web.route('/save_interface_doc', methods=["POST"])
+def save_interface_doc():
+    ret = deepcopy(RET)
+    req = request.json
+    channel = req.get('channel', None)
+    label = req.get('label', None)
+    url = req.get('url', '')
+    rep = req.get('rep', {})
+    interface_req = req.get('req', {})
+    if channel is None:
+        ret['code'] = 1
+        return jsonify(ret)
+    recorde = BackendKeyValue.query.filter(BackendKeyValue.backend_key == 'interfaceDoc').first()
+    backend_value = json.loads(recorde.backend_value)
+    if channel not in backend_value:
+        backend_value[channel] = []
+
+    if label is not None:
+        if label in [x['label'] for x in backend_value[channel]]:
+            for item in backend_value[channel]:
+                if item['label'] == label:
+                    item['url'] = url
+                    item['request'] = interface_req
+                    item['response'] = rep
+                    break
+        else:
+            backend_value[channel].append({'url': url, 'request': interface_req, 'response': rep,
+                                           'label': label})
+
+    recorde.backend_value = json.dumps(backend_value, ensure_ascii=False)
+    db.session.add(recorde)
+    db.session.flush()
+    return jsonify(ret)
+
+
+@api_web.route('/del_interface_doc', methods=["POST"])
+def del_interface_doc():
+    ret = deepcopy(RET)
+    req = request.json
+    channel = req.get('channel', None)
+    label = req.get('label', None)
+    if channel is None:
+        ret['code'] = 1
+        return jsonify(ret)
+    recorde = BackendKeyValue.query.filter(BackendKeyValue.backend_key == 'interfaceDoc').first()
+    backend_value = json.loads(recorde.backend_value)
+    if channel not in backend_value:
+        return
+
+    if label is not None:
+        if label in [x['label'] for x in backend_value[channel]]:
+            new_value = []
+            for item in backend_value[channel]:
+                if item['label'] != label:
+                    new_value.append(item)
+            backend_value[channel] = new_value
+    recorde.backend_value = json.dumps(backend_value, ensure_ascii=False)
+    db.session.add(recorde)
+    db.session.flush()
+    return jsonify(ret)
+
+
 @api_web.route('/add_capital', methods=["POST"])
 def add_capital():
     ret = deepcopy(RET)

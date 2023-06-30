@@ -333,6 +333,21 @@ class WithholdHistory(db.Model, BaseToDict):
     withhold_result_user_bank_card_encrypt = db.Column(db.String(128), nullable=False, server_default=db.FetchedValue(), info='用户银行卡号加密')
 
 
+class CapitalRepayTrial(db.Model, BaseToDict):
+    __tablename__ = 'capital_repay_trial'
+
+    capital_repay_trial_id = db.Column(db.BigInteger, primary_key=True)
+    capital_repay_trial_item_no = db.Column(db.String(64), nullable=False, index=True, info='资产编号')
+    capital_repay_trial_period = db.Column(db.SmallInteger, nullable=False, info='期次')
+    capital_repay_trial_type = db.Column(db.String(32), nullable=False, info='试算类型：提前还款、提前结清等')
+    capital_repay_trial_amount = db.Column(db.Integer, nullable=False)
+    capital_repay_trial_amount_type = db.Column(db.String(32), nullable=False, info='本金、利息等')
+    capital_repay_trial_date = db.Column(db.Date, nullable=False, index=True)
+    capital_repay_trial_create_at = db.Column(db.DateTime, nullable=False, index=True)
+    capital_repay_trial_update_at = db.Column(db.DateTime, nullable=False)
+    capital_repay_trial_status = db.Column(db.Enum('unfinished', 'finished'), nullable=False, server_default=db.FetchedValue(), info='试算状态')
+    capital_repay_trial_req_no = db.Column(db.String(128), info='试算请求编号')
+
 
 class WithholdResult(db.Model, BaseToDict):
     __tablename__ = 'withhold_result'

@@ -40,8 +40,8 @@ class RepayBaseService(BaseService):
         self.crm_trail_url = self.repay_host + '/asset/capital/SettlementTrial'
         self.channel = None
 
-    def get_debt_item_card(self, joint_debt_item):
-        element = self.get_four_element()
+    def get_debt_item_card(self, joint_debt_item, bank_name):
+        element = self.get_four_element(bank_name)
         if joint_debt_item:
             joint_debt_asset = self.db_session.query(Asset).filter(Asset.asset_item_no == joint_debt_item).first()
             if joint_debt_asset is None:
@@ -908,8 +908,8 @@ class OverseaRepayService(RepayBaseService):
         return four_element
 
     def auto_loan(self, channel, period, days, amount, source_type, joint_debt_item='', x_item_no=False
-                  , from_app='phi011', withdraw_type='online'):
-        element = self.get_debt_item_card(joint_debt_item)
+                  , from_app='phi011', withdraw_type='online', bank_name='中国银行'):
+        element = self.get_debt_item_card(joint_debt_item, bank_name)
         asset_info, old_asset, item_no = self.grant.asset_import(channel, period, days, "day", amount, self.country,
                                                                  from_app, source_type, element, withdraw_type)
         print('item_no:', item_no)

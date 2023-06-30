@@ -275,7 +275,7 @@ class ES(object):
                     log_value = log['fields'][0]['value']
                     if log_key in ('feign.request', 'feign.response', 'http.request', 'http.response'):
                         try:
-                            log_value = json.dumps(json.loads(log_value), ensure_ascii=False)
+                            log_value = json.loads(log_value)
                         except json.decoder.JSONDecodeError as e:
                             pass
 

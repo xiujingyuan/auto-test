@@ -117,7 +117,7 @@ class BaseService(object):
             self.db_session_contract.configure(bind=self.engine_contract)
         self.log = LogUtil()
 
-    def get_trace_info(self, trace_id, creator, services, task_order_no, operation, query_start, query_end):
+    def get_trace_info(self, channel, trace_id, creator, services, task_order_no, operation, query_start, query_end):
         es = ES(services)
         trace_info = es.get_request_child_info(operation, query_start, query_end,
                                                order='desc', operation_index=0, orderNo=task_order_no)
@@ -126,11 +126,19 @@ class BaseService(object):
 
         if trace_info:
             trace_info_first = list(trace_info.keys())[0]
+            back = db.session.query(BackendKeyValue).filter(BackendKeyValue.backend_key == 'interfaceDoc').first()
+            doc_info = json.loads(back.backend_value)
+            doc_info = None if channel not in doc_info else doc_info[channel]
             for item in trace_info[trace_info_first]:
-                if '/mock/' in trace_info[trace_info_first][item]['http.url']:
-                    easy_mock = EasyMock(trace_info[trace_info_first][item]['http.url'].split("/")[5:][0])
-                    api_info = easy_mock.get_api_info_by_api(trace_info[trace_info_first][item]['path'], None)
-                    trace_info[trace_info_first][item]['mock'] = api_info['mode']
+                info = trace_info[trace_info_first][item]
+                if '/mock/' in info['http.url']:
+                    easy_mock = EasyMock(info['http.url'].split("/")[5:][0])
+                    api_info = easy_mock.get_api_info_by_api(info['path'], None)
+                    info['mock'] = api_info['mode']
+                if doc_info is not None and info['path'] in doc_info:
+                    info['doc_info'] = doc_info[info['path']]
+                else:
+                    info['doc_info'] = {'request': '', 'response': ''}
         return trace_info[list(trace_info.keys())[0]] if trace_info else ''
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
@@ -176,7 +184,7 @@ class BaseService(object):
                 table_name.startswith('central_') else f'{self.program}{self.env}'
             service_name = f'gbiz{self.env}' if \
                 table_name.startswith('grant_') else service_name
-            return self.get_trace_info(get_id, extend['creator'], service_name, extend[order_no],
+            return self.get_trace_info(extend['channel'], get_id, extend['creator'], service_name, extend[order_no],
                                        extend[task_type], None, None)
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
         table_name = table_name.replace("grant_", '')
