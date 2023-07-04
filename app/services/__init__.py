@@ -118,19 +118,32 @@ class BaseService(object):
         self.log = LogUtil()
 
     def get_trace_info(self, channel, trace_id, creator, services, task_order_no, operation, query_start, query_end):
-        es = ES(services)
-        trace_info = es.get_request_child_info(operation, query_start, query_end,
-                                               order='desc', operation_index=0, orderNo=task_order_no)
-        trace_info = self.save_trace_info(trace_id, operation, trace_info, creator)
-        print('trace_info', trace_info)
-
-        if trace_info:
-            trace_info_first = list(trace_info.keys())[0]
+        trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
+                                                        TraceInfo.trace_info_env == int(self.env),
+                                                        TraceInfo.trace_info_trace_id == trace_id).first()
+        trace_info_first = None
+        if trace_info is not None:
+            if query_start == query_end:
+                if query_start in json.loads(trace_info.trace_info_content):
+                    trace_info_first = json.loads(trace_info.trace_info_content)[query_start]
+            else:
+                for trace_time in json.loads(trace_info.trace_info_content):
+                    if query_start <= trace_time < query_end:
+                        trace_info_first = json.loads(trace_info.trace_info_content)[trace_time]
+                        break
+        if trace_info_first is None:
+            es = ES(services)
+            trace_info = es.get_request_child_info(operation, query_start, query_end,
+                                                   order='desc', operation_index=0, orderNo=task_order_no)
+            trace_info = self.save_trace_info(trace_id, operation, trace_info, creator)
+            print('trace_info', trace_info)
+            trace_info_first = trace_info[list(trace_info.keys())[0]]
+        if trace_info_first:
             back = db.session.query(BackendKeyValue).filter(BackendKeyValue.backend_key == 'interfaceDoc').first()
             doc_info = json.loads(back.backend_value)
             doc_info = None if channel not in doc_info else doc_info[channel]
-            for item in trace_info[trace_info_first]:
-                info = trace_info[trace_info_first][item]
+            for item in trace_info_first:
+                info = trace_info_first[item]
                 if '/mock/' in info['http.url']:
                     easy_mock = EasyMock(info['http.url'].split("/")[5:][0])
                     api_info = easy_mock.get_api_info_by_api(info['path'], None)
@@ -139,7 +152,7 @@ class BaseService(object):
                     info['doc_info'] = doc_info[info['path']]
                 else:
                     info['doc_info'] = {'request': '', 'response': ''}
-        return trace_info[list(trace_info.keys())[0]] if trace_info else ''
+        return trace_info_first if trace_info_first else ''
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
         trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,
@@ -160,6 +173,7 @@ class BaseService(object):
         elif trace_info is not None:
             content = trace_info.trace_info_content
         return content
+
     @staticmethod
     def get_random_str(num=10):
         data = '1234567890abcdefghijklmnopqrstuvwxyz'
@@ -175,17 +189,6 @@ class BaseService(object):
         return json.loads(record.backend_value) if is_json else record.backend_value
 
     def get_detail_info(self, table_name, get_id, get_attr, extend):
-        if get_attr == 'trace_info':
-            order_no = f'{table_name.replace("central_", "")}_order_no' if \
-                table_name.startswith('central_') else 'order_no'
-            task_type = f'{table_name.replace("central_", "")}_type' if \
-                table_name.startswith('central_') else 'type'
-            service_name = f'biz-central-{self.env}' if \
-                table_name.startswith('central_') else f'{self.program}{self.env}'
-            service_name = f'gbiz{self.env}' if \
-                table_name.startswith('grant_') else service_name
-            return self.get_trace_info(extend['channel'], get_id, extend['creator'], service_name, extend[order_no],
-                                       extend[task_type], None, None)
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))
         table_name = table_name.replace("grant_", '')
         obj = getattr(meta_class, ''.join(

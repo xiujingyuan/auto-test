@@ -5,6 +5,7 @@ from sqlalchemy import desc
 
 from app.model.Model import AutoAsset
 from app.services import time_print
+from app.services.china import get_trace
 from app.services.grant import GrantBaseService
 from app.common.http_util import Http
 from app.services.china.biz_central.service import ChinaBizCentralService
@@ -238,6 +239,7 @@ class ChinaGrantService(GrantBaseService):
         ret = Http.http_get(url)
         return ret
 
+    @get_trace
     def operate_action(self, item_no, extend, op_type, table_name, run_date, creator):
         table_name = table_name[6:] if table_name.startswith('grant_') else table_name
         extend_name = '{0}_create_at'.format(table_name)

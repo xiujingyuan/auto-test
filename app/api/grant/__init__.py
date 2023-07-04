@@ -24,7 +24,9 @@ def grant_tools(tool):
     environment = req.pop('environment', 'dev')
     mock_name = req.pop('mock_name', 'gbiz_auto_test')
     period = req.pop("period", None)
-    loading_key = req.pop('loading_key', None)
+    op_type = req.get('op_type', None)
+    if op_type != 'get_trace_info':
+        loading_key = req.pop('loading_key', None)
     if period is not None:
         req['period'] = period
         if country != 'china':

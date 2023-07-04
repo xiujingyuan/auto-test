@@ -8,6 +8,7 @@ from app.services import BaseService, wait_timeout, time_print
 from app.common.http_util import Http
 import json
 
+from app.services.china import get_trace
 from app.services.china.biz_central import biz_modify_return
 from app.services.china.biz_central.Model import CentralTask, CentralSendMsg, Asset, AssetTran, \
     CapitalAsset, CapitalTransaction, WithholdHistory, WithholdResult, CapitalNotify, CapitalSettlementDetail, Holiday, \
@@ -46,6 +47,7 @@ class ChinaBizCentralService(BaseService):
                     return False
         return True
 
+    @get_trace
     def operate_action(self, item_no, extend, op_type, table_name, run_date, loading_key, creator):
         loading_key_first = loading_key.split("_")[0]
         extend_name = '{0}_create_at'.format(loading_key_first)
@@ -57,7 +59,7 @@ class ChinaBizCentralService(BaseService):
             real_req['re_run'] = True
         elif op_type == 'run_central_msg_by_msg_id':
             real_req[loading_key] = extend[loading_key]
-        if op_type == "del_row_data":
+        elif op_type == "del_row_data":
             real_req['del_id'] = extend['id']
             real_req['item_no'] = item_no
             real_req['refresh_type'] = table_name

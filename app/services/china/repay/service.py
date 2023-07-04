@@ -8,6 +8,7 @@ from functools import reduce
 
 from app.common.http_util import Http, FORM_HEADER
 from app.model.Model import BackendKeyValue
+from app.services.china import get_trace
 from app.services.repay import RepayBaseService
 from app.services.china.biz_central.service import ChinaBizCentralService
 from app.services.china.grant.service import ChinaGrantService
@@ -34,9 +35,10 @@ class ChinaRepayService(RepayBaseService):
                     return False
         return True
 
+    @get_trace
     def operate_action(self, item_no, creator, extend, op_type, table_name, run_date):
         req = {'max_create_at': extend['create_at'] if hasattr(extend, 'create_at') else None,
-                'item_no': item_no,
+               'item_no': item_no,
                'refresh_type': table_name
                }
         if op_type == 'reverse_item_no':
@@ -53,18 +55,6 @@ class ChinaRepayService(RepayBaseService):
             req['serial_no'] = extend['serial_no']
             req['status'] = 3 if op_type.endswith('fail') else 2
             op_type = 'repay_callback'
-        elif op_type == 'get_trace_info':
-            # services, task_order_no, operation
-            req.pop('item_no')
-            req.pop('refresh_type')
-            req.pop('max_create_at')
-            req['services'] = f'{self.program}{self.env}'
-            req['task_order_no'] = extend['order_no']
-            req['operation'] = extend['type']
-            req['query_start'] = None
-            req['trace_id'] = extend['id']
-            req['creator'] = creator
-            req['query_end'] = None
         return getattr(self, op_type)(**req)
 
     def calc_qinnong_early_settlement(self, item_no):

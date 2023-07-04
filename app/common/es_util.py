@@ -76,17 +76,17 @@ class ES(object):
                     }
                 }
             })
-            if query_start is not None and query_end is not None:
-                body["query"]["bool"]["filter"] = [
-                    {
-                        "range": {
-                            "timestamp": {
-                                "gte": get_date(date=query_start, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True),
-                                "lte": get_date(date=query_end, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True)
-                            }
-                        }
-                    }
-                ]
+            # if query_start is not None and query_end is not None:
+            #     body["query"]["bool"]["filter"] = [
+            #         {
+            #             "range": {
+            #                 "timestamp": {
+            #                     "gte": get_date(date=query_start, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True),
+            #                     "lte": get_date(date=query_end, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True)
+            #                 }
+            #             }
+            #         }
+            #     ]
         return body
 
     @staticmethod
