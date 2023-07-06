@@ -40,7 +40,7 @@ class HayinzhongbaoMock(BusinessMock):
                             if x.withhold_detail_type == 'principal']
         fee_detail = [x.withhold_detail_withhold_amount for x in withhold_detail if x.withhold_detail_type == 'fee']
         principal = reduce(lambda x, y: x + y, principal_detail, 0)
-        interest = interest_detail[0]  if interest_detail else 0
+        interest = interest_detail[0] if interest_detail else 0
         fee_amount = reduce(lambda x, y: x + y, fee_detail, 0)
         code = "0"
         status = '02' if success_type.lower() == 'success' else '03'
