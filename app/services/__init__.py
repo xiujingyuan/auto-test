@@ -122,10 +122,12 @@ class BaseService(object):
                                                         TraceInfo.trace_info_env == int(self.env),
                                                         TraceInfo.trace_info_trace_id == trace_id).first()
         trace_info_first = None
-        query_start = self.get_date(date=query_end, seconds=-1, is_str=True)
+        query_start_new = self.get_date(date=query_end, seconds=-1, is_str=True)
         if trace_info is not None:
             for trace_time in json.loads(trace_info.trace_info_content):
-                if query_start <= trace_time < query_end:
+                if query_start == query_end and query_start_new <= trace_time < query_end:
+                    trace_info_first = json.loads(trace_info.trace_info_content)[trace_time]
+                elif query_start != query_end and query_start_new <= trace_time <= query_end:
                     trace_info_first = json.loads(trace_info.trace_info_content)[trace_time]
         if trace_info_first is None:
             es = ES(services)
@@ -133,7 +135,11 @@ class BaseService(object):
                                                    order='desc', operation_index=0, orderNo=task_order_no)
             trace_info = self.save_trace_info(trace_id, operation, trace_info, creator)
             print('trace_info', trace_info)
-            trace_info_first = trace_info[list(trace_info.keys())[0]]
+            for trace_time in trace_info:
+                if query_start == query_end and query_start_new <= trace_time < query_end:
+                    trace_info_first = trace_info[trace_time]
+                elif query_start != query_end and query_start_new <= trace_time <= query_end:
+                    trace_info_first = trace_info[trace_time]
         if trace_info_first:
             back = db.session.query(BackendKeyValue).filter(BackendKeyValue.backend_key == 'interfaceDoc').first()
             doc_info = json.loads(back.backend_value)
@@ -148,7 +154,7 @@ class BaseService(object):
                     info['doc_info'] = doc_info[info['path']]
                 else:
                     info['doc_info'] = {'request': '', 'response': ''}
-        return trace_info_first if trace_info_first else ''
+        return trace_info_first if trace_info_first else {}
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
         trace_info = db.session.query(TraceInfo).filter(TraceInfo.trace_info_program == self.program,

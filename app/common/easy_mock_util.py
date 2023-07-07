@@ -123,7 +123,6 @@ class EasyMock(object):
         api_list = self.get_api_list(self.project_id)
         api_info = {}
         for mock in api_list["data"]["mocks"]:
-            print(mock["url"] == api and (method is None or (method is not None and mock['method'] == method)), mock["url"], mock["url"] == api, method)
             if mock["url"] == api and (method is None or (method is not None and mock['method'] == method)):
                 api_info["id"] = mock["_id"]
                 api_info["url"] = mock["url"]
