@@ -20,6 +20,8 @@ def modify_resp(func):
                 resp.status_code, url, json.dumps(req_data, ensure_ascii=False)))
         if url.startswith("https://openapitest.qinjia001.com"):
             return resp.content
+        if url.startswith('https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-filegate/'):
+            return resp.content
         content = json.loads(resp.content)
         log_info = dict(zip(('url', 'method', 'request', 'response'),
                             (url, 'post', req_data, content)))

@@ -7,6 +7,7 @@ from flask import current_app
 
 from app import db
 from app.common import RET
+from app.common.http_util import Http
 from app.model.Model import Menu, TestCase, BackendKeyValue, AutoAsset, CaseTask
 
 api_web = Blueprint('api_web', __name__)
@@ -76,6 +77,27 @@ def save_interface_doc():
     db.session.add(recorde)
     db.session.flush()
     return jsonify(ret)
+
+
+@api_web.route('/download_file', methods=['POST'])
+def download_file():
+    req = request.json
+    channel = req.get('channel', None)
+    file_dir = req.get('dir', None)
+    file_name = req.get('name', None)
+    url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-filegate/ftp/download/' + channel
+    req = {
+        "from_system": "biz_central",
+        "key": "81e99217-ebc0-4d03-b604-bc2b11daddfc",
+        "type": "FtpFileDownload",
+        "data": {
+            "dir": file_dir,
+            "name": file_name,
+            "resFormat": "bytes"
+        }
+    }
+    ret = Http.http_post(url, req)
+    return ret
 
 
 @api_web.route('/del_interface_doc', methods=["POST"])
