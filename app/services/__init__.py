@@ -122,13 +122,17 @@ class BaseService(object):
                                                         TraceInfo.trace_info_env == int(self.env),
                                                         TraceInfo.trace_info_trace_id == trace_id).first()
         trace_info_first = None
-        query_start_new = self.get_date(date=query_end, seconds=-1, is_str=True)
+        query_start_new = self.get_date(date=query_end, seconds=-1, is_str=True) \
+            if self.get_date(fmt='%Y-%m-%d', date=query_end) > self.get_date(fmt='%Y-%m-%d', date=query_start) \
+            else '{0} {1}'.format(self.get_date(fmt='%Y-%m-%d', is_str=True, date=query_end),
+                                  self.get_date(fmt='%H:%M:%S', date=query_start, is_str=True))
         if trace_info is not None:
-            for trace_time in json.loads(trace_info.trace_info_content):
+            trace_info_content = json.loads(trace_info.trace_info_content)
+            for trace_time in trace_info_content:
                 if query_start == query_end and query_start_new <= trace_time < query_end:
-                    trace_info_first = json.loads(trace_info.trace_info_content)[trace_time]
+                    trace_info_first = trace_info_content[trace_time]
                 elif query_start != query_end and query_start_new <= trace_time <= query_end:
-                    trace_info_first = json.loads(trace_info.trace_info_content)[trace_time]
+                    trace_info_first = trace_info_content[trace_time]
         if trace_info_first is None:
             es = ES(services)
             trace_info = es.get_request_child_info(operation, query_start, query_end,

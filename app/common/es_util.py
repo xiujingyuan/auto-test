@@ -277,6 +277,7 @@ class ES(object):
                         try:
                             log_value = json.loads(log_value)
                         except json.decoder.JSONDecodeError as e:
+                            log_value = str(e)
                             pass
 
                     log_key = log_key.replace("feign.", "") if log_key in ('feign.request', 'feign.response') else log_key
