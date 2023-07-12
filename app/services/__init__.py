@@ -122,10 +122,7 @@ class BaseService(object):
                                                         TraceInfo.trace_info_env == int(self.env),
                                                         TraceInfo.trace_info_trace_id == trace_id).first()
         trace_info_first = None
-        query_start_new = self.get_date(date=query_end, seconds=-1, is_str=True) \
-            if self.get_date(fmt='%Y-%m-%d', date=query_end) > self.get_date(fmt='%Y-%m-%d', date=query_start) \
-            else '{0} {1}'.format(self.get_date(fmt='%Y-%m-%d', is_str=True, date=query_end),
-                                  self.get_date(fmt='%H:%M:%S', date=query_start, is_str=True))
+        query_start_new = self.get_date(date=query_end, seconds=-1, is_str=True)
         if trace_info is not None:
             trace_info_content = json.loads(trace_info.trace_info_content)
             for trace_time in trace_info_content:
