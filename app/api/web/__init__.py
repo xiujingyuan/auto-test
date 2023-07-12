@@ -85,6 +85,14 @@ def download_file():
     channel = req.get('channel', None)
     file_dir = req.get('dir', None)
     file_name = req.get('name', None)
+    task_result = req.get('task_result', None)
+    try:
+        task_result = '_'.join(tuple(json.loads(task_result)['data']['pushSerialNo'].split("_")[:-2])) if \
+            task_result is not None else task_result
+    except Exception as e:
+        print(e)
+        task_result = None
+    channel = channel if task_result is None else task_result
     url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/biz-filegate/ftp/download/' + channel
     req = {
         "from_system": "biz_central",
