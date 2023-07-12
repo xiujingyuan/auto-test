@@ -157,8 +157,12 @@ class BaseService(object):
                 info = trace_info_first[item]
                 if '/mock/' in info['http.url']:
                     easy_mock = EasyMock(info['http.url'].split("/")[5:][0])
-                    api_info = easy_mock.get_api_info_by_api(info['path'], None)
-                    info['mock'] = api_info['mode']
+                    try:
+                        api_info = easy_mock.get_api_info_by_api(info['path'], None)
+                    except Exception as e:
+                        info['mock'] = str(e)
+                    else:
+                        info['mock'] = api_info['mode']
                 if doc_info is not None and info['path'] in doc_info:
                     info['doc_info'] = doc_info[info['path']]
                 else:
