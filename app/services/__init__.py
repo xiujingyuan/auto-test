@@ -133,6 +133,7 @@ class BaseService(object):
                     trace_info_first = trace_info_content[trace_time]
                 elif query_start != query_end and query_start_new <= trace_time <= query_end:
                     trace_info_first = trace_info_content[trace_time]
+        # 本地没有找到符合时间段的trace，就去查询最新的
         if trace_info_first is None:
             es = ES(services)
             trace_info = es.get_request_child_info(operation, query_start, query_end,
@@ -144,6 +145,10 @@ class BaseService(object):
                     trace_info_first = trace_info[trace_time]
                 elif query_start != query_end and query_start_new <= trace_time <= query_end:
                     trace_info_first = trace_info[trace_time]
+        # 最新的也没有，取最新的一条, 兜底
+        if trace_info_first is None and list(trace_info.keys()):
+            trace_info_first = trace_info[list(trace_info.keys())[0]]
+
         if trace_info_first:
             back = db.session.query(BackendKeyValue).filter(BackendKeyValue.backend_key == 'interfaceDoc').first()
             doc_info = json.loads(back.backend_value)
