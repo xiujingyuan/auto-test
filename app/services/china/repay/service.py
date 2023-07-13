@@ -109,8 +109,8 @@ class ChinaRepayService(RepayBaseService):
         except ValueError as e:
             print(e)
             # url = 'http://framework-test.k8s-ingress-nginx.kuainiujinke.com/rbiz-auto-loan'
-            url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/rbiz-auto-loan'
-            # url = 'http://127.0.0.1:5208/rbiz-auto-loan'
+            # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/rbiz-auto-loan'
+            url = 'http://127.0.0.1:5208/rbiz-auto-loan'
             param = {
                 "count": period,
                 "env": self.env,
