@@ -160,10 +160,14 @@ class BaseService(object):
                         info['mock'] = str(e)
                     else:
                         info['mock'] = api_info['mode']
-                if doc_info is not None and info['path'] in doc_info:
-                    info['doc_info'] = doc_info[info['path']]
+
+                if doc_info is not None and info['path'] in [x['url'] for x in doc_info]:
+                    for doc in doc_info:
+                        if doc['url'] == info['path']:
+                            info['doc_info'] = doc
+                            break
                 else:
-                    info['doc_info'] = {'request': '', 'response': ''}
+                    info['doc_info'] = {'request': '', 'response': '', 'label': '', 'url': ''}
         return trace_info_first if trace_info_first else {}
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
