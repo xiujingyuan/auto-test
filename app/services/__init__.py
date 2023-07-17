@@ -167,7 +167,7 @@ class BaseService(object):
                             info['doc_info'] = doc
                             break
                 else:
-                    info['doc_info'] = {'request': '', 'response': '', 'label': '', 'url': ''}
+                    info['doc_info'] = {'request': '{}', 'response': '{}', 'label': '', 'url': ''}
         return trace_info_first if trace_info_first else {}
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
