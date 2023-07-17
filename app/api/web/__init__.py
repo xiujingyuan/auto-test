@@ -55,7 +55,7 @@ def save_interface_doc():
         rep = json.loads(req.get('rep', '{}'))
         interface_req = json.loads(req.get('req', '{}'))
     except Exception as e:
-        ret['code'] == 1
+        ret['code'] = 1
         ret['message'] = str(e)
         return jsonify(ret)
     if channel is None:
