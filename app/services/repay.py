@@ -437,7 +437,8 @@ class RepayBaseService(BaseService):
                 Synctask.synctask_type == 'SendBindSms'
             ).order_by(desc(Synctask.synctask_id)).first()
         sync_task_list = self.db_session.query(Synctask).filter(
-            Synctask.synctask_key.like('{0}%'.format(task_order_no))).order_by(desc(Synctask.synctask_id)).paginate(
+            or_(Synctask.synctask_key.like('{0}%'.format(task_order_no)),
+                Synctask.synctask_order_no == task_order_no)).order_by(desc(Synctask.synctask_id)).paginate(
             page=1, per_page=20, error_out=False).items
         sync_task_list = sync_task_list if sync_task is None else [sync_task] + sync_task_list
         sync_task_list = list(map(lambda x: x.to_spec_dict_obj([Synctask.synctask_request_data,
