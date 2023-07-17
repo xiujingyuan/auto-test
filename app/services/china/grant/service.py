@@ -69,8 +69,8 @@ class ChinaGrantService(GrantBaseService):
         diff_str_service = int(diff_str[1].split("=")[1])
         diff = abs(diff_str_interest + diff_str_service)
         json_path_dict = {
-            '$.task_config_map.CapitalRepayPlanQuery.execute.allowance_check_range.min_value': -diff,
-            '$.task_config_map.CapitalRepayPlanQuery.execute.allowance_check_range.max_value': diff,
+            '$.workflow.props.CapitalRepayPlanProps.allowance_check_range.min_value': -diff,
+            '$.workflow.props.CapitalRepayPlanProps.allowance_check_range.max_value': diff,
         }
         return self.nacos.update_config_by_json_path(f'gbiz_capital_{channel}', json_path_dict)
 
