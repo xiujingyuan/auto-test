@@ -52,8 +52,10 @@ def save_interface_doc():
     label = req.get('label', None)
     url = req.get('url', '')
     try:
-        rep = json.loads(req.get('rep', '{}'))
-        interface_req = json.loads(req.get('req', '{}'))
+        rep = req.get('rep', '{}')
+        req = req if isinstance(req, dict) else json.loads(req)
+        interface_req = req.get('req', '{}')
+        interface_req = interface_req if isinstance(interface_req, dict) else json.loads(interface_req)
     except Exception as e:
         ret['code'] = 1
         ret['message'] = str(e)
@@ -137,7 +139,7 @@ def del_interface_doc():
     recorde.backend_value = json.dumps(backend_value, ensure_ascii=False)
     db.session.add(recorde)
     db.session.flush()
-    return jsonify(ret)
+    return get_backend_key_value()
 
 
 @api_web.route('/add_capital', methods=["POST"])

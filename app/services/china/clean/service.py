@@ -57,7 +57,7 @@ class ChinaCleanService(BaseService):
         return {'clean_capital_settlement_pending': list(map(lambda x: x.to_dict, clean_clearing_settlement_pending))}
 
     @get_trace
-    def operate_action(self, item_no, extend, op_type, table_name, loading_key):
+    def operate_action(self, item_no, extend, op_type, table_name, loading_key, creator):
         loading_key_first = loading_key.split("_")[0]
         extend_name = '{0}_create_at'.format(loading_key_first)
         max_create_at = extend[extend_name] if extend_name in extend else None

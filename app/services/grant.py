@@ -205,12 +205,19 @@ class GrantBaseService(BaseService):
             return None
         return json.loads(send_msg.sendmsg_content)['body'] if get_type == "body" else send_msg.to_dict
 
+    def get_only_grant_msg(self, old_asset):
+        send_msg_list = self.db_session.query(Sendmsg).filter(
+            Sendmsg.sendmsg_order_no == old_asset,
+            Sendmsg.sendmsg_type.in_(('AssetImportSync', 'GrantCapitalAsset', 'AssetWithdrawSuccess'))
+        ).all()
+        return [x.to_dict for x in send_msg_list]
+
     def get_withdraw_success_info_sync_task(self, old_asset):
         task = self.db_session.query(Synctask).filter(
             Synctask.synctask_order_no == old_asset,
             Synctask.synctask_type.in_(('BCAssetImport', 'DSQAssetImport'))
         ).first()
-        return task.to_dict
+        return task.to_dict if task is not None else {}
 
     def asset_import_success(self, asset_info):
         resp = Http.http_post(self.asset_import_url, asset_info)

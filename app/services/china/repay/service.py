@@ -400,6 +400,16 @@ class ChinaRepayService(RepayBaseService):
         agree_resp = Http.http_post(self.active_repay_url, agree_request_data)
         return agree_request_data, self.active_repay_url, agree_resp
 
+    def copy_by_grant_msg(self, item_no, grant_msg, source_type):
+        for msg in grant_msg:
+            self.grant.add_msg(msg)
+        self.run_task_by_order_no(item_no, task_type='AssetWithdrawSuccess')
+        self.biz_central.run_task_by_order_no(item_no)
+        asset = self.check_item_exist(item_no)
+        if asset.asset_loan_channel != 'noloan':
+            return self.add_asset(item_no, source_type)
+        return {}
+
     def copy_asset(self, item_no, asset_import, capital_import, capital_data, withdraw_success, grant_msg,
                    grant_sync_task, source_type):
         is_run = True

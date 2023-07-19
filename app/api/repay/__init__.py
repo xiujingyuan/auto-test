@@ -47,12 +47,18 @@ def repay_tools(tool):
             from_req = {'item_no': req.get('item_no')}
             req_param = getattr(from_repay, 'get_exist_asset_request')(**from_req)
             if not req_param['biz_task']:
+                grant_msg = getattr(from_repay, 'get_only_grant_msg')(**from_req)
+                if len(grant_msg) == 3:
+                    tool = 'copy_by_grant_msg'
+                    req = {'grant_msg': grant_msg}
+                    for e in to_env:
+                        repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
+                        ret['data'].append({e: getattr(repay, tool)(**req)})
                 raise ValueError('not found the asset_import or capital_import or withdraw_success msg!')
             req['asset_import'] = req_param['biz_task'][0]
             req['capital_import'] = req_param['biz_task'][1] if req_param['is_noloan'] else []
             req['capital_data'] = req_param['capital_data']
             req['withdraw_success'] = req_param['biz_task'][-1]
-            req['grant_msg'] = req_param['grant_msg']
             req['grant_sync_task'] = req_param['grant_sync_task']
             for e in to_env:
                 repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
