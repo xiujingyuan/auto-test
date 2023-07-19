@@ -20,7 +20,7 @@ from app.test_cases import CaseException
 class ChinaCleanService(BaseService):
 
     def __init__(self, env, run_env, mock_name, check_req=False, return_req=False):
-        self.clean_host = "http://biz-dcs-1.k8s-ingress-nginx.kuainiujinke.com"
+        self.clean_host = "https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/dcs1"
         super(ChinaCleanService, self).__init__('china', 'clean', env, run_env, mock_name, check_req, return_req)
         self.task_url = self.clean_host + "/job/runTaskByOrderNo?orderNo={0}"
         self.asset = None

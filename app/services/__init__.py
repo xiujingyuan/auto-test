@@ -101,7 +101,10 @@ class BaseService(object):
                 local_bind_address=('127.0.0.1', port))
             # current_app.global_data[db_key]['server'] = self.server
             self.server.start()
-        self.engine = create_engine(AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port), echo=False)
+        sql_url = AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port)
+        if program == 'clean':
+            sql_url = sql_url.replace('10.1.0.15', '10.1.1.15')
+        self.engine = create_engine(sql_url, echo=False)
         # current_app.global_data[db_key]['engine'] = self.engine
         # else:
         #     self.server = current_app.global_data[db_key]['server']

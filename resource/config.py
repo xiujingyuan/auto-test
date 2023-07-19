@@ -30,7 +30,7 @@ class AutoTestConfig:
                 "grant": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{1}/gbiz{0}",
                 "contract": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":{0}/contract",
                 "biz_central": "mysql+pymysql://root:Coh8Beyiusa7@" + DB_IP + ":3306/biz{0}",
-                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@" + DB_IP + ":3321/capital{0}"
+                "clean": "mysql+pymysql://capital:piqXNdySXa2bLsbE@" + DB_IP + ":3321/capital7"
             },
             'ind': {
                 "repay": "mysql+pymysql://biz_test:1Swb3hAN0Hax9p@127.0.0.1:{1}/global_rbiz{0}",
