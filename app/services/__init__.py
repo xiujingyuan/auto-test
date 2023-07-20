@@ -104,6 +104,8 @@ class BaseService(object):
         sql_url = AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port)
         if program == 'clean':
             sql_url = sql_url.replace('10.1.0.15', '10.1.1.5').replace('3321', '3322')
+        print('sql_url', sql_url)
+        current_app.logger.info('sql_url', sql_url)
         self.engine = create_engine(sql_url, echo=False)
         # current_app.global_data[db_key]['engine'] = self.engine
         # else:
