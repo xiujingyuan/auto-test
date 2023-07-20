@@ -43,12 +43,14 @@ class ChinaCleanService(BaseService):
         return {table_name: list(map(lambda x: x.to_dict, table_info))}
 
     def get_clean_task(self, item_no):
-        clean_task = self.db_session.query(CleanTask).filter(CleanTask.task_order_no == item_no).all()
+        clean_task = self.db_session.query(CleanTask).filter(CleanTask.task_order_no == item_no).order_by(
+            desc(CleanTask.task_id)).all()
         return {'clean_task': list(map(lambda x: x.to_dict, clean_task))}
 
     def get_clean_clearing_trans(self, item_no):
         clean_clearing_tran = self.db_session.query(CleanClearingTrans).filter(
-            CleanClearingTrans.item_no == item_no).all()
+            CleanClearingTrans.item_no == item_no).order_by(CleanClearingTrans.period,
+                                                            CleanClearingTrans.amount_type).all()
         return {'clean_clearing_trans': list(map(lambda x: x.to_dict, clean_clearing_tran))}
 
     def get_clean_capital_settlement_pending(self, item_no):
