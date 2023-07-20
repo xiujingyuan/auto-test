@@ -12,7 +12,7 @@ def get_trace(func):
                 table_name.startswith('central_') else 'order_no'
             task_type = f'{table_name.replace("central_", "")}_type' if \
                 table_name.startswith('central_') else 'type'
-            service_name = f'biz-central-{self.env}' if \
+            service_name = f'biz-central' if \
                 table_name.startswith('central_') else f'{self.program}{self.env}'
             service_name = f'gbiz{self.env}' if \
                 table_name.startswith('grant_') else service_name

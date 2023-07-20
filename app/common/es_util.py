@@ -59,7 +59,8 @@ class ES(object):
                         {"match": {"operationName": operate}}
                     ]
                 }
-            }
+            },
+            "size": 1000
         }
         for tag_key, tag_value in tags.items():
             tag_key = ES.de_parse_tag(tag_key)
@@ -76,17 +77,6 @@ class ES(object):
                     }
                 }
             })
-            # if query_start is not None and query_end is not None:
-            #     body["query"]["bool"]["filter"] = [
-            #         {
-            #             "range": {
-            #                 "timestamp": {
-            #                     "gte": get_date(date=query_start, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True),
-            #                     "lte": get_date(date=query_end, fmt="%Y-%m-%d'T'%H:%M:%S'Z'", is_str=True)
-            #                 }
-            #             }
-            #         }
-            #     ]
         return body
 
     @staticmethod
@@ -225,7 +215,7 @@ class ES(object):
         ret_data_dt = {}
         # 1.查到trace_id
         param = self.search_trace_body(self.services, operate, order, query_start, query_end, **tags)
-        resp = self.es.search(index=self.index, body=param)
+        resp = self.es.search(index=self.index, body=param, size=1000)
         hits = resp['hits']['hits']
 
         if not hits:
