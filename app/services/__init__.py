@@ -103,7 +103,7 @@ class BaseService(object):
             self.server.start()
         sql_url = AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port)
         if program == 'clean':
-            sql_url = sql_url.replace('10.1.0.15', '10.1.1.5').replace('3321', '3322')
+            sql_url = sql_url.replace('10.1.0.15', '10.1.1.5').replace('3321', '3306')
         print('sql_url', sql_url)
         current_app.logger.info('sql_url' + sql_url)
         self.engine = create_engine(sql_url, echo=False)
