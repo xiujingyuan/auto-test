@@ -143,8 +143,8 @@ class ChinaGrantService(GrantBaseService):
             "source_type": source_type,
             "extend": extend
         }
-        # url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
-        url = 'http://127.0.0.1:5208/capital-manual-grant'
+        url = 'https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test/capital-manual-grant'
+        # url = 'http://127.0.0.1:5208/capital-manual-grant'
         ret = Http.http_post(url, req)
         if ret['code'] == 0:
             item_no = ret['data']['item_no']
