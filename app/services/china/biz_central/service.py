@@ -38,7 +38,7 @@ class ChinaBizCentralService(BaseService):
         self.asset = None
 
     def is_mock(self, channel):
-        value = self.nacos.get_config(f'biz-central-{self.env}.properties', group='SYSTEM')
+        value = self.nacos.get_config(f'biz-central.properties', group='SYSTEM')
         key_name = 'rpc.client.bizGateway.serviceUrl'
         for v in value['content'].split('\n')[::-1]:
             if v.startswith(key_name):
