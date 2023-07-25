@@ -53,7 +53,7 @@ def save_interface_doc():
     url = req.get('url', '')
     try:
         rep = req.get('rep', '{}')
-        req = req if isinstance(req, dict) else json.loads(req)
+        rep = rep if isinstance(rep, dict) else json.loads(rep)
         interface_req = req.get('req', '{}')
         interface_req = interface_req if isinstance(interface_req, dict) else json.loads(interface_req)
     except Exception as e:
@@ -83,7 +83,7 @@ def save_interface_doc():
     recorde.backend_value = json.dumps(backend_value, ensure_ascii=False)
     db.session.add(recorde)
     db.session.flush()
-    return jsonify(ret)
+    return get_backend_key_value()
 
 
 @api_web.route('/download_file', methods=['POST'])

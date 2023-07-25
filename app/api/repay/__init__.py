@@ -55,14 +55,16 @@ def repay_tools(tool):
                         repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
                         ret['data'].append({e: getattr(repay, tool)(**req)})
                 raise ValueError('not found the asset_import or capital_import or withdraw_success msg!')
-            req['asset_import'] = req_param['biz_task'][0]
-            req['capital_import'] = req_param['biz_task'][1] if req_param['is_noloan'] else []
-            req['capital_data'] = req_param['capital_data']
-            req['withdraw_success'] = req_param['biz_task'][-1]
-            req['grant_sync_task'] = req_param['grant_sync_task']
-            for e in to_env:
-                repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
-                ret['data'].append({e: getattr(repay, tool)(**req)})
+            else:
+                req['asset_import'] = req_param['biz_task'][0]
+                req['grant_msg'] = req_param['grant_msg']
+                req['capital_import'] = req_param['biz_task'][1] if req_param['is_noloan'] else []
+                req['capital_data'] = req_param['capital_data']
+                req['withdraw_success'] = req_param['biz_task'][-1]
+                req['grant_sync_task'] = req_param['grant_sync_task']
+                for e in to_env:
+                    repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
+                    ret['data'].append({e: getattr(repay, tool)(**req)})
     else:
         repay = RepayServiceFactory.get_repay(country, env, environment, mock_name)
         if tool == "run_xxl_job":
