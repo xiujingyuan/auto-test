@@ -1,3 +1,4 @@
+import json
 import traceback
 from copy import deepcopy
 
@@ -65,6 +66,23 @@ def repay_tools(tool):
                 for e in to_env:
                     repay = RepayServiceFactory.get_repay(country, e, environment, mock_name)
                     ret['data'].append({e: getattr(repay, tool)(**req)})
+    elif tool == 'sync_kv_value':
+        data = req.pop('data')
+        value = req.pop('value')
+        name = req.pop('name')
+        channel = req.pop('channel')
+        kv_value = req.pop('kv_value')
+        kv_value = json.dumps(kv_value, ensure_ascii=False) if isinstance(kv_value, dict) else kv_value
+        req['content'] = kv_value
+        for item in ['1', '2', '3', '4', '9']:
+            if item != env:
+                repay = RepayServiceFactory.get_repay(country, item, environment, mock_name)
+                if data == value:
+                    name = name.format(channel)
+                if value.endswith('system'):
+                    name = name + '.properties'
+                req['config_name'] = name
+                repay.nacos.update_config(**req)
     else:
         repay = RepayServiceFactory.get_repay(country, env, environment, mock_name)
         if tool == "run_xxl_job":

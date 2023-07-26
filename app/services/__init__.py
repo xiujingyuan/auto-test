@@ -104,8 +104,6 @@ class BaseService(object):
         sql_url = AutoTestConfig.SQLALCHEMY_DICT[country][program].format(env, port)
         if program == 'clean':
             sql_url = sql_url.replace('10.1.0.15', '10.1.1.5').replace('3321', '3306')
-        print('sql_url', sql_url)
-        current_app.logger.info('sql_url' + sql_url)
         self.engine = create_engine(sql_url, echo=False)
         # current_app.global_data[db_key]['engine'] = self.engine
         # else:
@@ -141,7 +139,6 @@ class BaseService(object):
             trace_info = es.get_request_child_info(operation, query_start, query_end,
                                                    order='desc', operation_index=0, orderNo=task_order_no)
             trace_info = self.save_trace_info(trace_id, operation, trace_info, creator)
-            print('trace_info', trace_info)
             for trace_time in trace_info:
                 if query_start == query_end and query_start_new <= trace_time < query_end:
                     trace_info_first = trace_info[trace_time]
@@ -208,6 +205,34 @@ class BaseService(object):
                                               BackendKeyValue.backend_key == key_name,
                                               BackendKeyValue.backend_is_active == 1).first()
         return json.loads(record.backend_value) if is_json else record.backend_value
+
+    def get_kv_value(self, data, channel, value, name, group):
+        if data == value:
+            name = name.format(channel)
+        if value.endswith('system'):
+            name = name + '.properties'
+        config_info = self.nacos.get_config(name, group)
+        content = config_info['content'] if 'content' in config_info else {name: 'not found kv'}
+        ke_types = 'TEXT' if name.endswith('.properties') else 'JSON'
+        try:
+            return {'data': json.loads(content), 'kv_types': ke_types}
+        except Exception as e:
+            print(e)
+            return {'data': content, 'kv_types': ke_types}
+
+    def save_kv_value(self, data, channel, value, name, kv_value, group, types):
+        if data == value:
+            name = name.format(channel)
+        if value.endswith('system'):
+            name = name + '.properties'
+        try:
+            kv_value = json.dumps(kv_value, ensure_ascii=False) if isinstance(kv_value, dict) else kv_value
+            self.nacos.update_config(name, kv_value, group, types)
+        except Exception as e:
+            print(e)
+            return str(e)
+        else:
+            return '更新成功'
 
     def get_detail_info(self, table_name, get_id, get_attr, extend):
         meta_class = importlib.import_module('app.services.{0}.{1}.Model'.format(self.country, self.program))

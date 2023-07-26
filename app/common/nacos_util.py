@@ -24,6 +24,7 @@ class Nacos(object):
     get_config_content_url = "http://{0}/nacos/v1/cs/configs?search=accurate&dataId={1}&group=&appName=&config_tags=" \
               "&pageNo=1&pageSize=10&tenant={2}&namespaceId={2}"
     get_config_url = "http://{0}/nacos/v1/cs/configs"
+    create_config_url = "http://{0}/nacos/#/newconfig"
 
     def __init__(self, country, tenant, username="nacos", password="nacos"):
         self.username = username
@@ -56,8 +57,8 @@ class Nacos(object):
         url = self.get_config_id_url.format(self.domain, config_name, self.tenant, self.tenant)
         resp = Http.parse_resp_body('get', url, headers={"Authorization": self.authorization},
                                     cookies=self.cookies)
-        config_id = resp['content']["pageItems"][0]["id"]
-        return config_id
+        pageItems = resp['content']["pageItems"]
+        return pageItems[0]["id"] if len(pageItems) > 0 else None
 
     def update_nacos_config(self, nacos_config_key):
         """
