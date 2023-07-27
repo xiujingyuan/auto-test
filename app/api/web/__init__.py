@@ -230,20 +230,6 @@ def get_table():
     }
     return jsonify(ret)
 
-
-@api_web.route('/auto_task', methods=["POST"])
-def auto_task():
-    ret = deepcopy(RET)
-    req = request.json
-    program = req.get('program', 'total')
-    country = req.get('country', 'china')
-    record = CaseTask.query.filter(CaseTask.case_task_country == country).all()
-    if country != 'total':
-        record = [x for x in record if x.case_task_program == program]
-    ret['data'] = list(map(lambda x: x.to_spec_dict, record))
-    return jsonify(ret)
-
-
 @api_web.route('/remove_item/', methods=["POST"])
 def remove_item():
     req = request.json
@@ -256,55 +242,6 @@ def remove_item():
                                        AutoAsset.asset_env == env).delete()
     db.session.flush()
     return jsonify(ret)
-
-
-@api_web.route('/run_single_case', methods=["POST"])
-def run_case():
-    ret = deepcopy(RET)
-    req = request.json
-    case_id = req.get("case_id", None)
-    environment = req.get("environment", 'dev')
-    env = req.get("env", "1")
-    if env is None:
-        ret['message'] = 'need env, but not found'
-        ret['code'] = 1
-    if case_id is None:
-        ret['message'] = 'need case, but not found'
-        ret['code'] = 1
-    find_case = TestCase.query.filter(TestCase.test_cases_id == case_id).first()
-    if find_case is None:
-        ret['message'] = "not fount the case with case's {0}".format(case_id)
-        ret['code'] = 1
-    channel = find_case.test_cases_channel
-    mock_name = find_case.test_cases_mock_name
-    program = find_case.test_cases_group.lower()
-    obj_name = '{0}{1}AutoTest'.format(channel.replace('_', '').title(), program.title())
-    meta_class = importlib.import_module('app.test_cases.china.{0}.{1}'.format(program, obj_name))
-    obj = getattr(meta_class, obj_name)(env, environment, mock_name)
-    obj.run_single_case(find_case)
-    return jsonify(ret)
-
-
-@api_web.route('/update_single_case', methods=["POST"])
-def update_case():
-    ret = deepcopy(RET)
-    req = request.json
-    case = req.get("case", None)
-    if case is None:
-        ret['message'] = 'need case, but not found'
-        ret['code'] = 1
-    find_case = TestCase.query.filter(TestCase.test_cases_id == case['id']).first()
-    if find_case is None:
-        ret['message'] = "not fount the case with case's {0}".format(case['id'])
-        ret['code'] = 1
-    for case_key, case_value in case.items():
-        if case_key == 'id':
-            continue
-        setattr(find_case, 'test_cases_{0}'.format(case_key), case_value)
-    db.session.add(find_case)
-    db.session.flush()
-    return jsonify(ret)
-
 
 def get_all_menu(menu_list):
     ret_menu = []
