@@ -212,7 +212,8 @@ class BaseService(object):
         if value.endswith('system'):
             name = name + '.properties'
         if value == 'gateway' and data == 'grant':
-            config_info = self.nacos.gateway_nacos.get_config(name.format(channel), group)
+            name = name.format(channel)
+            config_info = self.nacos.gateway_nacos.get_config(name, group)
         else:
             config_info = self.nacos.get_config(name, group)
         content = config_info['content'] if 'content' in config_info else {name: 'not found kv'}
