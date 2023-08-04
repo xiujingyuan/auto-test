@@ -231,7 +231,11 @@ class BaseService(object):
             name = name + '.properties'
         try:
             kv_value = json.dumps(kv_value, ensure_ascii=False) if isinstance(kv_value, dict) else kv_value
-            self.nacos.update_config(name, kv_value, group, types)
+            if value == 'gateway' and data == 'grant':
+                name = name.format(channel)
+                self.nacos.gateway_nacos.update_config(name, kv_value, group, types)
+            else:
+                self.nacos.update_config(name, kv_value, group, types)
         except Exception as e:
             print(e)
             return str(e)
