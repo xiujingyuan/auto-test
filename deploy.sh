@@ -27,6 +27,8 @@ touch /data/www/wwwroot/auto-test/logs/gunicon/gunicorn.pid
 touch /data/www/wwwroot/auto-test/logs/supervisor/auto_test.log
 
 echo "#########################修改一些配置 framework-test ##########################"
+cd /data/www/wwwroot/framework-test
+git checkout biz_test
 cp -f /data/www/wwwroot/framework-test/framework.conf /etc/supervisor/conf.d/framework.conf
 mkdir -p /data/www/wwwroot/framework-test/logs/supervisor
 mkdir -p /data/www/wwwroot/framework-test/logs/gunicon

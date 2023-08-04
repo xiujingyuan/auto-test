@@ -433,8 +433,8 @@ class ChinaGrantService(GrantBaseService):
             "period_count": loan_period_count,
             "principal": loan_principal_amount
         }
-        ret = Http.http_post('http://framework-test.k8s-ingress-nginx.kuainiujinke.com/gbiz-calc-noloan-amount',
-                             req_data)
+        ret = Http.http_post('https://biz-gateway-proxy.k8s-ingress-nginx.kuainiujinke.com/framework-test'
+                             '/gbiz-calc-noloan-amount', req_data)
         rongdan = ret['data']['apr融担小单金额']
         lieyin = ret['data']['irr权益小单金额']
         rongdan_irr = ret['data']['irr融担小单金额']

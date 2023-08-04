@@ -169,7 +169,7 @@ class BaseService(object):
                             info['doc_info'] = doc
                             break
                 else:
-                    info['doc_info'] = {'request': '{}', 'response': '{}', 'label': '', 'url': ''}
+                    info['doc_info'] = {'request': {}, 'response': {}, 'label': '', 'url': ''}
         return trace_info_first if trace_info_first else {}
 
     def save_trace_info(self, trace_id, operate_type, content, creator):
@@ -211,7 +211,10 @@ class BaseService(object):
             name = name.format(channel)
         if value.endswith('system'):
             name = name + '.properties'
-        config_info = self.nacos.get_config(name, group)
+        if value == 'gateway' and data == 'grant':
+            config_info = self.nacos.getway_nacos.get_config(name.format(channel), group)
+        else:
+            config_info = self.nacos.get_config(name, group)
         content = config_info['content'] if 'content' in config_info else {name: 'not found kv'}
         ke_types = 'TEXT' if name.endswith('.properties') else 'JSON'
         try:

@@ -243,6 +243,7 @@ def remove_item():
     db.session.flush()
     return jsonify(ret)
 
+
 def get_all_menu(menu_list):
     ret_menu = []
     for menu in menu_list:

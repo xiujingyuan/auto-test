@@ -27,8 +27,11 @@ class CaseTask(db.Model, BaseToDict):
     case_task_country = db.Column(db.String(10), nullable=False, server_default=db.FetchedValue(), info='国家')
     case_task_program = db.Column(db.String(10), info='系统')
     case_task_type = db.Column(db.Integer, info='任务类型，0:具体时间；1:cron')
-    case_task_run_env = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue())
-    case_task_is_valid = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(), info='任务是否有效')
+    case_task_run_env = db.Column(db.String(1), nullable=False, server_default=db.FetchedValue())
+    case_task_is_valid = db.Column(db.BOOLEAN, nullable=False, server_default=db.FetchedValue(), info='任务是否有效')
+    case_task_status = db.Column(db.Integer, nullable=False, server_default=db.FetchedValue(),
+                                 info='0:空闲;1:运行中;2:队列中;3:结束;4:异常')
+
 
 class TraceInfo(db.Model, BaseToDict):
     __tablename__ = 'trace_info'

@@ -1,6 +1,9 @@
 import importlib
 import json
 from copy import deepcopy
+
+from sqlalchemy import desc
+
 from app.common import RET
 from flask import Blueprint, current_app, jsonify, request
 from app.model.Model import CaseTask, TaskRelativeCase, TestCase, BackendKeyValue
@@ -50,6 +53,7 @@ def update_case():
     db.session.flush()
     return jsonify(ret)
 
+
 @api_test_case.route('/run_single_case', methods=["POST"])
 def run_case():
     ret = deepcopy(RET)
@@ -76,8 +80,8 @@ def run_case():
     obj.run_single_case(find_case)
     return jsonify(ret)
 
-@api_test_case.route('/run_case_task', methods=["POST"])
 
+@api_test_case.route('/run_case_task', methods=["POST"])
 def run_case_task():
     ret = deepcopy(RET)
     req = request.json
@@ -116,6 +120,23 @@ def get_case():
                                       TestCase.test_cases_group == program).order_by(TestCase.test_cases_id).all()
     ret['data'] = {'case': list(map(lambda x: x.to_spec_dict, case_list))}
     return jsonify(ret)
+
+
+@api_test_case.route('/get_auto_task_case/<int:task_id>', methods=["POST"])
+def get_auto_task_case(task_id):
+    ret = deepcopy(RET)
+    req = request.json
+    pageParams = req.get('pageParams', {'page': 1, "limit": 13})
+    case_list = TaskRelativeCase.query.filter(
+        TaskRelativeCase.task_relative_case_task_id == task_id).all()
+    case_list = tuple([x.task_relative_case_case_id for x in case_list])
+    test_case = TestCase.query.filter(TestCase.test_cases_id.in_(case_list)).paginate(
+            page=pageParams['page'],
+            per_page=pageParams['limit'],
+            error_out=True)
+    ret["total"] = test_case.total
+    ret["data"] = TestCase.to_spec_dicts(test_case.items) if test_case.items else []
+    return ret
 
 
 @api_test_case.route('/filter_cases', methods=["POST"])
@@ -175,7 +196,7 @@ def case_task_create():
         case_rel.task_relative_case_task_id = case_task.case_task_id
         db.session.add(case_rel)
     db.session.flush()
-
+    ret["total"], ret["data"] = get_case_task(program, country, {'page': 1, 'limit': 15})
     return jsonify(ret)
 
 
@@ -186,6 +207,11 @@ def auto_task():
     program = req.get('program', 'total')
     country = req.get('country', 'china')
     pageParams = req.get('pageParams', {'page': 1, 'limit': 15})
+    ret["total"], ret["data"] = get_case_task(program, country, pageParams)
+    return jsonify(ret)
+
+
+def get_case_task(program, country, page_params):
     if program == 'total':
         auto_task_list = json.loads(BackendKeyValue.query.filter(
             BackendKeyValue.backend_key == 'auto_task_list').first().backend_value)
@@ -194,11 +220,10 @@ def auto_task():
     else:
         program = tuple([program],)
     record = CaseTask.query.filter(CaseTask.case_task_country == country,
-                                   CaseTask.case_task_program.in_(program)).paginate(
-            page=pageParams['page'],
-            per_page=pageParams['limit'],
+                                   CaseTask.case_task_program.in_(program)).order_by(
+        desc(CaseTask.case_task_id)).paginate(
+            page=page_params['page'],
+            per_page=page_params['limit'],
             error_out=True)
-    ret["total"] = record.total
-    ret["data"] = TestCase.to_spec_dicts(record.items) if record.items else []
-    return jsonify(ret)
+    return record.total, TestCase.to_spec_dicts(record.items) if record.items else []
 
