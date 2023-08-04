@@ -71,6 +71,11 @@ def repay_tools(tool):
         value = req.pop('value')
         name = req.pop('name')
         channel = req.pop('channel')
+        if value == 'gateway':
+            ret['message'] = 'gateway配置不需要迁移'
+            ret['code'] = 1
+            ret['data'] = []
+            return jsonify(ret)
         kv_value = req.pop('kv_value')
         kv_value = json.dumps(kv_value, ensure_ascii=False) if isinstance(kv_value, dict) else kv_value
         req['content'] = kv_value
