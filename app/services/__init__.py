@@ -155,7 +155,9 @@ class BaseService(object):
             for item in trace_info_first:
                 info = trace_info_first[item]
                 if '/mock/' in info['http.url']:
-                    easy_mock = EasyMock(info['http.url'].split("/")[5:][0])
+                    program_name = info['http.url'].split("/")[5:][0]
+                    program_name = 'gbiz_auto_test' if program_name == 'gbiz' else program_name
+                    easy_mock = EasyMock(program_name)
                     try:
                         api_info = easy_mock.get_api_info_by_api(info['path'], None)
                     except Exception as e:

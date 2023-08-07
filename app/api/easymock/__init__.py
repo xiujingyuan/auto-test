@@ -43,8 +43,10 @@ def modify_mock():
     url = req.get('url', None)
     value = req.get("value", None)
     mock_name = url.split("/")[3]
+    url_path = url.split(mock_name)[-1]
+    mock_name = 'gbiz_auto_test' if mock_name == 'gbiz' else mock_name
     easy_mock = EasyMock(mock_name)
-    easy_mock.update_by_value(url.split(mock_name)[-1], value)
+    easy_mock.update_by_value(url_path, value)
     return get_ret
 
 

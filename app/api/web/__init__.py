@@ -83,7 +83,7 @@ def save_interface_doc():
     recorde.backend_value = json.dumps(backend_value, ensure_ascii=False)
     db.session.add(recorde)
     db.session.flush()
-    return get_backend_key_value()
+    return jsonify(ret)
 
 
 @api_web.route('/download_file', methods=['POST'])

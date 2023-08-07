@@ -232,8 +232,17 @@ class ES(object):
             hit_ret_data_dt['task_info']['host'] = "本地"
             hit_ret_data_dt['task_info']['path'] = "本地"
             hit_ret_data_dt['task_info']['http.url'] = "本地"
-            hit_ret_data_dt['task_info']['request'] = json.loads(hit['_source']['logs'][0]['fields'][0]['value'])
-            hit_ret_data_dt['task_info']['response'] = json.loads(hit['_source']['logs'][-1]['fields'][0]['value'])
+
+            try:
+                hit_ret_data_dt['task_info']['request'] = json.loads(hit['_source']['logs'][0]['fields'][0]['value'])
+            except Exception as e:
+                print(e)
+                hit_ret_data_dt['task_info']['request'] = hit['_source']['logs'][0]['fields'][0]['value']
+            try:
+                hit_ret_data_dt['task_info']['response'] = json.loads(hit['_source']['logs'][-1]['fields'][0]['value'])
+            except Exception as e:
+                print(e)
+                hit_ret_data_dt['task_info']['response'] = hit['_source']['logs'][-1]['fields'][0]['value']
 
             hit_ret_data_dt['task_info']['trace_url'] = f"https://biz-tracing.k8s-ingress-nginx.kuainiujin" \
                                                         f"ke.com/trace/{trace_id}/"
